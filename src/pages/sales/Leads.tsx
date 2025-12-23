@@ -20,7 +20,6 @@ export default function SalesLeads() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
-  // Load clients from API
   useEffect(() => {
     loadClients()
   }, [currentPage, searchTerm])
@@ -45,7 +44,6 @@ export default function SalesLeads() {
     }
   }
 
-  // Convert API client data to lead format
   const convertClientToLead = (client: any) => ({
     id: client.id,
     name: client.name || 'N/A',
@@ -68,7 +66,7 @@ export default function SalesLeads() {
 
   const handleSearch = (value: string) => {
     setSearchTerm(value)
-    setCurrentPage(1) // Reset to first page when searching
+    setCurrentPage(1)
   }
 
   return (
@@ -109,10 +107,6 @@ export default function SalesLeads() {
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin mr-2" /> 
                 <span>Loading clients...</span>
-              </div>
-            ) : filteredLeads.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No clients found</p>
               </div>
             ) : (
               <>
@@ -179,7 +173,6 @@ export default function SalesLeads() {
                   ))}
                 </div>
                 
-                {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-between mt-6">
                     <p className="text-sm text-muted-foreground">

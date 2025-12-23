@@ -109,11 +109,6 @@ export default function SalesHome() {
     dueTime: ''
   })
 
-  // Load initial data
-  useEffect(() => {
-    // Initial data loading can be added here if needed
-  }, [])
-
   const filteredFollowups = todaysFollowups.filter((followup) => {
     if (statusFilter === 'all') return true
     return followup.followupStatus === statusFilter
@@ -123,10 +118,7 @@ export default function SalesHome() {
   const stillPendingCount = todaysFollowups.filter((f) => f.followupStatus === 'still pending').length
 
   const handleAddTask = () => {
-    // Here you would typically send the data to your backend
-    console.log('Adding new task:', newTask)
     setIsAddTaskOpen(false)
-    // Reset form
     setNewTask({
       customerCode: '',
       customerName: '',
@@ -141,8 +133,6 @@ export default function SalesHome() {
   }
 
   const handleDailyUpload = () => {
-    // For now, we'll use the client import for all types
-    // In a real implementation, you'd have separate endpoints for each type
     setUploadType('client')
     setIsUploadDialogOpen(true)
   }
@@ -166,9 +156,6 @@ export default function SalesHome() {
         response = await clientAPI.import(uploadFile)
       }
       
-      console.log('Upload successful:', response)
-      
-      // Close dialog and reset
       setIsUploadDialogOpen(false)
       setUploadFile(null)
       setUploadType('')
@@ -497,7 +484,6 @@ export default function SalesHome() {
           </CardContent>
         </Card>
 
-        {/* Upload Dialog */}
         <UploadDialog
           isOpen={isUploadDialogOpen}
           onClose={() => {
@@ -517,7 +503,6 @@ export default function SalesHome() {
   )
 }
 
-// Upload Dialog Component
 const UploadDialog = ({ 
   isOpen, 
   onClose, 

@@ -108,7 +108,6 @@ export default function SalesFollowups() {
   })
 
   const handleCreateFollowup = () => {
-    console.log('Creating new followup:', newFollowup)
     setIsCreateFollowupOpen(false)
     setNewFollowup({
       customerCode: '',
@@ -153,7 +152,7 @@ export default function SalesFollowups() {
               <DialogTitle>Create Token & Pending Follow-up</DialogTitle>
               <DialogDescription>
                 Create a new follow-up task with customer details and requirements.
-              </DialogDescription>
+              </DialogDescription>  
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">

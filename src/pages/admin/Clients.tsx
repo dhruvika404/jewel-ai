@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search } from 'lucide-react'
+import { Eye, Search } from 'lucide-react'
 
 const clients = [
   { id: 1, name: 'Acme Corp', email: 'contact@acme.com', status: 'Active', value: '$50,000' },
@@ -54,7 +54,7 @@ export default function AdminClients() {
                     </td>
                     <td className="py-3 px-4 font-semibold">{client.value}</td>
                     <td className="py-3 px-4">
-                      <Button variant="ghost" size="sm">View</Button>
+                       <Eye className="w-4 h-4 text-muted-foreground" />
                     </td>
                   </tr>
                 ))}

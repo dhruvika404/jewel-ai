@@ -13,7 +13,6 @@ export default function AdminSettings() {
 
       <div className="p-4 lg:p-6 space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             <Card className="blur-bg border-purple-200/50 dark:border-purple-900/50">
               <CardHeader>
