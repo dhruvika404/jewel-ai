@@ -19,7 +19,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const menuItems = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { label: 'Clients', href: '/admin/clients', icon: Users },
-    { label: 'Followups', href: '/admin/followups', icon: CheckCircle },
+    // { label: 'Followups', href: '/admin/followups', icon: CheckCircle },
     // { label: 'Settings', href: '/admin/settings', icon: Settings },
   ]
 

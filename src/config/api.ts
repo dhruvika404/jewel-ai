@@ -1,7 +1,9 @@
 export const API_CONFIG = {
-  BASE_URL: 'http://localhost:3000/api',
-  AUTH_TOKEN: 'ru498ru849ur3984ur849uvm48uv48r48mr4339ie09cr8y4783brv74ryn38uc093rcm493fnvr',
+  BASE_URL: (import.meta.env.VITE_BASE_URL || 'http://localhost:3000') + '/api',
   ENDPOINTS: {
+    AUTH: {
+      LOGIN: '/auth/login'
+    },
     SALES_PERSON: {
       LIST: '/sales-person',
       IMPORT: '/sales-person/import',
@@ -12,15 +14,44 @@ export const API_CONFIG = {
       IMPORT: '/client/import',
       DETAIL: '/client'
     },
+    PENDING_ORDER: {
+      LIST: '/pending-order',
+      IMPORT: '/pending-order/import',
+      FOLLOW_UP: '/pending-order/follow-up',
+      ADD_FOLLOW_UP: '/pending-order/add-followup'
+    },
+    PENDING_MATERIAL: {
+      LIST: '/pending-material',
+      IMPORT: '/pending-material/import',
+      FOLLOW_UP: '/pending-material/follow-up',
+      ADD_FOLLOW_UP: '/pending-material/add-followup'
+    },
+    NEW_ORDER: {
+      LIST: '/new-order',
+      IMPORT: '/new-order/import',
+      FOLLOW_UP: '/new-order/follow-up',
+      ADD_FOLLOW_UP: '/new-order/add-followup'
+    },
     HEALTH: '/'
   }
 }
 
-export const getAuthHeaders = () => ({
-  'x-auth-token': API_CONFIG.AUTH_TOKEN,
-  'Content-Type': 'application/json',
-})
+// Get auth headers with token
+export const getHeaders = () => {
+  const token = localStorage.getItem('jewelai_token')
+  return {
+    'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
+    ...(token && { 'x-auth-token': token })
+  }
+}
 
-export const getAuthHeadersForUpload = () => ({
-  'x-auth-token': API_CONFIG.AUTH_TOKEN,
-})
+// Get auth headers for uploads
+export const getUploadHeaders = () => {
+  const token = localStorage.getItem('jewelai_token')
+  return {
+    // Let browser set Content-Type for multipart/form-data
+    'ngrok-skip-browser-warning': 'true',
+    ...(token && { 'x-auth-token': token })
+  }
+}

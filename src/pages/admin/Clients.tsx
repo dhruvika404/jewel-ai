@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,252 +17,90 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import TablePagination from "@/components/ui/table-pagination";
 import {
   Search,
   Plus,
+  Eye,
   Calendar,
-  Users,
-  Package,
-  ShoppingCart,
-  Sparkles,
-  ChevronRight,
   Clock,
   MessageSquare,
+  Upload,
+  ArrowLeft,
+  Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { 
+  clientAPI, 
+  pendingOrderAPI, 
+  pendingMaterialAPI, 
+  newOrderAPI 
+} from "@/services/api";
+import ExcelUpload from "@/components/ExcelUpload";
+
+interface Client {
+  id: string;
+  clientCode: string;
+  clientName: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  status?: string;
+  createdAt?: string;
+}
 
 interface FollowUp {
-  lastFollowUp: string;
-  nextFollowUp: string;
-  message: string;
+  id: string;
+  followUpMsg: string;
+  nextFollowUpDate: string;
+  followUpStatus: string;
+  createdAt: string;
 }
 
-interface MaterialItem {
-  materialName: string;
-  status: string;
-  quantity: string;
-  remark: string;
-  followUps: FollowUp[];
-}
-
-interface OrderItem {
+interface PendingOrder {
+  id: string;
   orderId: string;
+  clientCode: string;
   status: string;
   orderDate: string;
   grossWt: string;
   collection: string;
-  followUps: FollowUp[];
+  followUps?: FollowUp[];
 }
 
-interface NewOrderItem {
+interface PendingMaterial {
+  id: string;
+  materialName: string;
+  clientCode: string;
+  status: string;
+  quantity: string;
+  remark: string;
+  followUps?: FollowUp[];
+}
+
+interface NewOrder {
+  id: string;
   designName: string;
+  clientCode: string;
   status: string;
   date: string;
   remark: string;
-  followUps: FollowUp[];
+  followUps?: FollowUp[];
 }
-
-interface Client {
-  code: string;
-  name: string;
-  pendingMaterial: MaterialItem[];
-  pendingOrders: OrderItem[];
-  newOrders: NewOrderItem[];
-}
-
-const clientsData: Client[] = [
-  {
-    code: "CL001",
-    name: "XYZ Jewelers",
-    pendingMaterial: [
-      {
-        materialName: "Gold Bullion",
-        status: "Completed",
-        quantity: "100 Units",
-        remark: "Wait for quality confirmation",
-        followUps: [
-          {
-            lastFollowUp: "12-12-2025",
-            nextFollowUp: "25-12-2025",
-            message: "Need updated inventory list",
-          },
-          {
-            lastFollowUp: "05-12-2025",
-            nextFollowUp: "25-12-2025",
-            message: "Awaiting material confirmation",
-          },
-          {
-            lastFollowUp: "01-11-2025",
-            nextFollowUp: "01-01-2026",
-            message: "Supply delay updates",
-          },
-        ],
-      },
-    ],
-    pendingOrders: [
-      {
-        orderId: "MO/25-26/15668",
-        status: "Pending",
-        orderDate: "22/12/2025",
-        grossWt: "42.75",
-        collection: "New Collection",
-        followUps: [
-          {
-            lastFollowUp: "15-12-2025",
-            nextFollowUp: "25-12-2025",
-            message: "Please approve order #1024",
-          },
-          {
-            lastFollowUp: "09-12-2025",
-            nextFollowUp: "18-12-2025",
-            message: "Confirm shipment for customer",
-          },
-          {
-            lastFollowUp: "09-12-2025",
-            nextFollowUp: "12-12-2025",
-            message: "Review payment details",
-          },
-        ],
-      },
-    ],
-    newOrders: [
-      {
-        designName: "Modern Emerald",
-        status: "In Review",
-        date: "12/12/2025",
-        remark: "Final samples for review",
-        followUps: [
-          {
-            lastFollowUp: "10-12-2025",
-            nextFollowUp: "29-12-2025",
-            message: "Confirmed design samples",
-          },
-          {
-            lastFollowUp: "05-12-2025",
-            nextFollowUp: "02-09-2025",
-            message: "Request feedback",
-          },
-          {
-            lastFollowUp: "01-09-2025",
-            nextFollowUp: "05-12-2025",
-            message: "Send estimate for review",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    code: "CL002",
-    name: "ABC Gold",
-    pendingMaterial: [
-      {
-        materialName: "Silver Bars",
-        status: "Pending",
-        quantity: "250 Units",
-        remark: "Verify purity specifications",
-        followUps: [
-          {
-            lastFollowUp: "15-11-2025",
-            nextFollowUp: "20-11-2025",
-            message: "Dealer applied updated specifications",
-          },
-        ],
-      },
-    ],
-    pendingOrders: [
-      {
-        orderId: "MO/25-26/14205",
-        status: "Pending",
-        orderDate: "20-11-2025",
-        grossWt: "38.50",
-        collection: "Classic Gold",
-        followUps: [
-          {
-            lastFollowUp: "20-11-2025",
-            nextFollowUp: "20-12-2025",
-            message: "Dealer applied order #1026",
-          },
-        ],
-      },
-    ],
-    newOrders: [
-      {
-        designName: "Royal Diamond",
-        status: "Completed",
-        date: "20-11-2025",
-        remark: "Draft confirmed details",
-        followUps: [
-          {
-            lastFollowUp: "20-11-2025",
-            nextFollowUp: "20-11-2025",
-            message: "Draft confirmed details",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    code: "CL003",
-    name: "PQR Diamonds",
-    pendingMaterial: [
-      {
-        materialName: "Platinum Wire",
-        status: "In Transit",
-        quantity: "75 Units",
-        remark: "Awaiting switch confirmation",
-        followUps: [
-          {
-            lastFollowUp: "20-12-2025",
-            nextFollowUp: "20-11-2025",
-            message: "Under carrier of order #4005",
-          },
-        ],
-      },
-    ],
-    pendingOrders: [
-      {
-        orderId: "MO/25-26/14005",
-        status: "Processing",
-        orderDate: "09-12-2025",
-        grossWt: "52.30",
-        collection: "Premium Series",
-        followUps: [
-          {
-            lastFollowUp: "09-12-2025",
-            nextFollowUp: "20-12-2025",
-            message: "Under carrier of order #4005",
-          },
-        ],
-      },
-    ],
-    newOrders: [
-      {
-        designName: "Sapphire Elite",
-        status: "Approved",
-        date: "16-12-2025",
-        remark: "Send proposal for retailer",
-        followUps: [
-          {
-            lastFollowUp: "16-12-2025",
-            nextFollowUp: "10-12-2025",
-            message: "Send proposal for retailer",
-          },
-        ],
-      },
-    ],
-  },
-];
 
 type TabType = "pendingMaterial" | "pendingOrders" | "newOrders";
+type ViewType = "list" | "detail" | "upload";
 
 const getStatusBadgeVariant = (status: string) => {
   const statusLower = status.toLowerCase();
   if (statusLower === "completed" || statusLower === "approved")
-    return "success";
+    return "default";
   if (statusLower === "pending" || statusLower === "in review")
-    return "pending";
+    return "secondary";
   if (statusLower === "processing" || statusLower === "in transit")
-    return "warning";
+    return "outline";
   return "secondary";
 };
 
@@ -271,531 +109,596 @@ export default function AdminClients() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("pendingMaterial");
   const [showAddFollowUp, setShowAddFollowUp] = useState(false);
-  const [addFollowUpCategory, setAddFollowUpCategory] =
-    useState<TabType | null>(null);
   const [followUpMessage, setFollowUpMessage] = useState("");
   const [followUpDate, setFollowUpDate] = useState("");
   const [followUpStatus, setFollowUpStatus] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [viewType, setViewType] = useState<ViewType>("list");
+  
+  // Data states
+  const [clients, setClients] = useState<Client[]>([]);
+  const [pendingOrders, setPendingOrders] = useState<PendingOrder[]>([]);
+  const [pendingMaterials, setPendingMaterials] = useState<PendingMaterial[]>([]);
+  const [newOrders, setNewOrders] = useState<NewOrder[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState<string>("");
 
-  const filteredClients = clientsData.filter(
-    (client) =>
-      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.code.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const getLatestFollowUpInfo = (
-    items: MaterialItem[] | OrderItem[] | NewOrderItem[]
-  ) => {
-    if (items.length === 0)
-      return { lastFollowUp: "-", nextFollowUp: "-", message: "-" };
-    const latestFollowUp = items[0].followUps[0];
-    return {
-      lastFollowUp: latestFollowUp.lastFollowUp,
-      nextFollowUp: latestFollowUp.nextFollowUp,
-      message: latestFollowUp.message,
-    };
+  // Load clients data
+  const loadClients = async () => {
+    setLoading(true);
+    try {
+      const response = await clientAPI.getAll({
+        page: currentPage,
+        size: pageSize,
+        role: "client"
+      });
+      
+      if (response.success !== false) {
+        setClients(response.data || response.clients || []);
+      } else {
+        toast.error("Failed to load clients");
+      }
+    } catch (error: any) {
+      toast.error("Error loading clients: " + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const stats = [
-    {
-      label: "Total Clients",
-      value: clientsData.length,
-      icon: Users,
-      color: "text-primary",
-    },
-    {
-      label: "Pending Materials",
-      value: clientsData.reduce((acc, c) => acc + c.pendingMaterial.length, 0),
-      icon: Package,
-      color: "text-blue-500",
-    },
-    {
-      label: "Pending Orders",
-      value: clientsData.reduce((acc, c) => acc + c.pendingOrders.length, 0),
-      icon: ShoppingCart,
-      color: "text-amber-500",
-    },
-    {
-      label: "New Orders",
-      value: clientsData.reduce((acc, c) => acc + c.newOrders.length, 0),
-      icon: Sparkles,
-      color: "text-emerald-500",
-    },
-  ];
+  // Load client-specific data
+  const loadClientData = async (clientCode: string) => {
+    setLoading(true);
+    try {
+      const [ordersRes, materialsRes, newOrdersRes] = await Promise.all([
+        pendingOrderAPI.getFollowUpsByClientCode({ clientCode, page: 1, size: 100 }),
+        pendingMaterialAPI.getFollowUpsByClientCode({ clientCode, page: 1, size: 100 }),
+        newOrderAPI.getFollowUpsByClientCode({ clientCode, page: 1, size: 100 })
+      ]);
 
-  return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-20 border-b border-border bg-card/80 backdrop-blur-md">
-        <div className="px-4 py-4 sm:px-6 lg:px-8">
+      setPendingOrders(ordersRes.data || []);
+      setPendingMaterials(materialsRes.data || []);
+      setNewOrders(newOrdersRes.data || []);
+    } catch (error: any) {
+      toast.error("Error loading client data: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add follow-up
+  const handleAddFollowUp = async () => {
+    if (!followUpMessage || !followUpDate || !followUpStatus || !selectedItemId) {
+      toast.error("Please fill all fields");
+      return;
+    }
+
+    try {
+      let apiCall;
+      const followUpData = {
+        followUpMsg: followUpMessage,
+        nextFollowUpDate: followUpDate,
+        followUpStatus: followUpStatus
+      };
+
+      if (activeTab === "pendingOrders") {
+        apiCall = pendingOrderAPI.addFollowUp({
+          pendingOrderId: selectedItemId,
+          ...followUpData
+        });
+      } else if (activeTab === "pendingMaterial") {
+        apiCall = pendingMaterialAPI.addFollowUp({
+          pendingMaterialRecordId: selectedItemId,
+          ...followUpData
+        });
+      } else {
+        apiCall = newOrderAPI.addFollowUp({
+          newOrderRecordId: selectedItemId,
+          ...followUpData
+        });
+      }
+
+      await apiCall;
+      toast.success("Follow-up added successfully");
+      
+      // Reload client data
+      if (selectedClient) {
+        await loadClientData(selectedClient.clientCode);
+      }
+      
+      // Reset form
+      setShowAddFollowUp(false);
+      setFollowUpMessage("");
+      setFollowUpDate("");
+      setFollowUpStatus("");
+      setSelectedItemId("");
+    } catch (error: any) {
+      toast.error("Failed to add follow-up: " + error.message);
+    }
+  };
+
+  useEffect(() => {
+    if (viewType === "list") {
+      loadClients();
+    }
+  }, [currentPage, pageSize, viewType]);
+
+  // Listen for upload trigger from dashboard
+  useEffect(() => {
+    const handleShowUpload = () => {
+      setViewType("upload");
+    };
+
+    window.addEventListener('showUpload', handleShowUpload);
+    return () => window.removeEventListener('showUpload', handleShowUpload);
+  }, []);
+
+  const filteredClients = clients.filter(
+    (client) =>
+      client.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.clientCode?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredClients.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedClients = filteredClients.slice(startIndex, startIndex + pageSize);
+
+  const handleViewClient = async (client: Client) => {
+    setSelectedClient(client);
+    setViewType("detail");
+    await loadClientData(client.clientCode);
+  };
+
+  const handleBackToList = () => {
+    setViewType("list");
+    setSelectedClient(null);
+    setPendingOrders([]);
+    setPendingMaterials([]);
+    setNewOrders([]);
+  };
+
+  if (viewType === "upload") {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b px-6 py-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => setViewType("list")}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+            <h1 className="text-xl font-semibold text-gray-900">Upload Excel Files</h1>
+          </div>
+        </div>
+        <div className="p-6">
+          <ExcelUpload />
+        </div>
+      </div>
+    );
+  }
+
+  if (viewType === "detail" && selectedClient) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                <Sparkles className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-foreground">
-                  Client Overview
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Manage follow-ups and orders
-                </p>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                onClick={handleBackToList}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold">
+                  {selectedClient.clientCode.charAt(0)}
+                </div>
+                <div>
+                  <h1 className="text-xl font-semibold text-gray-900">{selectedClient.clientCode}</h1>
+                  <p className="text-sm text-gray-600">{selectedClient.clientName}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </header>
 
-      <main className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {stats.map((stat, index) => (
-            <div
-              key={stat.label}
-              className="group animate-fade-up rounded-xl border border-border bg-card p-4 shadow-soft transition-all duration-300 hover:shadow-card"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`rounded-lg bg-muted p-2 transition-colors group-hover:bg-accent`}
-                >
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">
-                    {stat.value}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
-                </div>
-              </div>
+        <div className="p-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin" />
             </div>
-          ))}
-        </div>
-
-        <Card
-          className="animate-fade-up overflow-hidden border-border shadow-card"
-          style={{ animationDelay: "200ms" }}
-        >
-          <CardHeader className="border-b border-border bg-muted/30 px-6 py-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by client name or code..."
-                className="pl-10 bg-background border-border focus:ring-primary"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border bg-muted/20">
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Client
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Pending Material
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Pending Orders
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      New Orders
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filteredClients.map((client, index) => {
-                    const materialInfo = getLatestFollowUpInfo(
-                      client.pendingMaterial
-                    );
-                    const ordersInfo = getLatestFollowUpInfo(
-                      client.pendingOrders
-                    );
-                    const newOrdersInfo = getLatestFollowUpInfo(
-                      client.newOrders
-                    );
-                    return (
-                      <tr
-                        key={client.code}
-                        className="group animate-fade-up bg-card transition-colors hover:bg-muted/30"
-                        style={{ animationDelay: `${(index + 4) * 50}ms` }}
-                      >
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                              {client.name.charAt(0)}
-                            </div>
-                            <div>
-                              <p className="font-medium text-foreground">
-                                {client.name}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {client.code}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <FollowUpCell {...materialInfo} />
-                        </td>
-                        <td className="px-6 py-4">
-                          <FollowUpCell {...ordersInfo} />
-                        </td>
-                        <td className="px-6 py-4">
-                          <FollowUpCell {...newOrdersInfo} />
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <Button
-                            onClick={() => {
-                              setSelectedClient(client);
-                              setActiveTab("pendingMaterial");
-                            }}
-                            size="sm"
-                            className="group-hover:shadow-card"
-                          >
-                            View
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      </main>
-
-      <Dialog
-        open={!!selectedClient}
-        onOpenChange={() => setSelectedClient(null)}
-      >
-        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-border bg-card">
-          <DialogHeader className="border-b border-border pb-4">
-            <DialogTitle className="flex items-center gap-3 text-xl">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                {selectedClient?.name.charAt(0)}
-              </div>
-              <div>
-                <span className="text-foreground">{selectedClient?.name}</span>
-                <p className="text-sm font-normal text-muted-foreground">
-                  {selectedClient?.code}
-                </p>
-              </div>
-            </DialogTitle>
-          </DialogHeader>
-
-          {selectedClient && (
-            <div className="mt-4">
-              <div className="mb-6 flex gap-1 rounded-lg bg-muted/50 p-1">
+          ) : (
+            <div>
+              <div className="mb-6 flex border-b border-border">
                 {[
-                  {
-                    id: "pendingMaterial" as TabType,
-                    label: "Pending Material",
-                    icon: Package,
-                  },
-                  {
-                    id: "pendingOrders" as TabType,
-                    label: "Pending Orders",
-                    icon: ShoppingCart,
-                  },
-                  {
-                    id: "newOrders" as TabType,
-                    label: "New Orders",
-                    icon: Sparkles,
-                  },
+                  { id: "pendingMaterial" as TabType, label: "Pending Material", count: pendingMaterials.length },
+                  { id: "pendingOrders" as TabType, label: "Pending Orders", count: pendingOrders.length },
+                  { id: "newOrders" as TabType, label: "New Orders", count: newOrders.length },
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-all ${
+                    className={`px-4 py-3 border-b-2 -mb-px text-sm font-medium transition-colors flex items-center gap-2 ${
                       activeTab === tab.id
-                        ? "bg-card text-foreground shadow-soft"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "border-primary text-primary"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    <tab.icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{tab.label}</span>
+                    {tab.label}
+                    <Badge variant="secondary" className="text-xs">
+                      {tab.count}
+                    </Badge>
                   </button>
                 ))}
               </div>
 
               <div className="space-y-4">
                 {activeTab === "pendingMaterial" &&
-                  selectedClient.pendingMaterial.map((item, idx) => (
+                  pendingMaterials.map((item) => (
                     <DetailCard
-                      key={idx}
-                      title="Material Details"
-                      fields={[
-                        { label: "Material Name", value: item.materialName },
-                        { label: "Status", value: item.status, isBadge: true },
-                        { label: "Quantity", value: item.quantity },
-                        { label: "Remark", value: item.remark },
-                      ]}
-                      followUps={item.followUps}
-                      onAddFollowUp={() => {
-                        setAddFollowUpCategory("pendingMaterial");
+                      key={item.id}
+                      type="material"
+                      item={item}
+                      onAddFollowUp={(id) => {
+                        setSelectedItemId(id);
                         setShowAddFollowUp(true);
                       }}
                     />
                   ))}
 
                 {activeTab === "pendingOrders" &&
-                  selectedClient.pendingOrders.map((item, idx) => (
-                    <DetailCard 
-                      key={idx}
-                      title="Order Details"
-                      fields={[
-                        { label: "Order ID", value: item.orderId },
-                        { label: "Status", value: item.status, isBadge: true },
-                        { label: "Order Date", value: item.orderDate },
-                        { label: "Gross Weight", value: `${item.grossWt}g` },
-                        {
-                          label: "Collection",
-                          value: item.collection,
-                          fullWidth: true,
-                        },
-                      ]}
-                      followUps={item.followUps}
-                      onAddFollowUp={() => {
-                        setAddFollowUpCategory("pendingOrders");
+                  pendingOrders.map((item) => (
+                    <DetailCard
+                      key={item.id}
+                      type="order"
+                      item={item}
+                      onAddFollowUp={(id) => {
+                        setSelectedItemId(id);
                         setShowAddFollowUp(true);
                       }}
                     />
                   ))}
 
                 {activeTab === "newOrders" &&
-                  selectedClient.newOrders.map((item, idx) => (
+                  newOrders.map((item) => (
                     <DetailCard
-                      key={idx}
-                      title="Design Details"
-                      fields={[
-                        { label: "Design Name", value: item.designName },
-                        { label: "Status", value: item.status, isBadge: true },
-                        { label: "Date", value: item.date },
-                        { label: "Remark", value: item.remark },
-                      ]}
-                      followUps={item.followUps}
-                      onAddFollowUp={() => {
-                        setAddFollowUpCategory("newOrders");
+                      key={item.id}
+                      type="design"
+                      item={item}
+                      onAddFollowUp={(id) => {
+                        setSelectedItemId(id);
                         setShowAddFollowUp(true);
                       }}
                     />
                   ))}
+
+                {((activeTab === "pendingMaterial" && pendingMaterials.length === 0) ||
+                  (activeTab === "pendingOrders" && pendingOrders.length === 0) ||
+                  (activeTab === "newOrders" && newOrders.length === 0)) && (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500">No data available for this section</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
+        </div>
 
-          <DialogFooter className="mt-6 border-t border-border pt-4">
-            <Button onClick={() => setSelectedClient(null)} variant="outline">
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={showAddFollowUp}
-        onOpenChange={() => {
-          setShowAddFollowUp(false);
-          setAddFollowUpCategory(null);
-          setFollowUpMessage("");
-          setFollowUpDate("");
-          setFollowUpStatus("");
-        }}
-      >
-        <DialogContent className="max-w-md border-border bg-card">
-          <DialogHeader className="border-b border-border pb-4">
-            <DialogTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5 text-primary" />
-              Add Follow-up
-            </DialogTitle>
-          </DialogHeader>
-          <div className="mt-4 space-y-4">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">
-                Follow-up Message
-              </label>
-              <Textarea
-                placeholder="Enter your message..."
-                value={followUpMessage}
-                onChange={(e) => setFollowUpMessage(e.target.value)}
-                rows={3}
-                className="border-border bg-background focus:ring-primary"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">
-                Next Follow-up Date
-              </label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        {/* Add Follow-up Modal */}
+        <Dialog open={showAddFollowUp} onOpenChange={setShowAddFollowUp}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-lg">Add Follow-up</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-2 block text-sm text-muted-foreground">
+                  Message
+                </label>
+                <Textarea
+                  placeholder="Enter message..."
+                  value={followUpMessage}
+                  onChange={(e) => setFollowUpMessage(e.target.value)}
+                  rows={3}
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm text-muted-foreground">
+                  Next Date
+                </label>
                 <Input
                   type="date"
                   value={followUpDate}
                   onChange={(e) => setFollowUpDate(e.target.value)}
-                  className="pl-10 border-border bg-background focus:ring-primary"
                 />
               </div>
+              <div>
+                <label className="mb-2 block text-sm text-muted-foreground">Status</label>
+                <Select value={followUpStatus} onValueChange={setFollowUpStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="in-progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">
-                Status
-              </label>
-              <Select value={followUpStatus} onValueChange={setFollowUpStatus}>
-                <SelectTrigger className="border-border bg-background">
-                  <SelectValue placeholder="Select Status" />
-                </SelectTrigger>
-                <SelectContent className="border-border bg-card">
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter className="mt-6 border-t border-border pt-4">
-            <Button
-              onClick={() => {
-                setShowAddFollowUp(false);
-                setAddFollowUpCategory(null);
-                setFollowUpMessage("");
-                setFollowUpDate("");
-                setFollowUpStatus("");
-              }}
-              variant="outline"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                setShowAddFollowUp(false);
-                setAddFollowUpCategory(null);
-                setFollowUpMessage("");
-                setFollowUpDate("");
-                setFollowUpStatus("");
-              }}
-            >
-              <Plus className="h-4 w-4" />
-              Add Follow-up
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
+            <DialogFooter className="mt-6">
+              <Button variant="outline" onClick={() => setShowAddFollowUp(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddFollowUp}>
+                Add Follow-up
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
 
-function FollowUpCell({
-  lastFollowUp,
-  nextFollowUp,
-  message,
-}: {
-  lastFollowUp: string;
-  nextFollowUp: string;
-  message: string;
-}) {
   return (
-    <div className="space-y-1.5 text-xs">
-      <div className="flex items-center gap-1.5 text-muted-foreground">
-        <Clock className="h-3 w-3" />
-        <span>Last: {lastFollowUp}</span>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b px-6 py-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold text-gray-900">Clients</h1>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search clients..."
+                className="pl-10 w-64"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Button 
+              variant="outline"
+              onClick={() => setViewType("upload")}
+              className="flex items-center gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              Upload Excel
+            </Button>
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Client
+            </Button>
+          </div>
+        </div>
       </div>
-      <div className="flex items-center gap-1.5 text-primary">
-        <Calendar className="h-3 w-3" />
-        <span className="font-medium">Next: {nextFollowUp}</span>
-      </div>
-      <div className="flex items-start gap-1.5 text-foreground">
-        <MessageSquare className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground" />
-        <span className="line-clamp-2">{message}</span>
+
+      <div className="p-6">
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-lg border p-4 text-center">
+            <div className="text-2xl font-bold text-gray-900 mb-1">
+              {clients.length}
+            </div>
+            <div className="text-sm text-gray-500">Total Clients</div>
+          </div>
+          
+          <div className="bg-white rounded-lg border p-4 text-center">
+            <div className="text-2xl font-bold text-green-600 mb-1">
+              {clients.filter(c => c.status !== 'inactive').length}
+            </div>
+            <div className="text-sm text-gray-500">Active Clients</div>
+          </div>
+          
+          <div className="bg-white rounded-lg border p-4 text-center">
+            <div className="text-2xl font-bold text-red-600 mb-1">
+              {clients.filter(c => c.status === 'inactive').length}
+            </div>
+            <div className="text-sm text-gray-500">Inactive Clients</div>
+          </div>
+          
+          <div className="bg-white rounded-lg border p-4 text-center">
+            <div className="text-2xl font-bold text-gray-900 mb-1">
+              {pendingOrders.length + pendingMaterials.length + newOrders.length}
+            </div>
+            <div className="text-sm text-gray-500">Total Records</div>
+          </div>
+        </div>
+
+        {/* Clients Table */}
+        <Card className="overflow-hidden">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-medium text-gray-700">Client Name</TableHead>
+                    <TableHead className="font-medium text-gray-700">Client Code</TableHead>
+                    <TableHead className="font-medium text-gray-700">Email</TableHead>
+                    <TableHead className="font-medium text-gray-700">Phone</TableHead>
+                    <TableHead className="font-medium text-gray-700">Status</TableHead>
+                    <TableHead className="font-medium text-gray-700 text-center">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedClients.map((client) => (
+                    <TableRow key={client.id} className="hover:bg-gray-50">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold">
+                            {client.clientCode?.charAt(0) || 'C'}
+                          </div>
+                          <div className="font-medium text-gray-900">{client.clientName || 'N/A'}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium text-gray-900">{client.clientCode}</TableCell>
+                      <TableCell className="text-gray-600">{client.email || 'N/A'}</TableCell>
+                      <TableCell className="text-gray-600">{client.phone || 'N/A'}</TableCell>
+                      <TableCell>
+                        <Badge variant={client.status === 'active' ? 'default' : 'secondary'}>
+                          {client.status || 'Active'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-primary/10"
+                            onClick={() => handleViewClient(client)}
+                          >
+                            <Eye className="h-4 w-4 text-gray-600" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </Card>
+
+        {/* Pagination */}
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
+        />
       </div>
     </div>
   );
-}
-
-interface DetailField {
-  label: string;
-  value: string;
-  isBadge?: boolean;
-  fullWidth?: boolean;
 }
 
 function DetailCard({
-  title,
-  fields,
-  followUps,
+  type,
+  item,
   onAddFollowUp,
 }: {
-  title: string;
-  fields: DetailField[];
-  followUps: FollowUp[];
-  onAddFollowUp: () => void;
+  type: "material" | "order" | "design";
+  item: PendingMaterial | PendingOrder | NewOrder;
+  onAddFollowUp: (id: string) => void;
 }) {
+  const getFields = () => {
+    if (type === "material") {
+      const material = item as PendingMaterial;
+      return [
+        { label: "Material Name", value: material.materialName },
+        { label: "Status", value: material.status, badge: true },
+        { label: "Quantity", value: material.quantity },
+        { label: "Remark", value: material.remark },
+      ];
+    }
+    if (type === "order") {
+      const order = item as PendingOrder;
+      return [
+        { label: "Order ID", value: order.orderId },
+        { label: "Status", value: order.status, badge: true },
+        { label: "Order Date", value: order.orderDate },
+        { label: "Gross Weight", value: `${order.grossWt}g` },
+        { label: "Collection", value: order.collection },
+      ];
+    }
+    const design = item as NewOrder;
+    return [
+      { label: "Design Name", value: design.designName },
+      { label: "Status", value: design.status, badge: true },
+      { label: "Date", value: design.date },
+      { label: "Remark", value: design.remark },
+    ];
+  };
+
+  const getTitle = () => {
+    if (type === "material") return "Material Details";
+    if (type === "order") return "Order Details";
+    return "Design Details";
+  };
+
   return (
-    <div className="animate-scale-in overflow-hidden rounded-xl border border-border bg-card">
-      <div className="border-b border-border bg-muted/30 px-4 py-3">
-        <h3 className="font-semibold text-foreground">{title}</h3>
-      </div>
-      <div className="p-4">
-        <div className="mb-4 grid grid-cols-2 gap-4">
-          {fields.map((field, i) => (
-            <div key={i} className={field.fullWidth ? "col-span-2" : ""}>
-              <p className="mb-1 text-xs text-muted-foreground">
-                {field.label}
-              </p>
-              {field.isBadge ? (
-                <Badge variant={getStatusBadgeVariant(field.value)}>
-                  {field.value}
-                </Badge>
-              ) : (
-                <p className="font-medium text-foreground">{field.value}</p>
-              )}
-            </div>
-          ))}
+    <div className="space-y-4">
+      <div className="rounded-lg border border-border bg-card">
+        <div className="border-b border-border bg-muted px-4 py-3">
+          <h3 className="font-medium text-foreground">{getTitle()}</h3>
         </div>
-
-        <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Follow-up History
-          </p>
-          {followUps.map((f, i) => (
-            <div
-              key={i}
-              className="rounded-lg border border-border bg-muted/20 p-3 transition-colors hover:bg-muted/40"
-            >
-              <div className="grid gap-2 text-sm sm:grid-cols-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="h-3.5 w-3.5" />
-                  <span>Last: {f.lastFollowUp}</span>
-                </div>
-                <div className="flex items-center gap-2 text-primary">
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span className="font-medium">Next: {f.nextFollowUp}</span>
-                </div>
-                <div className="flex items-start gap-2 sm:col-span-2">
-                  <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  <span className="text-foreground">{f.message}</span>
-                </div>
+        <div className="p-4">
+          <div className="grid grid-cols-2 gap-4">
+            {getFields().map((field, i) => (
+              <div key={i}>
+                <p className="text-sm text-muted-foreground">{field.label}</p>
+                {field.badge ? (
+                  <Badge
+                    variant={getStatusBadgeVariant(field.value)}
+                    className="mt-1"
+                  >
+                    {field.value}
+                  </Badge>
+                ) : (
+                  <p className="font-medium text-foreground mt-1">
+                    {field.value}
+                  </p>
+                )}
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
+      </div>
 
-        <Button
-          onClick={onAddFollowUp}
-          className="mt-4"
-          size="sm"
-          variant="outline"
-        >
-          <Plus className="h-4 w-4" />
-          Add Follow-up
-        </Button>
+      <div className="rounded-lg border border-border bg-card">
+        <div className="border-b border-border bg-muted px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+              <h3 className="font-medium text-foreground">Follow-ups</h3>
+              <span className="text-sm text-muted-foreground">
+                ({item.followUps?.length || 0})
+              </span>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => onAddFollowUp(item.id)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Add
+            </Button>
+          </div>
+        </div>
+        <div className="p-4">
+          <div className="max-h-64 space-y-3 overflow-y-auto pr-2">
+            {item.followUps && item.followUps.length > 0 ? (
+              item.followUps.map((followUp, i) => (
+                <div key={i} className="border border-border rounded p-3">
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      <span>Created: {new Date(followUp.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-foreground">
+                      <Calendar className="h-3 w-3" />
+                      <span className="font-medium">
+                        Next: {new Date(followUp.nextFollowUpDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">{followUp.followUpMsg}</p>
+                  <Badge variant="outline" className="text-xs">
+                    {followUp.followUpStatus}
+                  </Badge>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No follow-ups available
+              </p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

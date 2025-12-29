@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { authAPI } from '@/services/api'
 
-export type UserRole = 'admin' | 'sales'
+export type UserRole = 'admin' | 'sales' | 'sales_executive' | 'client'
 
 interface User {
   id: string
@@ -12,17 +13,12 @@ interface User {
 
 interface AuthContextType {
   user: User | null
-  login: (email: string, password: string) => Promise<void>
+  login: (identifier: string, password: string, role?: string) => Promise<void>
   logout: () => void
   isLoading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
-
-const MOCK_USERS = [
-  { id: '1', email: 'admin@jewelai.com', password: 'admin123', name: 'Admin User', role: 'admin' as UserRole },
-  { id: '2', email: 'sales@jewelai.com', password: 'sales123', name: 'Sales User', role: 'sales' as UserRole },
-]
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -43,29 +39,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setInitializing(false)
   }, [])
 
-  const login = async (email: string, password: string) => {
+  const login = async (identifier: string, password: string, role: string = 'admin') => {
     setIsLoading(true)
     try {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      const foundUser = MOCK_USERS.find(
-        u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-      )
-
-      if (!foundUser) {
-        throw new Error('Invalid email or password')
+      // Prepare login payload based on role
+      let loginPayload: any = { password, role }
+      
+      if (role === 'client' || role === 'admin') {
+        loginPayload.email = identifier
+      } else if (role === 'sales_executive') {
+        loginPayload.userCode = identifier
       }
 
-      const userSession = {
-        id: foundUser.id,
-        email: foundUser.email,
-        name: foundUser.name,
-        role: foundUser.role,
+      // Call the real API
+      const response = await authAPI.login(loginPayload)
+      
+      if (response.success === false) {
+        throw new Error(response.message || 'Login failed')
+      }
+
+      // Extract user data and token from response
+      const userData = response.user || response.data || response
+      const token = response.token || response.accessToken || userData.token
+      
+      const userSession: User = {
+        id: userData.id || userData.userId || '1',
+        email: userData.email || (role === 'admin' ? identifier : ''),
+        name: userData.name || userData.username || (role === 'admin' ? 'Admin User' : 'Sales Executive'),
+        role: (userData.role || role) as UserRole
       }
 
       setUser(userSession)
       localStorage.setItem('jewelai_user', JSON.stringify(userSession))
       
-      navigate(`/${foundUser.role}`)
+      // Store authentication token if provided
+      if (token) {
+        localStorage.setItem('jewelai_token', token)
+      }
+      
+      // Navigate based on role
+      const navigateRole = userSession.role === 'sales_executive' ? 'sales' : userSession.role
+      navigate(`/${navigateRole}`)
+    } catch (error: any) {
+      console.error('Login error:', error)
+      throw new Error(error.message || 'Login failed. Please check your credentials.')
     } finally {
       setIsLoading(false)
     }
@@ -74,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null)
     localStorage.removeItem('jewelai_user')
+    localStorage.removeItem('jewelai_token')
     navigate('/login')
   }
 
