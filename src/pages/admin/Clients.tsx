@@ -16,9 +16,16 @@ import TablePagination from '@/components/ui/table-pagination'
 import { Upload, Loader2, Eye, CheckCircle, XCircle, AlertTriangle, MessageSquare, Plus, Pencil, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import { clientAPI, dashboardAPI } from '@/services/api'
+import { clientAPI, dashboardAPI, pendingOrderAPI, pendingMaterialAPI, newOrderAPI } from '@/services/api'
 import { ClientModal } from '@/components/modals/ClientModal'
-// import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 
 // Client interface
 interface Client {
@@ -71,6 +78,7 @@ export default function Clients() {
   const [totalItems, setTotalItems] = useState(0)
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [importType, setImportType] = useState('clients')
   const [isUploading, setIsUploading] = useState(false)
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
@@ -177,11 +185,26 @@ export default function Clients() {
     setIsUploading(true)
     setImportResult(null)
     try {
-      const result = await clientAPI.import(uploadFile)
+      let result
+      switch (importType) {
+        case 'pending-order':
+          result = await pendingOrderAPI.import(uploadFile)
+          break
+        case 'pending-material':
+          result = await pendingMaterialAPI.import(uploadFile)
+          break
+        case 'new-order':
+          result = await newOrderAPI.import(uploadFile)
+          break
+        default:
+          result = await clientAPI.import(uploadFile)
+      }
+      
       setImportResult(result)
       if (result.success) {
           toast.success(result.message || 'Import processed')
           loadData() // Refresh list in background
+          resetUpload() // Close modal on success
       }
     } catch (error: any) {
       toast.error('Upload failed: ' + error.message)
@@ -365,9 +388,15 @@ export default function Clients() {
       }}>
         <DialogContent className={`${importResult ? 'max-w-4xl' : 'max-w-md'}`}>
           <DialogHeader>
-            <DialogTitle>Import Clients</DialogTitle>
+            <DialogTitle>
+                {importResult ? 'Import Processing Result' : 
+                 importType === 'clients' ? 'Import Clients' :
+                 importType === 'pending-order' ? 'Import Pending Orders' :
+                 importType === 'pending-material' ? 'Import Pending Material' :
+                 'Import New Orders'}
+            </DialogTitle>
             <DialogDescription>
-              {importResult ? 'Import Processing Result' : 'Upload an Excel file to import client data'}
+              {importResult ? 'Import Processing Result' : 'Upload an Excel file to import data'}
             </DialogDescription>
           </DialogHeader>
           
@@ -375,10 +404,24 @@ export default function Clients() {
               // Original Upload Form
               <>
                   <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Select Import Type</Label>
+                      <Select value={importType} onValueChange={setImportType}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select import type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="clients">Clients</SelectItem>
+                          <SelectItem value="pending-order">Pending Order Task Sheet</SelectItem>
+                          <SelectItem value="pending-material">Pending Material Task Sheet</SelectItem>
+                          <SelectItem value="new-order">New Order Task Sheet</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div>
-                      <label className="mb-2 block text-sm text-muted-foreground">
+                      <Label className="mb-2 block text-sm">
                         Excel File
-                      </label>
+                      </Label>
                       <Input
                         type="file"
                         accept=".xlsx,.xls"
