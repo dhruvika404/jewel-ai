@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Gem } from 'lucide-react'
+import { Gem, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function Login() {
@@ -12,6 +12,34 @@ export default function Login() {
     identifier: '',
     password: ''
   })
+  const [showPassword, setShowPassword] = useState(false)
+
+  // Check ngrok connectivity on component mount
+  useEffect(() => {
+    const checkNgrokConnection = async () => {
+      try {
+        const baseUrl = import.meta.env.VITE_BASE_URL
+    
+
+        const response = await fetch(baseUrl, {
+          method: 'GET',
+          headers: {
+            'ngrok-skip-browser-warning': 'true'
+          }
+        })
+
+        if (response.ok) {
+          console.log('✅ Ngrok connection successful:', baseUrl)
+        } else {
+          console.warn('⚠️ Ngrok responded with status:', response.status)
+        }
+      } catch (error) {
+        console.error('❌ Ngrok connection failed:', error)
+      }
+    }
+
+    checkNgrokConnection()
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -45,7 +73,7 @@ export default function Login() {
               </div>
             </div>
             <CardTitle className="text-2xl font-semibold">
-              Jewel AI CRM
+              Welcome back
             </CardTitle>
             <CardDescription className="text-muted-foreground">
               Sign in to continue
@@ -69,16 +97,30 @@ export default function Login() {
               </div>
 
               <div className="space-y-2">
-                <Input
-                  label="Password"
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    label="Password"
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-[44px] text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               <Button type="submit" className="w-full" disabled={isLoading} size="lg">

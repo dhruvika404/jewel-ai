@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { CheckCircle, Clock, Package, ShoppingCart, Box, Plus, Upload, FileUp } from 'lucide-react'
-import { useState, useEffect, useRef } from 'react'
+import { CheckCircle, Clock, Package, ShoppingCart, Box, Loader2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import {
   Select,
   SelectContent,
@@ -9,563 +8,322 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { salesPersonAPI, clientAPI } from '@/services/api'
+import { newOrderAPI, pendingOrderAPI, pendingMaterialAPI } from '@/services/api'
+import { toast } from 'sonner'
+import { usePageHeader } from '@/contexts/PageHeaderProvider'
 
-const todaysFollowups = [
-  {
-    id: 1,
-    client: 'Acme Corp (CJ001)',
-    type: 'New order',
-    date: '2025-12-18',
-    time: '10:00 AM',
-    notes: 'Discuss new product catalog',
-    nextFollowupDate: '2025-12-20',
-    nextFollowupTime: '2:00 PM',
-    status: 'Open',
-    followupStatus: 'followed up',
-  },
-  {
-    id: 2,
-    client: 'Tech Solutions (CD002)',
-    type: 'Pending order',
-    date: '2025-12-18',
-    time: '11:30 AM',
-    notes: 'Follow up on order confirmation',
-    nextFollowupDate: '2025-12-19',
-    nextFollowupTime: '10:00 AM',
-    status: 'Open',
-    followupStatus: 'still pending',
-  },
-  {
-    id: 3,
-    client: 'Global Inc (CR003)',
-    type: 'Pending material',
-    date: '2025-12-18',
-    time: '3:00 PM',
-    notes: 'Check material availability',
-    nextFollowupDate: '2025-12-19',
-    nextFollowupTime: '11:00 AM',
-    status: 'Open',
-    followupStatus: 'followed up',
-  },
-  {
-    id: 4,
-    client: 'Innovation Labs (CS004)',
-    type: 'New order',
-    date: '2025-12-18',
-    time: '4:30 PM',
-    notes: 'Proposal discussion',
-    nextFollowupDate: '2025-12-21',
-    nextFollowupTime: '3:00 PM',
-    status: 'Closed',
-    followupStatus: 'followed up',
-  },
-]
+interface FollowUp {
+  id: string
+  followUpMsg: string
+  nextFollowUpDate: string
+  followUpStatus: string
+  createdAt: string
+  clientCode?: string
+  clientName?: string
+  type?: string
+}
 
 const getTypeIcon = (type: string) => {
-  if (type === 'New order') return Package
-  if (type === 'Pending order') return ShoppingCart
-  if (type === 'Pending material') return Box
+  if (type === 'New Order' || type === 'new-order') return Package
+  if (type === 'Pending Order' || type === 'pending-order') return ShoppingCart
+  if (type === 'Pending Material' || type === 'pending-material') return Box
   return Clock
 }
 
 const getTypeColor = (type: string) => {
-  if (type === 'New order') return 'text-blue-500 dark:text-blue-400'
-  if (type === 'Pending order') return 'text-orange-500 dark:text-orange-400'
-  if (type === 'Pending material') return 'text-purple-500 dark:text-purple-400'
+  if (type === 'New Order' || type === 'new-order') return 'text-blue-500 dark:text-blue-400'
+  if (type === 'Pending Order' || type === 'pending-order') return 'text-orange-500 dark:text-orange-400'
+  if (type === 'Pending Material' || type === 'pending-material') return 'text-purple-500 dark:text-purple-400'
   return 'text-gray-500 dark:text-gray-400'
 }
 
 export default function SalesHome() {
-  const [statusFilter, setStatusFilter] = useState<'all' | 'followed up' | 'still pending'>('all')
-  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false)
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
-  const [uploadType, setUploadType] = useState<'sales-person' | 'client' | ''>('')
-  const [uploadFile, setUploadFile] = useState<File | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  
-  const [newTask, setNewTask] = useState({
-    customerCode: '',
-    customerName: '',
-    taskType: '',
-    salesExecutiveCode: '',
-    contactNo: '',
-    followupType: '',
-    notes: '',
-    dueDate: '',
-    dueTime: ''
-  })
+  const { setHeader } = usePageHeader()
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all')
+  const [loading, setLoading] = useState(false)
+  const [followUps, setFollowUps] = useState<FollowUp[]>([])
+  const [todayCount, setTodayCount] = useState(0)
+  const [pendingCount, setPendingCount] = useState(0)
+  const [overdueCount, setOverdueCount] = useState(0)
 
-  const filteredFollowups = todaysFollowups.filter((followup) => {
-    if (statusFilter === 'all') return true
-    return followup.followupStatus === statusFilter
-  })
+  // Set header
+  useEffect(() => {
+    setHeader({ title: 'Dashboard' })
+  }, [])
 
-  const followedUpCount = todaysFollowups.filter((f) => f.followupStatus === 'followed up').length
-  const stillPendingCount = todaysFollowups.filter((f) => f.followupStatus === 'still pending').length
+  // Load all follow-ups
+  const loadFollowUps = async () => {
+    setLoading(true)
+    try {
+      const [newOrderRes, pendingOrderRes, pendingMaterialRes] = await Promise.all([
+        newOrderAPI.getFollowUpsByClientCode({ page: 1, size: 1000 }),
+        pendingOrderAPI.getFollowUpsByClientCode({ page: 1, size: 1000, clientCode: '' }),
+        pendingMaterialAPI.getFollowUpsByClientCode({ page: 1, size: 1000, clientCode: '' })
+      ])
 
-  const handleAddTask = () => {
-    setIsAddTaskOpen(false)
-    setNewTask({
-      customerCode: '',
-      customerName: '',
-      taskType: '',
-      salesExecutiveCode: '',
-      contactNo: '',
-      followupType: '',
-      notes: '',
-      dueDate: '',
-      dueTime: ''
-    })
-  }
+      const allFollowUps: FollowUp[] = []
+      
+      // Process new orders
+      if (newOrderRes.data) {
+        newOrderRes.data.forEach((item: any) => {
+          if (item.followUps && item.followUps.length > 0) {
+            item.followUps.forEach((fu: any) => {
+              allFollowUps.push({
+                ...fu,
+                clientCode: item.clientCode,
+                clientName: item.designName || item.clientCode,
+                type: 'New Order'
+              })
+            })
+          }
+        })
+      }
 
-  const handleDailyUpload = () => {
-    setUploadType('client')
-    setIsUploadDialogOpen(true)
-  }
+      // Process pending orders
+      if (pendingOrderRes.data) {
+        pendingOrderRes.data.forEach((item: any) => {
+          if (item.followUps && item.followUps.length > 0) {
+            item.followUps.forEach((fu: any) => {
+              allFollowUps.push({
+                ...fu,
+                clientCode: item.clientCode,
+                clientName: item.orderId || item.clientCode,
+                type: 'Pending Order'
+              })
+            })
+          }
+        })
+      }
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      setUploadFile(file)
+      // Process pending materials
+      if (pendingMaterialRes.data) {
+        pendingMaterialRes.data.forEach((item: any) => {
+          if (item.followUps && item.followUps.length > 0) {
+            item.followUps.forEach((fu: any) => {
+              allFollowUps.push({
+                ...fu,
+                clientCode: item.clientCode,
+                clientName: item.materialName || item.clientCode,
+                type: 'Pending Material'
+              })
+            })
+          }
+        })
+      }
+
+      setFollowUps(allFollowUps)
+      calculateCounts(allFollowUps)
+    } catch (error: any) {
+      console.error('Error loading follow-ups:', error)
+      toast.error('Failed to load follow-ups')
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleUpload = async () => {
-    if (!uploadFile || !uploadType) return
+  const calculateCounts = (followUpsList: FollowUp[]) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
 
-    setIsUploading(true)
-    try {
-      let response
-      if (uploadType === 'sales-person') {
-        response = await salesPersonAPI.import(uploadFile)
-      } else {
-        response = await clientAPI.import(uploadFile)
+    let todayC = 0
+    let pendingC = 0
+    let overdueC = 0
+
+    followUpsList.forEach(fu => {
+      const followUpDate = new Date(fu.nextFollowUpDate)
+      followUpDate.setHours(0, 0, 0, 0)
+
+      const isCompleted = fu.followUpStatus?.toLowerCase() === 'completed'
+
+      if (followUpDate.getTime() === today.getTime()) {
+        todayC++
       }
       
-      setIsUploadDialogOpen(false)
-      setUploadFile(null)
-      setUploadType('')
+      if (!isCompleted && followUpDate >= today) {
+        pendingC++
+      }
       
-    } catch (error) {
-      console.error('Upload failed:', error)
-    } finally {
-      setIsUploading(false)
-    }
+      if (!isCompleted && followUpDate < today) {
+        overdueC++
+      }
+    })
+
+    setTodayCount(todayC)
+    setPendingCount(pendingC)
+    setOverdueCount(overdueC)
   }
 
-  return (
-    <>
-      <header className="bg-card border-b border-border px-3 lg:px-4 py-2.5 sticky top-0 z-10 min-h-14 flex items-center justify-between">
-        <h1 className="text-base lg:text-lg font-semibold text-foreground">Dashboard</h1>
-      </header>
+  useEffect(() => {
+    loadFollowUps()
+  }, [])
 
-      <div className="p-3 lg:p-4 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+  const filteredFollowups = followUps.filter((followup) => {
+    if (statusFilter === 'all') return true
+    if (statusFilter === 'completed') return followup.followUpStatus?.toLowerCase() === 'completed'
+    if (statusFilter === 'pending') return followup.followUpStatus?.toLowerCase() !== 'completed'
+    return true
+  })
+
+  return (
+    <div className="bg-gray-50 pb-6">
+      <div className="p-4 lg:p-6 space-y-6">
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="blur-bg border-blue-200/50 dark:border-blue-900/50">
             <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <Package className="w-7 h-7 text-blue-500" />
-                  <div>
-                    <p className="text-lg font-bold">New Orders</p>
-                  </div>
-                </div>
-                <Button size="sm" onClick={handleDailyUpload}>
-                  <Upload className="w-4 h-4 mr-1" />
-                  Upload
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="blur-bg border-orange-200/50 dark:border-orange-900/50">
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <ShoppingCart className="w-7 h-7 text-orange-500" />
-                  <div>
-                    <p className="text-lg font-bold">Pending Orders</p>
-                  </div>
-                </div>
-                <Button size="sm" onClick={handleDailyUpload}>
-                  <Upload className="w-4 h-4 mr-1" />
-                  Upload
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="blur-bg border-purple-200/50 dark:border-purple-900/50">
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <Box className="w-7 h-7 text-purple-500" />
-                  <div>
-                    <p className="text-lg font-bold">Pending Material</p>
-                  </div>
-                </div>
-                <Button size="sm" onClick={handleDailyUpload}>
-                  <Upload className="w-4 h-4 mr-1" />
-                  Upload
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Card className="blur-bg border-green-200/50 dark:border-green-900/50">
-            <CardContent className="pt-4">
               <div className="flex items-center gap-2.5">
-                <CheckCircle className="w-7 h-7 text-green-400" />
+                <Clock className="w-7 h-7 text-blue-500" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Followed Up</p>
-                  <p className="text-2xl font-bold">{followedUpCount}</p>
+                  <p className="text-sm text-muted-foreground">Today's Follow-ups</p>
+                  <p className="text-2xl font-bold">{loading ? '...' : todayCount}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
+          
           <Card className="blur-bg border-yellow-200/50 dark:border-yellow-900/50">
             <CardContent className="pt-4">
               <div className="flex items-center gap-2.5">
-                <Clock className="w-7 h-7 text-yellow-400" />
+                <Package className="w-7 h-7 text-yellow-500" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Still Pending</p>
-                  <p className="text-2xl font-bold">{stillPendingCount}</p>
+                  <p className="text-sm text-muted-foreground">Pending Follow-ups</p>
+                  <p className="text-2xl font-bold">{loading ? '...' : pendingCount}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="blur-bg border-red-200/50 dark:border-red-900/50">
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle className="w-7 h-7 text-red-500" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Overdue Follow-ups</p>
+                  <p className="text-2xl font-bold">{loading ? '...' : overdueCount}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* Follow-ups List */}
         <Card className="blur-bg border-purple-200/50 dark:border-purple-900/50">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Today's Pending Follow-ups</CardTitle>
+                <CardTitle>All Follow-ups</CardTitle>
               </div>
               <div className="flex items-center gap-2">
-                <Dialog open={isAddTaskOpen} onOpenChange={setIsAddTaskOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add New Task
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[500px]">
-                    <DialogHeader>
-                      <DialogTitle>Add New Task</DialogTitle>
-                      <DialogDescription>
-                        Create a new follow-up task with customer details and requirements.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="customerCode">Customer Code</Label>
-                          <Input
-                            id="customerCode"
-                            value={newTask.customerCode}
-                            onChange={(e) => setNewTask({...newTask, customerCode: e.target.value})}
-                            placeholder="e.g., CJ001"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="customerName">Customer Name</Label>
-                          <Input
-                            id="customerName"
-                            value={newTask.customerName}
-                            onChange={(e) => setNewTask({...newTask, customerName: e.target.value})}
-                            placeholder="e.g., Acme Corp"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="taskType">Task Type</Label>
-                          <Select value={newTask.taskType} onValueChange={(value) => setNewTask({...newTask, taskType: value})}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="new-order">New Order</SelectItem>
-                              <SelectItem value="pending-order">Pending Order</SelectItem>
-                              <SelectItem value="pending-material">Pending Material</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="salesExecutiveCode">Sales Executive Code</Label>
-                          <Input
-                            id="salesExecutiveCode"
-                            value={newTask.salesExecutiveCode}
-                            onChange={(e) => setNewTask({...newTask, salesExecutiveCode: e.target.value})}
-                            placeholder="e.g., SE001"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="contactNo">Contact Number</Label>
-                          <Input
-                            id="contactNo"
-                            value={newTask.contactNo}
-                            onChange={(e) => setNewTask({...newTask, contactNo: e.target.value})}
-                            placeholder="Phone number"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="followupType">Follow-up Type</Label>
-                          <Select value={newTask.followupType} onValueChange={(value) => setNewTask({...newTask, followupType: value})}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="call">Phone Call</SelectItem>
-                              <SelectItem value="email">Email</SelectItem>
-                              <SelectItem value="meeting">Meeting</SelectItem>
-                              <SelectItem value="visit">Site Visit</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="notes">Notes/Details</Label>
-                        <Textarea
-                          id="notes"
-                          value={newTask.notes}
-                          onChange={(e) => setNewTask({...newTask, notes: e.target.value})}
-                          placeholder="Task details and requirements..."
-                          rows={3}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="dueDate">Due Date</Label>
-                          <Input
-                            id="dueDate"
-                            type="date"
-                            value={newTask.dueDate}
-                            onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="dueTime">Due Time</Label>
-                          <Input
-                            id="dueTime"
-                            type="time"
-                            value={newTask.dueTime}
-                            onChange={(e) => setNewTask({...newTask, dueTime: e.target.value})}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsAddTaskOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={handleAddTask}>
-                        Create Task
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as 'all' | 'followed up' | 'still pending')}>
+                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as 'all' | 'pending' | 'completed')}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Filter status..." />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="followed up">Followed Up</SelectItem>
-                    <SelectItem value="still pending">Still Pending</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {filteredFollowups.length === 0 ? (
-                <div className="col-span-full">
-                  <p className="text-center text-muted-foreground py-8">No follow-ups found</p>
-                </div>
-              ) : (
-                filteredFollowups.map((followup) => {
-                  const TypeIcon = getTypeIcon(followup.type)
-                  return (
-                    <div
-                      key={followup.id}
-                      className="p-4 rounded-lg border border-border bg-card hover:border-primary/50 hover:shadow-sm transition-all"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-start gap-3 flex-1">
-                          <div className={`p-2.5 rounded-lg ${
-                            followup.type === 'New order' ? 'bg-blue-500/10 dark:bg-blue-400/10' :
-                            followup.type === 'Pending order' ? 'bg-orange-500/10 dark:bg-orange-400/10' :
-                            followup.type === 'Pending material' ? 'bg-purple-500/10 dark:bg-purple-400/10' :
-                            'bg-gray-500/10 dark:bg-gray-400/10'
-                          }`}>
-                            <TypeIcon className={`w-5 h-5 ${getTypeColor(followup.type)}`} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-base mb-2">{followup.client}</h3>
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className={`px-2.5 py-1 rounded text-sm font-medium ${
-                                followup.type === 'New order' ? 'text-blue-600 dark:text-blue-400 bg-blue-500/10 dark:bg-blue-400/10' :
-                                followup.type === 'Pending order' ? 'text-orange-600 dark:text-orange-400 bg-orange-500/10 dark:bg-orange-400/10' :
-                                followup.type === 'Pending material' ? 'text-purple-600 dark:text-purple-400 bg-purple-500/10 dark:bg-purple-400/10' :
-                                'text-gray-600 dark:text-gray-400 bg-gray-500/10 dark:bg-gray-400/10'
-                              }`}>
-                                {followup.type}
-                              </span>
-                              <span
-                                className={`px-2.5 py-1 rounded text-sm font-medium ${
-                                  followup.status === 'Open'
-                                    ? 'text-blue-600 dark:text-blue-400 bg-blue-500/10 dark:bg-blue-400/10'
-                                    : 'text-gray-600 dark:text-gray-400 bg-gray-500/10 dark:bg-gray-400/10'
-                                }`}
-                              >
-                                {followup.status}
-                              </span>
-                              <span
-                                className={`px-2.5 py-1 rounded text-sm font-medium ${
-                                  followup.followupStatus === 'followed up'
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredFollowups.length === 0 ? (
+                  <div className="col-span-full text-center py-12">
+                     <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                     <p className="text-muted-foreground">No follow-ups found</p>
+                  </div>
+                ) : (
+                  filteredFollowups.map((followup, index) => {
+                    const TypeIcon = getTypeIcon(followup.type || '')
+                    const followUpDate = new Date(followup.nextFollowUpDate)
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+                    followUpDate.setHours(0, 0, 0, 0)
+                    
+                    const isOverdue = followUpDate < today && followup.followUpStatus?.toLowerCase() !== 'completed'
+                    const isToday = followUpDate.getTime() === today.getTime()
+
+                    return (
+                      <div
+                        key={`${followup.id}-${index}`}
+                        className="p-4 rounded-lg border border-border bg-card hover:border-primary/50 hover:shadow-sm transition-all"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-start gap-3 flex-1">
+                            <div className={`p-2.5 rounded-lg ${
+                              followup.type === 'New Order' ? 'bg-blue-500/10 dark:bg-blue-400/10' :
+                              followup.type === 'Pending Order' ? 'bg-orange-500/10 dark:bg-orange-400/10' :
+                              followup.type === 'Pending Material' ? 'bg-purple-500/10 dark:bg-purple-400/10' :
+                              'bg-gray-500/10 dark:bg-gray-400/10'
+                            }`}>
+                              <TypeIcon className={`w-5 h-5 ${getTypeColor(followup.type || '')}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-base mb-2">
+                                {followup.clientName} ({followup.clientCode})
+                              </h3>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className={`px-2.5 py-1 rounded text-[11px] font-bold uppercase tracking-wider ${
+                                  followup.type === 'New Order' ? 'text-blue-600 dark:text-blue-400 bg-blue-500/10 dark:bg-blue-400/10' :
+                                  followup.type === 'Pending Order' ? 'text-orange-600 dark:text-orange-400 bg-orange-500/10 dark:bg-orange-400/10' :
+                                  followup.type === 'Pending Material' ? 'text-purple-600 dark:text-purple-400 bg-purple-500/10 dark:bg-purple-400/10' :
+                                  'text-gray-600 dark:text-gray-400 bg-gray-500/10 dark:bg-gray-400/10'
+                                }`}>
+                                  {followup.type}
+                                </span>
+                                <span className={`px-2.5 py-1 rounded text-[11px] font-bold uppercase tracking-wider ${
+                                  followup.followUpStatus?.toLowerCase() === 'completed'
                                     ? 'text-green-600 dark:text-green-400 bg-green-500/10 dark:bg-green-400/10'
                                     : 'text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 dark:bg-yellow-400/10'
-                                }`}
-                              >
-                                {followup.followupStatus}
-                              </span>
+                                }`}>
+                                  {followup.followUpStatus}
+                                </span>
+                                {isOverdue && (
+                                  <span className="px-2.5 py-1 rounded text-[11px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-500/10 dark:bg-red-400/10">
+                                    Overdue
+                                  </span>
+                                )}
+                                {isToday && (
+                                  <span className="px-2.5 py-1 rounded text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-500/10 dark:bg-blue-400/10">
+                                    Today
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                            <Clock className="w-4 h-4" />
-                            <span className="font-medium">{followup.time}</span>
-                          </div>
-                        </div>
-                      </div>
 
-                      {followup.notes && (
-                        <div className="mb-3 pt-3 border-t border-border/50">
-                          <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-foreground">Notes: </span>
-                            {followup.notes}
+                        {followup.followUpMsg && (
+                          <div className="mb-3 pt-3 border-t border-border/50">
+                            <p className="text-sm text-muted-foreground">
+                              <span className="font-medium text-foreground">Message: </span>
+                              {followup.followUpMsg}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="pt-2 border-t border-border/50 flex justify-between items-center">
+                          <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-tight">
+                            <span className="text-foreground">Next: </span>
+                            {new Date(followup.nextFollowUpDate).toLocaleDateString()}
                           </p>
                         </div>
-                      )}
-
-                      <div className="pt-2 border-t border-border/50">
-                        <p className="text-sm text-muted-foreground">
-                          <span className="font-medium text-foreground">Next Follow-up: </span>
-                          {followup.nextFollowupDate} at {followup.nextFollowupTime}
-                        </p>
                       </div>
-                    </div>
-                  )
-                })
-              )}
-            </div>
+                    )
+                  })
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
-
-        <UploadDialog
-          isOpen={isUploadDialogOpen}
-          onClose={() => {
-            setIsUploadDialogOpen(false)
-            setUploadFile(null)
-            setUploadType('')
-          }}
-          uploadType={uploadType}
-          uploadFile={uploadFile}
-          onFileSelect={handleFileSelect}
-          onUpload={handleUpload}
-          isUploading={isUploading}
-          fileInputRef={fileInputRef}
-        />
       </div>
-    </>
+    </div>
   )
 }
-
-const UploadDialog = ({ 
-  isOpen, 
-  onClose, 
-  uploadType, 
-  uploadFile, 
-  onFileSelect, 
-  onUpload, 
-  isUploading,
-  fileInputRef 
-}: {
-  isOpen: boolean
-  onClose: () => void
-  uploadType: string
-  uploadFile: File | null
-  onFileSelect: (event: React.ChangeEvent<HTMLInputElement>) => void
-  onUpload: () => void
-  isUploading: boolean
-  fileInputRef: React.RefObject<HTMLInputElement>
-}) => (
-  <Dialog open={isOpen} onOpenChange={onClose}>
-    <DialogContent className="sm:max-w-[400px]">
-      <DialogHeader>
-        <DialogTitle>Upload {uploadType === 'sales-person' ? 'Sales Person' : 'Client'} Data</DialogTitle>
-        <DialogDescription>
-          Select an Excel file to import {uploadType === 'sales-person' ? 'sales person' : 'client'} data.
-        </DialogDescription>
-      </DialogHeader>
-      <div className="grid gap-4 py-4">
-        <div className="space-y-2">
-          <Label htmlFor="file">Excel File</Label>
-          <div className="flex items-center gap-2">
-            <Input
-              ref={fileInputRef}
-              id="file"
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={onFileSelect}
-              className="hidden"
-            />
-            <Button
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex-1"
-            >
-              <FileUp className="w-4 h-4 mr-2" />
-              {uploadFile ? uploadFile.name : 'Choose File'}
-            </Button>
-          </div>
-          {uploadFile && (
-            <p className="text-sm text-muted-foreground">
-              Selected: {uploadFile.name} ({(uploadFile.size / 1024).toFixed(1)} KB)
-            </p>
-          )}
-        </div>
-      </div>
-      <DialogFooter>
-        <Button variant="outline" onClick={onClose} disabled={isUploading}>
-          Cancel
-        </Button>
-        <Button onClick={onUpload} disabled={!uploadFile || isUploading}>
-          {isUploading ? 'Uploading...' : 'Upload'}
-        </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-)

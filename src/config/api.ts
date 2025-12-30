@@ -2,7 +2,11 @@ export const API_CONFIG = {
   BASE_URL: (import.meta.env.VITE_BASE_URL || 'http://localhost:3000') + '/api',
   ENDPOINTS: {
     AUTH: {
-      LOGIN: '/auth/login'
+      LOGIN: '/auth/login',
+      SET_PASSWORD: '/auth/set-login-pwd'
+    },
+    DASHBOARD: {
+      OVERVIEW: '/dashboard/overview-count'
     },
     SALES_PERSON: {
       LIST: '/sales-person',

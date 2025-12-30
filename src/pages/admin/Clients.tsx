@@ -1,512 +1,264 @@
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+
+import { useState, useEffect } from 'react'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import TablePagination from "@/components/ui/table-pagination";
-import {
-  Search,
-  Plus,
-  Eye,
-  Calendar,
-  Clock,
-  MessageSquare,
-  Upload,
-  ArrowLeft,
-  Loader2,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import { 
-  clientAPI, 
-  pendingOrderAPI, 
-  pendingMaterialAPI, 
-  newOrderAPI 
-} from "@/services/api";
-import ExcelUpload from "@/components/ExcelUpload";
+  DialogDescription,
+} from '@/components/ui/dialog'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import TablePagination from '@/components/ui/table-pagination'
+import { Upload, Loader2, Eye, CheckCircle, XCircle, AlertTriangle, MessageSquare, Plus, Pencil, Users } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { toast } from 'sonner'
+import { clientAPI, dashboardAPI } from '@/services/api'
+import { ClientModal } from '@/components/modals/ClientModal'
+// import { Badge } from '@/components/ui/badge'
 
+// Client interface
 interface Client {
-  id: string;
-  clientCode: string;
-  clientName: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  status?: string;
-  createdAt?: string;
+  uuid: string
+  userCode: string
+  name: string
+  city?: string
+  role: string
+  email: string
+  phone: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  pendingMaterial?: FollowUpSummary
+  pendingOrder?: FollowUpSummary
+  newOrder?: FollowUpSummary
 }
 
-interface FollowUp {
-  id: string;
-  followUpMsg: string;
-  nextFollowUpDate: string;
-  followUpStatus: string;
-  createdAt: string;
+interface FollowUpSummary {
+    uuid: string
+    clientCode: string
+    status: string
+    nextFollowUpDate: string
+    lastFollowUpDate: string
+    lastFollowUpMsg: string
 }
 
-interface PendingOrder {
-  id: string;
-  orderId: string;
-  clientCode: string;
-  status: string;
-  orderDate: string;
-  grossWt: string;
-  collection: string;
-  followUps?: FollowUp[];
+interface ImportResult {
+  success: boolean
+  message: string
+  data?: {
+    successCount: number
+    failureCount: number
+    failedRecords: Array<{
+      rowNo: number
+      reason: string
+    }>
+  }
 }
 
-interface PendingMaterial {
-  id: string;
-  materialName: string;
-  clientCode: string;
-  status: string;
-  quantity: string;
-  remark: string;
-  followUps?: FollowUp[];
-}
+import { usePageHeader } from '@/contexts/PageHeaderProvider'
 
-interface NewOrder {
-  id: string;
-  designName: string;
-  clientCode: string;
-  status: string;
-  date: string;
-  remark: string;
-  followUps?: FollowUp[];
-}
+export default function Clients() {
+  const { setHeader } = usePageHeader()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [clients, setClients] = useState<Client[]>([])
+  const [loading, setLoading] = useState(false)
+  const [totalItems, setTotalItems] = useState(0)
+  const [showUploadDialog, setShowUploadDialog] = useState(false)
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [importResult, setImportResult] = useState<ImportResult | null>(null)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingClient, setEditingClient] = useState<Client | null>(null)
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    inactive: 0
+  })
 
-type TabType = "pendingMaterial" | "pendingOrders" | "newOrders";
-type ViewType = "list" | "detail" | "upload";
+  // Set header
+  useEffect(() => {
+    setHeader({
+      title: 'Clients',
+      search: {
+        placeholder: 'Search clients...',
+        value: searchQuery,
+        onChange: (val) => setSearchQuery(val)
+      },
+      children: (
+        <>
+          <Button 
+            variant="outline"
+            onClick={() => setShowUploadDialog(true)}
+            className="flex items-center gap-2"
+          >
+            <Upload className="w-4 h-4" />
+            Import
+          </Button>
+          <Button 
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Client
+          </Button>
+        </>
+      )
+    })
+  }, [searchQuery])
 
-const getStatusBadgeVariant = (status: string) => {
-  const statusLower = status.toLowerCase();
-  if (statusLower === "completed" || statusLower === "approved")
-    return "default";
-  if (statusLower === "pending" || statusLower === "in review")
-    return "secondary";
-  if (statusLower === "processing" || statusLower === "in transit")
-    return "outline";
-  return "secondary";
-};
-
-export default function AdminClients() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>("pendingMaterial");
-  const [showAddFollowUp, setShowAddFollowUp] = useState(false);
-  const [followUpMessage, setFollowUpMessage] = useState("");
-  const [followUpDate, setFollowUpDate] = useState("");
-  const [followUpStatus, setFollowUpStatus] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [viewType, setViewType] = useState<ViewType>("list");
-  
-  // Data states
-  const [clients, setClients] = useState<Client[]>([]);
-  const [pendingOrders, setPendingOrders] = useState<PendingOrder[]>([]);
-  const [pendingMaterials, setPendingMaterials] = useState<PendingMaterial[]>([]);
-  const [newOrders, setNewOrders] = useState<NewOrder[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedItemId, setSelectedItemId] = useState<string>("");
-
-  // Load clients data
-  const loadClients = async () => {
-    setLoading(true);
+  // Load clients data and stats
+  const loadData = async () => {
+    setLoading(true)
+    let currentTotalItems = 0
     try {
+      // Load Clients List
       const response = await clientAPI.getAll({
         page: currentPage,
         size: pageSize,
-        role: "client"
-      });
+        search: searchQuery,
+        role: 'client'
+      })
       
       if (response.success !== false) {
-        setClients(response.data || response.clients || []);
+        // Handle both possible structures: response.data.data or response.data
+        if (response.data?.data) {
+          setClients(response.data.data)
+          currentTotalItems = response.data.totalItems || 0
+          setTotalItems(currentTotalItems)
+        } else {
+          setClients(response.data || [])
+          currentTotalItems = response.data?.length || 0
+          setTotalItems(currentTotalItems)
+        }
       } else {
-        toast.error("Failed to load clients");
+        toast.error('Failed to load clients')
       }
+
+      // Load Stats
+      const statsResponse = await dashboardAPI.getOverview()
+      if (statsResponse.success !== false && statsResponse.data) {
+          setStats({
+              total: statsResponse.data.totalClients || 0,
+              active: statsResponse.data.activeClients || 0,
+              inactive: statsResponse.data.inactiveClients || 0
+          })
+      }
+
     } catch (error: any) {
-      toast.error("Error loading clients: " + error.message);
+      toast.error('Error loading data: ' + error.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
-  // Load client-specific data
-  const loadClientData = async (clientCode: string) => {
-    setLoading(true);
-    try {
-      const [ordersRes, materialsRes, newOrdersRes] = await Promise.all([
-        pendingOrderAPI.getFollowUpsByClientCode({ clientCode, page: 1, size: 100 }),
-        pendingMaterialAPI.getFollowUpsByClientCode({ clientCode, page: 1, size: 100 }),
-        newOrderAPI.getFollowUpsByClientCode({ clientCode, page: 1, size: 100 })
-      ]);
-
-      setPendingOrders(ordersRes.data || []);
-      setPendingMaterials(materialsRes.data || []);
-      setNewOrders(newOrdersRes.data || []);
-    } catch (error: any) {
-      toast.error("Error loading client data: " + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Add follow-up
-  const handleAddFollowUp = async () => {
-    if (!followUpMessage || !followUpDate || !followUpStatus || !selectedItemId) {
-      toast.error("Please fill all fields");
-      return;
-    }
-
-    try {
-      let apiCall;
-      const followUpData = {
-        followUpMsg: followUpMessage,
-        nextFollowUpDate: followUpDate,
-        followUpStatus: followUpStatus
-      };
-
-      if (activeTab === "pendingOrders") {
-        apiCall = pendingOrderAPI.addFollowUp({
-          pendingOrderId: selectedItemId,
-          ...followUpData
-        });
-      } else if (activeTab === "pendingMaterial") {
-        apiCall = pendingMaterialAPI.addFollowUp({
-          pendingMaterialRecordId: selectedItemId,
-          ...followUpData
-        });
-      } else {
-        apiCall = newOrderAPI.addFollowUp({
-          newOrderRecordId: selectedItemId,
-          ...followUpData
-        });
-      }
-
-      await apiCall;
-      toast.success("Follow-up added successfully");
-      
-      // Reload client data
-      if (selectedClient) {
-        await loadClientData(selectedClient.clientCode);
-      }
-      
-      // Reset form
-      setShowAddFollowUp(false);
-      setFollowUpMessage("");
-      setFollowUpDate("");
-      setFollowUpStatus("");
-      setSelectedItemId("");
-    } catch (error: any) {
-      toast.error("Failed to add follow-up: " + error.message);
-    }
-  };
-
-  useEffect(() => {
-    if (viewType === "list") {
-      loadClients();
-    }
-  }, [currentPage, pageSize, viewType]);
-
-  // Listen for upload trigger from dashboard
-  useEffect(() => {
-    const handleShowUpload = () => {
-      setViewType("upload");
-    };
-
-    window.addEventListener('showUpload', handleShowUpload);
-    return () => window.removeEventListener('showUpload', handleShowUpload);
-  }, []);
-
-  const filteredClients = clients.filter(
-    (client) =>
-      client.clientName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.clientCode?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const totalPages = Math.ceil(filteredClients.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedClients = filteredClients.slice(startIndex, startIndex + pageSize);
-
-  const handleViewClient = async (client: Client) => {
-    setSelectedClient(client);
-    setViewType("detail");
-    await loadClientData(client.clientCode);
-  };
-
-  const handleBackToList = () => {
-    setViewType("list");
-    setSelectedClient(null);
-    setPendingOrders([]);
-    setPendingMaterials([]);
-    setNewOrders([]);
-  };
-
-  if (viewType === "upload") {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white border-b px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={() => setViewType("list")}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <h1 className="text-xl font-semibold text-gray-900">Upload Excel Files</h1>
-          </div>
-        </div>
-        <div className="p-6">
-          <ExcelUpload />
-        </div>
-      </div>
-    );
   }
 
-  if (viewType === "detail" && selectedClient) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white border-b px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                onClick={handleBackToList}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold">
-                  {selectedClient.clientCode.charAt(0)}
-                </div>
-                <div>
-                  <h1 className="text-xl font-semibold text-gray-900">{selectedClient.clientCode}</h1>
-                  <p className="text-sm text-gray-600">{selectedClient.clientName}</p>
-                </div>
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadData()
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [currentPage, pageSize, searchQuery])
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery])
+
+
+  const handleUpload = async () => {
+    if (!uploadFile) return
+
+    setIsUploading(true)
+    setImportResult(null)
+    try {
+      const result = await clientAPI.import(uploadFile)
+      setImportResult(result)
+      if (result.success) {
+          toast.success(result.message || 'Import processed')
+          loadData() // Refresh list in background
+      }
+    } catch (error: any) {
+      toast.error('Upload failed: ' + error.message)
+    } finally {
+      setIsUploading(false)
+    }
+  }
+  
+  const resetUpload = () => {
+      setShowUploadDialog(false)
+      setUploadFile(null)
+      setImportResult(null)
+  }
+
+  const totalPages = Math.ceil(totalItems / pageSize)
+
+  // Render Helper for FollowUp Summary Cell
+  const FollowUpCell = ({ data }: { data?: FollowUpSummary }) => {
+      if (!data) return <span className="text-gray-400 text-xs">-</span>
+      return (
+          <div className="flex flex-col gap-1 min-w-[200px]">
+              <div className="flex items-start gap-1">
+                  <MessageSquare className="w-3 h-3 text-gray-400 mt-0.5 shrink-0" />
+                  <span className="text-sm font-medium text-gray-700 line-clamp-2" title={data.lastFollowUpMsg}>
+                      {data.lastFollowUpMsg}
+                  </span>
               </div>
-            </div>
+              <div className="flex items-center gap-3 text-[10px] text-gray-500 ml-4">
+                   {data.lastFollowUpDate && (
+                       <span className="whitespace-nowrap">Last Follow up: {new Date(data.lastFollowUpDate).toLocaleDateString()}</span>
+                   )}
+                   {data.nextFollowUpDate && (
+                       <span className="whitespace-nowrap font-medium text-blue-600">Next Follow up: {new Date(data.nextFollowUpDate).toLocaleDateString()}</span>
+                   )}
+              </div>
           </div>
-        </div>
-
-        <div className="p-6">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : (
-            <div>
-              <div className="mb-6 flex border-b border-border">
-                {[
-                  { id: "pendingMaterial" as TabType, label: "Pending Material", count: pendingMaterials.length },
-                  { id: "pendingOrders" as TabType, label: "Pending Orders", count: pendingOrders.length },
-                  { id: "newOrders" as TabType, label: "New Orders", count: newOrders.length },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-3 border-b-2 -mb-px text-sm font-medium transition-colors flex items-center gap-2 ${
-                      activeTab === tab.id
-                        ? "border-primary text-primary"
-                        : "border-transparent text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {tab.label}
-                    <Badge variant="secondary" className="text-xs">
-                      {tab.count}
-                    </Badge>
-                  </button>
-                ))}
-              </div>
-
-              <div className="space-y-4">
-                {activeTab === "pendingMaterial" &&
-                  pendingMaterials.map((item) => (
-                    <DetailCard
-                      key={item.id}
-                      type="material"
-                      item={item}
-                      onAddFollowUp={(id) => {
-                        setSelectedItemId(id);
-                        setShowAddFollowUp(true);
-                      }}
-                    />
-                  ))}
-
-                {activeTab === "pendingOrders" &&
-                  pendingOrders.map((item) => (
-                    <DetailCard
-                      key={item.id}
-                      type="order"
-                      item={item}
-                      onAddFollowUp={(id) => {
-                        setSelectedItemId(id);
-                        setShowAddFollowUp(true);
-                      }}
-                    />
-                  ))}
-
-                {activeTab === "newOrders" &&
-                  newOrders.map((item) => (
-                    <DetailCard
-                      key={item.id}
-                      type="design"
-                      item={item}
-                      onAddFollowUp={(id) => {
-                        setSelectedItemId(id);
-                        setShowAddFollowUp(true);
-                      }}
-                    />
-                  ))}
-
-                {((activeTab === "pendingMaterial" && pendingMaterials.length === 0) ||
-                  (activeTab === "pendingOrders" && pendingOrders.length === 0) ||
-                  (activeTab === "newOrders" && newOrders.length === 0)) && (
-                  <div className="text-center py-12">
-                    <p className="text-gray-500">No data available for this section</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Add Follow-up Modal */}
-        <Dialog open={showAddFollowUp} onOpenChange={setShowAddFollowUp}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-lg">Add Follow-up</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="mb-2 block text-sm text-muted-foreground">
-                  Message
-                </label>
-                <Textarea
-                  placeholder="Enter message..."
-                  value={followUpMessage}
-                  onChange={(e) => setFollowUpMessage(e.target.value)}
-                  rows={3}
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-muted-foreground">
-                  Next Date
-                </label>
-                <Input
-                  type="date"
-                  value={followUpDate}
-                  onChange={(e) => setFollowUpDate(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm text-muted-foreground">Status</label>
-                <Select value={followUpStatus} onValueChange={setFollowUpStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter className="mt-6">
-              <Button variant="outline" onClick={() => setShowAddFollowUp(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddFollowUp}>
-                Add Follow-up
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    );
+      )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">Clients</h1>
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search clients..."
-                className="pl-10 w-64"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Button 
-              variant="outline"
-              onClick={() => setViewType("upload")}
-              className="flex items-center gap-2"
-            >
-              <Upload className="w-4 h-4" />
-              Upload Excel
-            </Button>
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Client
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="p-6">
+    <div className="bg-gray-50 pb-6">
+      <div className="p-6 space-y-6">
         {/* Statistics Cards */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg border p-4 text-center">
-            <div className="text-2xl font-bold text-gray-900 mb-1">
-              {clients.length}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="p-4 border-none shadow-sm bg-white ring-1 ring-black/[0.05]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shrink-0">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500">Total Clients</p>
+                <p className="text-xl font-bold text-gray-900">{loading ? '...' : stats.total}</p>
+              </div>
             </div>
-            <div className="text-sm text-gray-500">Total Clients</div>
-          </div>
-          
-          <div className="bg-white rounded-lg border p-4 text-center">
-            <div className="text-2xl font-bold text-green-600 mb-1">
-              {clients.filter(c => c.status !== 'inactive').length}
+          </Card>
+          <Card className="p-4 border-none shadow-sm bg-white ring-1 ring-black/[0.05]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 shrink-0">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500">Active Clients</p>
+                <p className="text-xl font-bold text-gray-900">{loading ? '...' : stats.active}</p>
+              </div>
             </div>
-            <div className="text-sm text-gray-500">Active Clients</div>
-          </div>
-          
-          <div className="bg-white rounded-lg border p-4 text-center">
-            <div className="text-2xl font-bold text-red-600 mb-1">
-              {clients.filter(c => c.status === 'inactive').length}
+          </Card>
+          <Card className="p-4 border-none shadow-sm bg-white ring-1 ring-black/[0.05]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center text-red-600 shrink-0">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500">Inactive Clients</p>
+                <p className="text-xl font-bold text-gray-900">{loading ? '...' : stats.inactive}</p>
+              </div>
             </div>
-            <div className="text-sm text-gray-500">Inactive Clients</div>
-          </div>
-          
-          <div className="bg-white rounded-lg border p-4 text-center">
-            <div className="text-2xl font-bold text-gray-900 mb-1">
-              {pendingOrders.length + pendingMaterials.length + newOrders.length}
-            </div>
-            <div className="text-sm text-gray-500">Total Records</div>
-          </div>
+          </Card>
         </div>
 
         {/* Clients Table */}
@@ -520,186 +272,215 @@ export default function AdminClients() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
-                    <TableHead className="font-medium text-gray-700">Client Name</TableHead>
-                    <TableHead className="font-medium text-gray-700">Client Code</TableHead>
-                    <TableHead className="font-medium text-gray-700">Email</TableHead>
-                    <TableHead className="font-medium text-gray-700">Phone</TableHead>
-                    <TableHead className="font-medium text-gray-700">Status</TableHead>
-                    <TableHead className="font-medium text-gray-700 text-center">Action</TableHead>
+                    <TableHead className="font-medium text-gray-700 w-[250px]">Client Name</TableHead>
+                    <TableHead className="font-medium text-gray-700 w-[100px]">Code</TableHead>
+                    <TableHead className="font-medium text-gray-700 w-[250px]">Pending Material</TableHead>
+                    <TableHead className="font-medium text-gray-700 w-[250px]">Pending Orders</TableHead>
+                    <TableHead className="font-medium text-gray-700 w-[250px]">New Orders</TableHead>
+                    <TableHead className="font-medium text-gray-700 text-center w-[80px]">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedClients.map((client) => (
-                    <TableRow key={client.id} className="hover:bg-gray-50">
-                      <TableCell>
+                  {clients.map((client) => (
+                    <TableRow key={client.uuid} className="hover:bg-gray-50">
+                      <TableCell className="align-top py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold">
-                            {client.clientCode?.charAt(0) || 'C'}
+                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
+                            {client.name?.charAt(0) || client.userCode?.charAt(0) || 'C'}
                           </div>
-                          <div className="font-medium text-gray-900">{client.clientName || 'N/A'}</div>
+                          <div>
+                              <div className="font-medium text-gray-900">{client.name || 'N/A'}</div>
+                              <div className="text-xs text-gray-500">{client.city}</div>
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium text-gray-900">{client.clientCode}</TableCell>
-                      <TableCell className="text-gray-600">{client.email || 'N/A'}</TableCell>
-                      <TableCell className="text-gray-600">{client.phone || 'N/A'}</TableCell>
-                      <TableCell>
-                        <Badge variant={client.status === 'active' ? 'default' : 'secondary'}>
-                          {client.status || 'Active'}
-                        </Badge>
+                      <TableCell className="font-medium text-gray-900 align-top py-4">{client.userCode}</TableCell>
+                      
+                      <TableCell className="align-top py-4">
+                          <FollowUpCell data={client.pendingMaterial} />
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-center">
+                      <TableCell className="align-top py-4">
+                          <FollowUpCell data={client.pendingOrder} />
+                      </TableCell>
+                      <TableCell className="align-top py-4">
+                          <FollowUpCell data={client.newOrder} />
+                      </TableCell>
+
+                      <TableCell className="align-top py-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Link to={`/admin/clients/${client.uuid}`} state={{ client }}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
                           <Button
                             variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 hover:bg-primary/10"
-                            onClick={() => handleViewClient(client)}
+                            size="icon"
+                            className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                            title="Edit Client"
+                            onClick={() => {
+                              setEditingClient(client)
+                              setShowEditModal(true)
+                            }}
                           >
-                            <Eye className="h-4 w-4 text-gray-600" />
+                            <Pencil className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
                     </TableRow>
                   ))}
+                  {clients.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        No clients found
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
           )}
+          
+          <div className="p-4 border-t bg-white flex justify-end">
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              pageSize={pageSize}
+              setPageSize={setPageSize}
+            />
+          </div>
         </Card>
-
-        {/* Pagination */}
-        <TablePagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          pageSize={pageSize}
-          setPageSize={setPageSize}
-        />
-      </div>
-    </div>
-  );
-}
-
-function DetailCard({
-  type,
-  item,
-  onAddFollowUp,
-}: {
-  type: "material" | "order" | "design";
-  item: PendingMaterial | PendingOrder | NewOrder;
-  onAddFollowUp: (id: string) => void;
-}) {
-  const getFields = () => {
-    if (type === "material") {
-      const material = item as PendingMaterial;
-      return [
-        { label: "Material Name", value: material.materialName },
-        { label: "Status", value: material.status, badge: true },
-        { label: "Quantity", value: material.quantity },
-        { label: "Remark", value: material.remark },
-      ];
-    }
-    if (type === "order") {
-      const order = item as PendingOrder;
-      return [
-        { label: "Order ID", value: order.orderId },
-        { label: "Status", value: order.status, badge: true },
-        { label: "Order Date", value: order.orderDate },
-        { label: "Gross Weight", value: `${order.grossWt}g` },
-        { label: "Collection", value: order.collection },
-      ];
-    }
-    const design = item as NewOrder;
-    return [
-      { label: "Design Name", value: design.designName },
-      { label: "Status", value: design.status, badge: true },
-      { label: "Date", value: design.date },
-      { label: "Remark", value: design.remark },
-    ];
-  };
-
-  const getTitle = () => {
-    if (type === "material") return "Material Details";
-    if (type === "order") return "Order Details";
-    return "Design Details";
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="rounded-lg border border-border bg-card">
-        <div className="border-b border-border bg-muted px-4 py-3">
-          <h3 className="font-medium text-foreground">{getTitle()}</h3>
-        </div>
-        <div className="p-4">
-          <div className="grid grid-cols-2 gap-4">
-            {getFields().map((field, i) => (
-              <div key={i}>
-                <p className="text-sm text-muted-foreground">{field.label}</p>
-                {field.badge ? (
-                  <Badge
-                    variant={getStatusBadgeVariant(field.value)}
-                    className="mt-1"
-                  >
-                    {field.value}
-                  </Badge>
-                ) : (
-                  <p className="font-medium text-foreground mt-1">
-                    {field.value}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
-      <div className="rounded-lg border border-border bg-card">
-        <div className="border-b border-border bg-muted px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-              <h3 className="font-medium text-foreground">Follow-ups</h3>
-              <span className="text-sm text-muted-foreground">
-                ({item.followUps?.length || 0})
-              </span>
-            </div>
-            <Button size="sm" variant="outline" onClick={() => onAddFollowUp(item.id)}>
-              <Plus className="h-4 w-4 mr-1" />
-              Add
-            </Button>
-          </div>
-        </div>
-        <div className="p-4">
-          <div className="max-h-64 space-y-3 overflow-y-auto pr-2">
-            {item.followUps && item.followUps.length > 0 ? (
-              item.followUps.map((followUp, i) => (
-                <div key={i} className="border border-border rounded p-3">
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      <span>Created: {new Date(followUp.createdAt).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-foreground">
-                      <Calendar className="h-3 w-3" />
-                      <span className="font-medium">
-                        Next: {new Date(followUp.nextFollowUpDate).toLocaleDateString()}
-                      </span>
+      {/* Upload Dialog */}
+      <Dialog open={showUploadDialog} onOpenChange={(open) => {
+          if (!open) resetUpload()
+          else setShowUploadDialog(true)
+      }}>
+        <DialogContent className={`${importResult ? 'max-w-4xl' : 'max-w-md'}`}>
+          <DialogHeader>
+            <DialogTitle>Import Clients</DialogTitle>
+            <DialogDescription>
+              {importResult ? 'Import Processing Result' : 'Upload an Excel file to import client data'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {!importResult ? (
+              // Original Upload Form
+              <>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="mb-2 block text-sm text-muted-foreground">
+                        Excel File
+                      </label>
+                      <Input
+                        type="file"
+                        accept=".xlsx,.xls"
+                        onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                      />
+                      {uploadFile && (
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Selected: {uploadFile.name} ({(uploadFile.size / 1024).toFixed(1)} KB)
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-2">{followUp.followUpMsg}</p>
-                  <Badge variant="outline" className="text-xs">
-                    {followUp.followUpStatus}
-                  </Badge>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                No follow-ups available
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+                  <DialogFooter className="mt-6">
+                    <Button variant="outline" onClick={resetUpload} disabled={isUploading}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleUpload} disabled={!uploadFile || isUploading}>
+                      {isUploading ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-2"/>
+                            Processing...
+                        </>
+                      ) : 'Upload'}
+                    </Button>
+                  </DialogFooter>
+              </>
+          ) : (
+              // Enhanced Result View
+              <div className="space-y-6">
+                  {/* Summary Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-4">
+                          <div className="p-3 bg-green-100 rounded-full text-green-600">
+                              <CheckCircle className="w-6 h-6" />
+                          </div>
+                          <div>
+                              <p className="text-sm font-medium text-green-900">Success Count</p>
+                              <p className="text-2xl font-bold text-green-700">{importResult.data?.successCount || 0}</p>
+                          </div>
+                      </div>
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-4">
+                          <div className="p-3 bg-red-100 rounded-full text-red-600">
+                              <XCircle className="w-6 h-6" />
+                          </div>
+                          <div>
+                              <p className="text-sm font-medium text-red-900">Failure Count</p>
+                              <p className="text-2xl font-bold text-red-700">{importResult.data?.failureCount || 0}</p>
+                          </div>
+                      </div>
+                  </div>
+
+                  {/* Failed Records Table */}
+                  {importResult.data?.failedRecords && importResult.data?.failedRecords.length > 0 && (
+                      <div className="border rounded-lg overflow-hidden">
+                          <div className="bg-gray-50 px-4 py-2 border-b flex items-center gap-2">
+                              <AlertTriangle className="w-4 h-4 text-orange-500" />
+                              <h3 className="font-medium text-sm text-gray-700">Failed Records Details</h3>
+                          </div>
+                          <div className="max-h-[300px] overflow-y-auto">
+                              <Table>
+                                  <TableHeader>
+                                      <TableRow>
+                                          <TableHead className="w-[100px]">Row No</TableHead>
+                                          <TableHead>Reason</TableHead>
+                                      </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                      {importResult.data.failedRecords.map((record, idx) => (
+                                          <TableRow key={idx} className="hover:bg-gray-50">
+                                              <TableCell className="font-medium">{record.rowNo}</TableCell>
+                                              <TableCell className="text-red-600 text-sm">{record.reason}</TableCell>
+                                          </TableRow>
+                                      ))}
+                                  </TableBody>
+                              </Table>
+                          </div>
+                      </div>
+                  )}
+
+                  <DialogFooter>
+                      <Button onClick={resetUpload}>Close</Button>
+                  </DialogFooter>
+              </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <ClientModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={loadData}
+      />
+
+      <ClientModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false)
+          setEditingClient(null)
+        }}
+        onSuccess={loadData}
+        client={editingClient}
+      />
     </div>
-  );
+  )
 }

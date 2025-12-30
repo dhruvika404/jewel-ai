@@ -13,7 +13,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null
-  login: (identifier: string, password: string, role?: string) => Promise<void>
+  login: (identifier: string, password: string) => Promise<void>
   logout: () => void
   isLoading: boolean
 }
@@ -39,15 +39,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setInitializing(false)
   }, [])
 
-  const login = async (identifier: string, password: string, role: string = 'admin') => {
+  const login = async (identifier: string, password: string) => {
     setIsLoading(true)
     try {
-      // Prepare login payload based on role
-      let loginPayload: any = { password, role }
+      // Determine if identifier is email or userCode
+      // Email format: contains @ symbol
+      // UserCode format: typically alphanumeric code like SE009
+      const isEmail = identifier.includes('@')
       
-      if (role === 'client' || role === 'admin') {
+      // Prepare login payload WITHOUT role - backend determines role
+      let loginPayload: any = { password }
+      
+      if (isEmail) {
+        // Admin login with email
         loginPayload.email = identifier
-      } else if (role === 'sales_executive') {
+      } else {
+        // Sales person login with userCode
         loginPayload.userCode = identifier
       }
 
@@ -64,9 +71,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const userSession: User = {
         id: userData.id || userData.userId || '1',
-        email: userData.email || (role === 'admin' ? identifier : ''),
-        name: userData.name || userData.username || (role === 'admin' ? 'Admin User' : 'Sales Executive'),
-        role: (userData.role || role) as UserRole
+        email: userData.email || (isEmail ? identifier : ''),
+        name: userData.name || userData.username || (isEmail ? 'Admin User' : 'Sales Executive'),
+        role: (userData.role || (isEmail ? 'admin' : 'sales_executive')) as UserRole
       }
 
       setUser(userSession)

@@ -1,9 +1,12 @@
 import { useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { Gem, LayoutDashboard, Target, CheckCircle, TrendingUp, LogOut } from 'lucide-react'
+import { Gem, LayoutDashboard, CheckCircle, LogOut, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import ConfirmationModal from '@/components/modals/ConfirmationModal'
+import { usePageHeader } from '@/contexts/PageHeaderProvider'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 interface SalesLayoutProps {
   children: React.ReactNode
@@ -11,6 +14,7 @@ interface SalesLayoutProps {
 
 export default function SalesLayout({ children }: SalesLayoutProps) {
   const { logout, user } = useAuth()
+  const { header } = usePageHeader()
   const location = useLocation()
   const [isSidebar, setIsSidebar] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
@@ -18,7 +22,6 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
 
   const menuItems = [
     { label: 'Dashboard', href: '/sales', icon: LayoutDashboard },
-    // { label: 'My Leads', href: '/sales/leads', icon: Target },
     { label: 'Followups', href: '/sales/followups', icon: CheckCircle },
   ]
 
@@ -30,11 +33,11 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
   }
 
   return (
-    <div className="max-h-screen min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex">
       <div
         ref={sideBarref}
         className={cn(
-          "fixed lg:static top-0 left-0 h-full z-50",
+          "fixed lg:sticky top-0 left-0 h-screen z-50",
           "w-64 bg-card border-r border-border overflow-hidden",
           "transition-transform duration-300 ease-in-out",
           isSidebar ? "translate-x-0" : "-translate-x-full",
@@ -129,7 +132,36 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
         </div>
       </div>
 
-      <div className="flex-1 pt-16 lg:pt-0 overflow-y-auto h-screen">
+      <div className="flex-1 pt-16 lg:pt-0">
+        {header?.visible !== false && header?.title && (
+          <header className="bg-card border-b border-border px-6 py-3 sticky top-0 z-10 min-h-16 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="text-base lg:text-lg font-semibold text-foreground">{header?.title}</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full">
+                {header?.search && (
+                  <Input 
+                    onChange={(e) => header.search?.onChange?.(e.target.value)} 
+                    placeholder={header.search.placeholder ?? "Search"} 
+                    className="h-9 w-full sm:w-60" 
+                    rightIcon={<Search className="w-4 h-4 text-muted-foreground" />}
+                  />
+                )}
+                {header?.children}
+                {header?.action && (
+                  <Button 
+                    size="sm" 
+                    variant={header.action.variant ?? "default"} 
+                    onClick={header.action.onClick} 
+                    className="h-9 w-full sm:w-auto px-4"
+                  >
+                    {header.action.icon}
+                    <span className={header.action.icon ? "ml-2" : ""}>{header.action.label}</span>
+                  </Button>
+                )}
+              </div>
+            </div>
+          </header>
+        )}
         {children}
       </div>
     </div>

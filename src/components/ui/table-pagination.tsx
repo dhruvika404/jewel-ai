@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext, PaginationEllipsis } from "@/components/ui/pagination";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 interface TablePaginationProps {
@@ -9,16 +9,8 @@ interface TablePaginationProps {
   pageSize: number;
   setPageSize: (size: number) => void;
 }
-
 const pageSizeOptions = [10, 25, 50, 100];
-
-const TablePagination: React.FC<TablePaginationProps> = ({ 
-  currentPage = 1, 
-  totalPages = 1, 
-  onPageChange, 
-  pageSize = pageSizeOptions[0], 
-  setPageSize 
-}) => {
+const TablePagination: React.FC<TablePaginationProps> = ({ currentPage = 1, totalPages = 1, onPageChange, pageSize = pageSizeOptions[0], setPageSize }) => {
   const renderPageLinks = () => {
     const pages = [];
 
@@ -26,23 +18,19 @@ const TablePagination: React.FC<TablePaginationProps> = ({
 
     // Always show first page
     pages.push(
-      <Button
-        key={1}
-        variant={currentPage === 1 ? "default" : "ghost"}
-        size="sm"
-        className="h-8 w-8 p-0"
-        onClick={() => onPageChange(1)}
-      >
-        1
-      </Button>
+      <PaginationItem key={1}>
+        <PaginationLink className="cursor-pointer" isActive={currentPage === 1} onClick={() => onPageChange(1)}>
+          1
+        </PaginationLink>
+      </PaginationItem>
     );
 
     // Ellipsis before currentPage-1
     if (currentPage > 3) {
       pages.push(
-        <span key="start-ellipsis" className="px-2">
-          ...
-        </span>
+        <PaginationItem className="cursor-pointer" key="start-ellipsis">
+          <PaginationEllipsis />
+        </PaginationItem>
       );
     }
 
@@ -50,15 +38,11 @@ const TablePagination: React.FC<TablePaginationProps> = ({
     for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
       if (i !== 1 && i !== totalPages) {
         pages.push(
-          <Button
-            key={i}
-            variant={i === currentPage ? "default" : "ghost"}
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={() => onPageChange(i)}
-          >
-            {i}
-          </Button>
+          <PaginationItem className="cursor-pointer" key={i}>
+            <PaginationLink isActive={i === currentPage} onClick={() => onPageChange(i)}>
+              {i}
+            </PaginationLink>
+          </PaginationItem>
         );
       }
     }
@@ -66,24 +50,20 @@ const TablePagination: React.FC<TablePaginationProps> = ({
     // Ellipsis after currentPage+1
     if (currentPage < totalPages - 2) {
       pages.push(
-        <span key="end-ellipsis" className="px-2">
-          ...
-        </span>
+        <PaginationItem className="cursor-pointer" key="end-ellipsis">
+          <PaginationEllipsis />
+        </PaginationItem>
       );
     }
 
     // Last page
     if (totalPages > 1) {
       pages.push(
-        <Button
-          key={totalPages}
-          variant={currentPage === totalPages ? "default" : "ghost"}
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => onPageChange(totalPages)}
-        >
-          {totalPages}
-        </Button>
+        <PaginationItem className="cursor-pointer" key={totalPages}>
+          <PaginationLink isActive={currentPage === totalPages} onClick={() => onPageChange(totalPages)}>
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
       );
     }
 
@@ -91,12 +71,12 @@ const TablePagination: React.FC<TablePaginationProps> = ({
   };
 
   return (
-    <div className="flex sm:flex-row flex-col items-center justify-end gap-4 text-sm border-t pt-4">
+    <div className="flex sm:flex-row flex-col items-center justify-end gap-6 text-sm">
       {/* Page Size Dropdown */}
-      <div className="flex items-center sm:justify-center sm:w-fit w-full justify-between gap-2">
-        <span className="whitespace-nowrap text-muted-foreground">Rows per page:</span>
+      <div className="flex items-center gap-2">
+        <span className="whitespace-nowrap text-gray-500">Rows per page:</span>
         <Select value={String(pageSize)} onValueChange={(val) => setPageSize(Number(val))}>
-          <SelectTrigger className="h-8 !w-20">
+          <SelectTrigger className="h-8 w-[70px] bg-gray-50 border-none shadow-none focus:ring-0">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -110,28 +90,26 @@ const TablePagination: React.FC<TablePaginationProps> = ({
       </div>
 
       {/* Page Navigation */}
-      <div className="flex items-center sm:justify-end justify-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={currentPage <= 1}
-          onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
-        >
-          ← Previous
-        </Button>
+      <div className="flex items-center gap-1">
+        <Pagination className="flex items-center w-auto mx-0">
+          <PaginationContent className="gap-1">
+            <PaginationItem className="cursor-pointer">
+              <PaginationPrevious 
+                onClick={() => currentPage > 1 && onPageChange(currentPage - 1)} 
+                className="hover:bg-transparent px-2"
+              />
+            </PaginationItem>
 
-        <div className="flex items-center gap-1">
-          {renderPageLinks()}
-        </div>
+            {renderPageLinks()}
 
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={currentPage >= totalPages}
-          onClick={() => currentPage < totalPages && onPageChange(currentPage + 1)}
-        >
-          Next →
-        </Button>
+            <PaginationItem className="cursor-pointer">
+              <PaginationNext 
+                onClick={() => currentPage < totalPages && onPageChange(currentPage + 1)} 
+                className="hover:bg-transparent px-2"
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
     </div>
   );

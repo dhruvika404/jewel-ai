@@ -2,8 +2,8 @@ import { API_CONFIG, getHeaders, getUploadHeaders } from '@/config/api'
 
 // Auth APIs
 export const authAPI = {
-  // Admin login - simple API call without token management
-  login: async (payload: { email?: string; userCode?: string; password: string; role: string }) => {
+  // Login - accepts either email or userCode with password
+  login: async (payload: { email?: string; userCode?: string; password: string }) => {
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`, {
         method: 'POST',
@@ -29,6 +29,52 @@ export const authAPI = {
       throw error
     }
   },
+
+  // Set login password for sales person
+  setPassword: async (userCode: string, password: string) => {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.SET_PASSWORD}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ userCode, password }),
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP error! status: ${response.status}`)
+      }
+      
+      return data
+    } catch (error: any) {
+      console.error('Set Password API Error:', error)
+      throw error
+    }
+  },
+}
+
+// Dashboard APIs
+export const dashboardAPI = {
+  // Get dashboard overview counts
+  getOverview: async () => {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DASHBOARD.OVERVIEW}`, {
+        method: 'GET',
+        headers: getHeaders(),
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP error! status: ${response.status}`)
+      }
+      
+      return data
+    } catch (error: any) {
+      console.error('Dashboard API Error:', error)
+      throw error
+    }
+  },
 }
 
 // Sales Person APIs
@@ -46,13 +92,37 @@ export const salesPersonAPI = {
     if (params?.search) queryParams.append('search', params.search)
     if (params?.role) queryParams.append('role', params.role)
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.LIST}?${queryParams}`)
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.LIST}?${queryParams}`, {
+      headers: getHeaders()
+    })
+    return response.json()
+  },
+
+  // Create new sales person
+  create: async (data: any) => {
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.LIST}`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    })
+    return response.json()
+  },
+
+  // Update sales person
+  update: async (id: string, data: any) => {
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.LIST}/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    })
     return response.json()
   },
 
   // Get sales person details by ID
   getById: async (id: string) => {
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.DETAIL}/${id}`)
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.DETAIL}/${id}`, {
+      headers: getHeaders()
+    })
     return response.json()
   },
 
@@ -85,13 +155,37 @@ export const clientAPI = {
     if (params?.search) queryParams.append('search', params.search)
     if (params?.role) queryParams.append('role', params.role)
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.LIST}?${queryParams}`)
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.LIST}?${queryParams}`, {
+      headers: getHeaders()
+    })
     return response.json()
   },
 
   // Get client details by ID
   getById: async (id: string) => {
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.DETAIL}/${id}`)
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.DETAIL}/${id}`, {
+      headers: getHeaders()
+    })
+    return response.json()
+  },
+
+  // Create new client
+  create: async (data: { userCode: string; name: string; email: string; phone: string }) => {
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.LIST}`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    })
+    return response.json()
+  },
+
+  // Update client
+  update: async (id: string, data: { userCode: string; name: string; email: string; phone: string }) => {
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.LIST}/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    })
     return response.json()
   },
 
@@ -112,7 +206,7 @@ export const clientAPI = {
       }
 
       // Test file readability before upload
-      const fileBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+      await new Promise<ArrayBuffer>((resolve, reject) => {
         const reader = new FileReader()
         reader.onload = (e) => {
           const result = e.target?.result as ArrayBuffer
@@ -144,7 +238,6 @@ export const clientAPI = {
         result = await response.json()
       } catch (parseError) {
         console.error('Client import - Failed to parse JSON response:', parseError)
-        const textResponse = await response.text()
         throw new Error(`Server returned invalid JSON. Status: ${response.status}`)
       }
 
@@ -167,12 +260,16 @@ export const pendingOrderAPI = {
   getAll: async (params?: {
     page?: number
     size?: number
+    clientCode?: string
   }) => {
     const queryParams = new URLSearchParams()
     if (params?.page) queryParams.append('page', params.page.toString())
     if (params?.size) queryParams.append('size', params.size.toString())
+    if (params?.clientCode) queryParams.append('clientCode', params.clientCode)
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.LIST}?${queryParams}`)
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.LIST}?${queryParams}`, {
+      headers: getHeaders()
+    })
     return response.json()
   },
 
@@ -187,7 +284,9 @@ export const pendingOrderAPI = {
     if (params.size) queryParams.append('size', params.size.toString())
     queryParams.append('clientCode', params.clientCode)
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.FOLLOW_UP}?${queryParams}`)
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.FOLLOW_UP}?${queryParams}`, {
+      headers: getHeaders()
+    })
     return response.json()
   },
 
@@ -226,12 +325,16 @@ export const pendingMaterialAPI = {
   getAll: async (params?: {
     page?: number
     size?: number
+    clientCode?: string
   }) => {
     const queryParams = new URLSearchParams()
     if (params?.page) queryParams.append('page', params.page.toString())
     if (params?.size) queryParams.append('size', params.size.toString())
+    if (params?.clientCode) queryParams.append('clientCode', params.clientCode)
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.LIST}?${queryParams}`)
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.LIST}?${queryParams}`, {
+      headers: getHeaders()
+    })
     return response.json()
   },
 
@@ -246,7 +349,9 @@ export const pendingMaterialAPI = {
     if (params.size) queryParams.append('size', params.size.toString())
     queryParams.append('clientCode', params.clientCode)
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.FOLLOW_UP}?${queryParams}`)
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.FOLLOW_UP}?${queryParams}`, {
+      headers: getHeaders()
+    })
     return response.json()
   },
 
@@ -285,12 +390,16 @@ export const newOrderAPI = {
   getAll: async (params?: {
     page?: number
     size?: number
+    clientCode?: string
   }) => {
     const queryParams = new URLSearchParams()
     if (params?.page) queryParams.append('page', params.page.toString())
     if (params?.size) queryParams.append('size', params.size.toString())
+    if (params?.clientCode) queryParams.append('clientCode', params.clientCode)
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.LIST}?${queryParams}`)
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.LIST}?${queryParams}`, {
+      headers: getHeaders()
+    })
     return response.json()
   },
 
@@ -305,7 +414,9 @@ export const newOrderAPI = {
     if (params.size) queryParams.append('size', params.size.toString())
     if (params.clientCode) queryParams.append('clientCode', params.clientCode)
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.FOLLOW_UP}?${queryParams}`)
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.FOLLOW_UP}?${queryParams}`, {
+      headers: getHeaders()
+    })
     return response.json()
   },
 
