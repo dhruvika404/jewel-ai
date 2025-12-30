@@ -149,15 +149,6 @@ export default function Clients() {
         toast.error('Failed to load clients')
       }
 
-      // Load Stats
-      const statsResponse = await dashboardAPI.getOverview()
-      if (statsResponse.success !== false && statsResponse.data) {
-          setStats({
-              total: statsResponse.data.totalClients || 0,
-              active: statsResponse.data.activeClients || 0,
-              inactive: statsResponse.data.inactiveClients || 0
-          })
-      }
 
     } catch (error: any) {
       toast.error('Error loading data: ' + error.message)
