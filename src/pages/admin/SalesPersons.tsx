@@ -347,10 +347,7 @@ export default function SalesPersons() {
                           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs shrink-0">
                             {sp.name?.charAt(0).toUpperCase() || 'U'}
                           </div>
-                          <div>
                             <div className="font-medium text-gray-900">{sp.name}</div>
-                            <div className="text-xs text-gray-500 capitalize">{sp.role?.replace('_', ' ') || 'Staff'}</div>
-                          </div>
                         </div>
                       </TableCell>
                         <TableCell className="font-medium text-gray-900 align-top py-4">
