@@ -1,66 +1,48 @@
-import { useState, useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Gem } from 'lucide-react'
-import { toast } from 'sonner'
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Gem, Shield, Users } from "lucide-react";
+import { toast } from "sonner";
+
+type RoleType = "admin" | "sales_executive";
 
 export default function Login() {
-  const { login, isLoading } = useAuth()
+  const { login, isLoading } = useAuth();
+  const [selectedRole, setSelectedRole] = useState<RoleType>("admin");
   const [formData, setFormData] = useState({
-    identifier: '',
-    password: ''
-  })
-
-
-  // Check ngrok connectivity on component mount
-  useEffect(() => {
-    const checkNgrokConnection = async () => {
-      try {
-        const baseUrl = import.meta.env.VITE_BASE_URL
-    
-
-        const response = await fetch(baseUrl, {
-          method: 'GET',
-          headers: {
-            'ngrok-skip-browser-warning': 'true'
-          }
-        })
-
-        if (response.ok) {
-          console.log('✅ Ngrok connection successful:', baseUrl)
-        } else {
-          console.warn('⚠️ Ngrok responded with status:', response.status)
-        }
-      } catch (error) {
-        console.error('❌ Ngrok connection failed:', error)
-      }
-    }
-
-    checkNgrokConnection()
-  }, [])
+    identifier: "",
+    password: "",
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+
     if (!formData.identifier || !formData.password) {
-      toast.error('Please fill in all fields')
-      return
+      toast.error("Please fill in all fields");
+      return;
     }
 
     try {
-      await login(formData.identifier, formData.password)
-      toast.success('Welcome back!')
+      await login(formData.identifier, formData.password, selectedRole);
+      toast.success("Welcome back!");
     } catch (error: any) {
-      toast.error(error?.message || 'Login failed. Please try again.')
+      toast.error(error?.message || "Login failed. Please try again.");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -82,12 +64,33 @@ export default function Login() {
 
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Role Selection Tabs */}
+              <Tabs
+                value={selectedRole}
+                onValueChange={(value) => setSelectedRole(value as RoleType)}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="admin" className="gap-2">
+                    <Shield className="w-4 h-4" />
+                    Admin
+                  </TabsTrigger>
+                  <TabsTrigger value="sales_executive" className="gap-2">
+                    <Users className="w-4 h-4" />
+                    Sales Executive
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
               <div className="space-y-2">
                 <Input
-                  label="User ID / Email"
+                  label={selectedRole === "admin" ? "Email" : "User Code"}
                   id="identifier"
                   type="text"
-                  placeholder="Enter your ID or Email"
+                  placeholder={
+                    selectedRole === "admin"
+                      ? "Enter your email or user code"
+                      : "Enter your user code"
+                  }
                   name="identifier"
                   value={formData.identifier}
                   onChange={handleChange}
@@ -97,26 +100,30 @@ export default function Login() {
               </div>
 
               <div className="space-y-2">
-                  <Input
-                    label="Password"
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                  />
+                <Input
+                  label="Password"
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading} size="lg">
-                {isLoading ? 'Signing in...' : 'Sign In'}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading}
+                size="lg"
+              >
+                {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }
-

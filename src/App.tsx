@@ -1,11 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { Toaster } from 'sonner'
-import Login from './pages/Login'
-import AdminDashboard from './pages/AdminDashboard'
-import SalesDashboard from './pages/SalesDashboard'
-import ProtectedRoute from './components/ProtectedRoute'
-import { AuthProvider } from './contexts/AuthContext'
-import { PageHeaderProvider } from './contexts/PageHeaderProvider'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "sonner";
+import Login from "./pages/Login";
+import AdminDashboard from "./pages/AdminDashboard";
+import SalesDashboard from "./pages/SalesDashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { AuthProvider } from "./contexts/AuthContext";
+import { PageHeaderProvider } from "./contexts/PageHeaderProvider";
 
 function App() {
   return (
@@ -36,7 +36,7 @@ function App() {
         </PageHeaderProvider>
       </AuthProvider>
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
+export default App;

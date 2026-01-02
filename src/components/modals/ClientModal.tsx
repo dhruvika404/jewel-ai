@@ -12,7 +12,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { clientAPI } from '@/services/api'
+import { clientAPI, salesPersonAPI } from '@/services/api'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface ClientModalProps {
   isOpen: boolean
@@ -23,12 +24,31 @@ interface ClientModalProps {
 
 export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalProps) {
   const [loading, setLoading] = useState(false)
+  const [salesPersons, setSalesPersons] = useState<any[]>([])
   const [formData, setFormData] = useState({
     userCode: '',
     name: '',
     email: '',
     phone: '',
+    salesExecCode: '',
   })
+
+  useEffect(() => {
+    const loadSalesPersons = async () => {
+      try {
+        const response = await salesPersonAPI.getAll({ page: 1, size: 1000, role: 'sales_executive' })
+        if (response.success && response.data?.data) {
+          setSalesPersons(response.data.data)
+        }
+      } catch (error) {
+        console.error('Error loading sales persons:', error)
+      }
+    }
+    
+    if (isOpen) {
+      loadSalesPersons()
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (client) {
@@ -37,6 +57,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
         name: client.name || '',
         email: client.email || '',
         phone: client.phone || '',
+        salesExecCode: client.salesExecCode || 'unassigned',
       })
     } else {
       setFormData({
@@ -44,6 +65,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
         name: '',
         email: '',
         phone: '',
+        salesExecCode: '',
       })
     }
   }, [client, isOpen])
@@ -56,13 +78,31 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
       return
     }
 
+    if (formData.email && formData.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        toast.error("Please enter a valid email address");
+        return;
+      }
+    }
+
+    if (!client && (!formData.salesExecCode || formData.salesExecCode === 'unassigned')) {
+      toast.error('Please select a Sales Executive for new client')
+      return
+    }
+
     setLoading(true)
     try {
+      const apiData = {
+        ...formData,
+        salesExecCode: formData.salesExecCode === 'unassigned' ? '' : formData.salesExecCode
+      }
+
       let response
       if (client?.uuid) {
-        response = await clientAPI.update(client.uuid, formData)
+        response = await clientAPI.update(client.uuid, apiData)
       } else {
-        response = await clientAPI.create(formData)
+        response = await clientAPI.create(apiData)
       }
 
       if (response.success !== false) {
@@ -129,6 +169,34 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
               autoComplete="off"
             />
           </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="salesExecCode">
+              Sales Executive Assignment {!client && <span className="text-red-500">*</span>}
+            </Label>
+            <Select value={formData.salesExecCode} onValueChange={(val) => setFormData({ ...formData, salesExecCode: val })}>
+              <SelectTrigger>
+                <SelectValue placeholder={"Select sales executive"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unassigned">
+                  {client ? "Select sales executive" : "No Assignment"}
+                </SelectItem>
+                {salesPersons.length > 0 ? (
+                  salesPersons.map((sp) => (
+                    <SelectItem key={sp.uuid} value={sp.userCode}>
+                      {sp.name} ({sp.userCode})
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-sales-persons" disabled>
+                    No sales executives available
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          
           <DialogFooter className="pt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Cancel

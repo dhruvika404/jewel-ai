@@ -1,192 +1,259 @@
-import { API_CONFIG, getHeaders, getUploadHeaders } from '@/config/api'
+import { API_CONFIG, getHeaders, getUploadHeaders } from "@/config/api";
 
 // Auth APIs
 export const authAPI = {
-  // Login - accepts either email or userCode with password
-  login: async (payload: { email?: string; userCode?: string; password: string }) => {
+  // Login - accepts either email or userCode with password and role
+  login: async (payload: {
+    email?: string;
+    userCode?: string;
+    password: string;
+    role?: string;
+  }) => {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
-        },
-        body: JSON.stringify(payload),
-      })
-      
-      const data = await response.json()
-      
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(data.message || `HTTP error! status: ${response.status}`)
+        throw new Error(
+          data.message || `HTTP error! status: ${response.status}`
+        );
       }
-      
-      return data
+
+      return data;
     } catch (error: any) {
-      console.error('Auth API Error:', error)
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        throw new Error('Unable to connect to server. Please check your internet connection.')
+      console.error("Auth API Error:", error);
+      if (error.name === "TypeError" && error.message.includes("fetch")) {
+        throw new Error(
+          "Unable to connect to server. Please check your internet connection."
+        );
       }
-      throw error
+      throw error;
     }
   },
 
   // Set login password for sales person
   setPassword: async (userCode: string, password: string) => {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.SET_PASSWORD}`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify({ userCode, password }),
-      })
-      
-      const data = await response.json()
-      
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.SET_PASSWORD}`,
+        {
+          method: "PUT",
+          headers: getHeaders(),
+          body: JSON.stringify({ userCode, password }),
+        }
+      );
+
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(data.message || `HTTP error! status: ${response.status}`)
+        throw new Error(
+          data.message || `HTTP error! status: ${response.status}`
+        );
       }
-      
-      return data
+
+      return data;
     } catch (error: any) {
-      console.error('Set Password API Error:', error)
-      throw error
+      console.error("Set Password API Error:", error);
+      throw error;
     }
   },
-}
+};
 
 // Dashboard APIs
 export const dashboardAPI = {
   // Get dashboard overview counts
   getOverview: async () => {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DASHBOARD.OVERVIEW}`, {
-        method: 'GET',
-        headers: getHeaders(),
-      })
-      
-      const data = await response.json()
-      
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DASHBOARD.OVERVIEW}`,
+        {
+          method: "GET",
+          headers: getHeaders(),
+        }
+      );
+
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(data.message || `HTTP error! status: ${response.status}`)
+        throw new Error(
+          data.message || `HTTP error! status: ${response.status}`
+        );
       }
-      
-      return data
+
+      return data;
     } catch (error: any) {
-      console.error('Dashboard API Error:', error)
-      throw error
+      console.error("Dashboard API Error:", error);
+      throw error;
     }
   },
-}
+};
 
 // Sales Person APIs
 export const salesPersonAPI = {
   // Get all sales persons with pagination and filters
   getAll: async (params?: {
-    page?: number
-    size?: number
-    search?: string
-    role?: string
+    page?: number;
+    size?: number;
+    search?: string;
+    role?: string;
   }) => {
-    const queryParams = new URLSearchParams()
-    if (params?.page) queryParams.append('page', params.page.toString())
-    if (params?.size) queryParams.append('size', params.size.toString())
-    if (params?.search) queryParams.append('search', params.search)
-    if (params?.role) queryParams.append('role', params.role)
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.size) queryParams.append("size", params.size.toString());
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.role) queryParams.append("role", params.role);
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.LIST}?${queryParams}`, {
-      headers: getHeaders()
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.LIST}?${queryParams}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.json();
   },
 
   // Create new sales person
   create: async (data: any) => {
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.LIST}`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.LIST}`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
   },
 
   // Update sales person
   update: async (id: string, data: any) => {
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.LIST}/${id}`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.LIST}/${id}`,
+      {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
   },
 
   // Get sales person details by ID
   getById: async (id: string) => {
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.DETAIL}/${id}`, {
-      headers: getHeaders()
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.DETAIL}/${id}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.json();
   },
 
   // Import sales person data
   import: async (file: File) => {
-    const formData = new FormData()
-    formData.append('file', file)
+    const formData = new FormData();
+    formData.append("file", file);
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.IMPORT}`, {
-      method: 'POST',
-      headers: getUploadHeaders(),
-      body: formData,
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.IMPORT}`,
+      {
+        method: "POST",
+        headers: getUploadHeaders(),
+        body: formData,
+      }
+    );
+    return response.json();
   },
-}
+};
 
 // Client APIs
 export const clientAPI = {
   // Get all clients with pagination and filters
   getAll: async (params?: {
-    page?: number
-    size?: number
-    search?: string
-    role?: string
+    page?: number;
+    size?: number;
+    search?: string;
+    role?: string;
+    salesExecCode?: string;
   }) => {
-    const queryParams = new URLSearchParams()
-    if (params?.page) queryParams.append('page', params.page.toString())
-    if (params?.size) queryParams.append('size', params.size.toString())
-    if (params?.search) queryParams.append('search', params.search)
-    if (params?.role) queryParams.append('role', params.role)
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.size) queryParams.append("size", params.size.toString());
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.role) queryParams.append("role", params.role);
+    if (params?.salesExecCode)
+      queryParams.append("salesExecCode", params.salesExecCode);
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.LIST}?${queryParams}`, {
-      headers: getHeaders()
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.LIST}?${queryParams}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.json();
   },
 
   // Get client details by ID
   getById: async (id: string) => {
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.DETAIL}/${id}`, {
-      headers: getHeaders()
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.DETAIL}/${id}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.json();
   },
 
   // Create new client
-  create: async (data: { userCode: string; name: string; email: string; phone: string }) => {
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.LIST}`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    })
-    return response.json()
+  create: async (data: {
+    userCode: string;
+    name: string;
+    email: string;
+    phone: string;
+    salesExecCode?: string;
+  }) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.LIST}`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
   },
 
   // Update client
-  update: async (id: string, data: { userCode: string; name: string; email: string; phone: string }) => {
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.LIST}/${id}`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    })
-    return response.json()
+  update: async (
+    id: string,
+    data: {
+      userCode: string;
+      name: string;
+      email: string;
+      phone: string;
+      salesExecCode?: string;
+    }
+  ) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.LIST}/${id}`,
+      {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
   },
 
   // Import client data
@@ -194,265 +261,481 @@ export const clientAPI = {
     try {
       // Validate file
       if (!file) {
-        throw new Error('No file provided')
+        throw new Error("No file provided");
       }
 
       if (file.size === 0) {
-        throw new Error('File is empty')
+        throw new Error("File is empty");
       }
 
       if (!file.name.match(/\.(xlsx|xls)$/i)) {
-        throw new Error('File must be an Excel file (.xlsx or .xls)')
+        throw new Error("File must be an Excel file (.xlsx or .xls)");
       }
 
       // Test file readability before upload
       await new Promise<ArrayBuffer>((resolve, reject) => {
-        const reader = new FileReader()
+        const reader = new FileReader();
         reader.onload = (e) => {
-          const result = e.target?.result as ArrayBuffer
+          const result = e.target?.result as ArrayBuffer;
           if (result && result.byteLength > 0) {
-            resolve(result)
+            resolve(result);
           } else {
-            reject(new Error('File is empty or unreadable'))
+            reject(new Error("File is empty or unreadable"));
           }
-        }
-        reader.onerror = () => reject(new Error('Failed to read file'))
-        reader.readAsArrayBuffer(file)
-      })
+        };
+        reader.onerror = () => reject(new Error("Failed to read file"));
+        reader.readAsArrayBuffer(file);
+      });
 
       // Create FormData with the validated file
-      const formData = new FormData()
-      formData.append('file', file, file.name)
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.IMPORT}`
-
+      const formData = new FormData();
+      formData.append("file", file, file.name);
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.IMPORT}`;
 
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: getUploadHeaders(),
         body: formData,
-      })
+      });
 
-
-      let result
+      let result;
       try {
-        result = await response.json()
+        result = await response.json();
       } catch (parseError) {
-        console.error('Client import - Failed to parse JSON response:', parseError)
-        throw new Error(`Server returned invalid JSON. Status: ${response.status}`)
+        console.error(
+          "Client import - Failed to parse JSON response:",
+          parseError
+        );
+        throw new Error(
+          `Server returned invalid JSON. Status: ${response.status}`
+        );
       }
-
 
       if (!response.ok) {
-        throw new Error(result.message || result.error || `HTTP error! status: ${response.status}`)
+        throw new Error(
+          result.message ||
+            result.error ||
+            `HTTP error! status: ${response.status}`
+        );
       }
 
-      return result
+      return result;
     } catch (error: any) {
-      console.error('Client import - Error:', error)
-      throw error
+      console.error("Client import - Error:", error);
+      throw error;
     }
   },
-}
+};
 
 // Pending Order APIs
 export const pendingOrderAPI = {
   // Get all pending orders with pagination
   getAll: async (params?: {
-    page?: number
-    size?: number
-    clientCode?: string
+    page?: number;
+    size?: number;
+    clientCode?: string;
+    search?: string;
+    status?: string;
+    sortBy?: string;
   }) => {
-    const queryParams = new URLSearchParams()
-    if (params?.page) queryParams.append('page', params.page.toString())
-    if (params?.size) queryParams.append('size', params.size.toString())
-    if (params?.clientCode) queryParams.append('clientCode', params.clientCode)
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.size) queryParams.append("size", params.size.toString());
+    if (params?.clientCode) queryParams.append("clientCode", params.clientCode);
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.LIST}?${queryParams}`, {
-      headers: getHeaders()
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.LIST}?${queryParams}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.json();
+  },
+
+  // Create new pending order manually
+  create: async (data: {
+    salesExecCode: string;
+    clientCode: string;
+    orderNo: string;
+    orderDate: string;
+    grossWtTotal: string;
+    remark?: string;
+    nextFollowUpDate?: string;
+    lastFollowUpMsg?: string;
+  }) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.LIST}`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
+  },
+
+  // Update pending order
+  update: async (
+    id: string,
+    data: {
+      salesExecCode?: string;
+      clientCode?: string;
+      orderNo?: string;
+      orderDate?: string;
+      grossWtTotal?: string;
+      remark?: string;
+      nextFollowUpDate?: string;
+      lastFollowUpMsg?: string;
+    }
+  ) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.LIST}/${id}`,
+      {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
   },
 
   // Get follow-ups by client code
   getFollowUpsByClientCode: async (params: {
-    page?: number
-    size?: number
-    clientCode: string
+    page?: number;
+    size?: number;
+    clientCode: string;
+    status?: string;
+    sortBy?: string;
   }) => {
-    const queryParams = new URLSearchParams()
-    if (params.page) queryParams.append('page', params.page.toString())
-    if (params.size) queryParams.append('size', params.size.toString())
-    queryParams.append('clientCode', params.clientCode)
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.size) queryParams.append("size", params.size.toString());
+    queryParams.append("clientCode", params.clientCode);
+    if (params.status) queryParams.append("status", params.status);
+    if (params.sortBy) queryParams.append("sortBy", params.sortBy);
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.FOLLOW_UP}?${queryParams}`, {
-      headers: getHeaders()
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.FOLLOW_UP}?${queryParams}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.json();
   },
 
-  // Add follow-up
+  // Add follow-up for pending order
   addFollowUp: async (data: {
-    pendingOrderId: string
-    followUpMsg: string
-    nextFollowUpDate: string
-    followUpStatus: string
+    pendingOrderId: string;
+    followUpMsg: string;
+    nextFollowUpDate: string;
   }) => {
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.ADD_FOLLOW_UP}`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.ADD_FOLLOW_UP}`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
   },
 
   // Import pending order data
   import: async (file: File) => {
-    const formData = new FormData()
-    formData.append('file', file)
+    const formData = new FormData();
+    formData.append("file", file);
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.IMPORT}`, {
-      method: 'POST',
-      headers: getUploadHeaders(),
-      body: formData,
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.IMPORT}`,
+      {
+        method: "POST",
+        headers: getUploadHeaders(),
+        body: formData,
+      }
+    );
+    return response.json();
   },
-}
+};
 
 // Pending Material APIs
 export const pendingMaterialAPI = {
   // Get all pending materials with pagination
   getAll: async (params?: {
-    page?: number
-    size?: number
-    clientCode?: string
+    page?: number;
+    size?: number;
+    clientCode?: string;
+    search?: string;
+    status?: string;
+    sortBy?: string;
   }) => {
-    const queryParams = new URLSearchParams()
-    if (params?.page) queryParams.append('page', params.page.toString())
-    if (params?.size) queryParams.append('size', params.size.toString())
-    if (params?.clientCode) queryParams.append('clientCode', params.clientCode)
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.size) queryParams.append("size", params.size.toString());
+    if (params?.clientCode) queryParams.append("clientCode", params.clientCode);
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.LIST}?${queryParams}`, {
-      headers: getHeaders()
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.LIST}?${queryParams}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.json();
+  },
+
+  // Create new pending material manually
+  create: async (data: {
+    salesExecCode: string;
+    clientCode: string;
+    styleNo: string;
+    orderNo: string;
+    expectedDeliveryDate: string;
+    departmentName: string;
+    totalNetWt: string;
+    nextFollowUpDate?: string;
+    lastFollowUpMsg?: string;
+    status?: string;
+  }) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.LIST}`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
+  },
+
+  // Update pending material
+  update: async (
+    id: string,
+    data: {
+      salesExecCode?: string;
+      clientCode?: string;
+      styleNo?: string;
+      orderNo?: string;
+      expectedDeliveryDate?: string;
+      departmentName?: string;
+      totalNetWt?: string;
+      nextFollowUpDate?: string;
+      lastFollowUpMsg?: string;
+      status?: string;
+    }
+  ) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.LIST}/${id}`,
+      {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
   },
 
   // Get follow-ups by client code
   getFollowUpsByClientCode: async (params: {
-    page?: number
-    size?: number
-    clientCode: string
+    page?: number;
+    size?: number;
+    clientCode: string;
+    status?: string;
+    sortBy?: string;
   }) => {
-    const queryParams = new URLSearchParams()
-    if (params.page) queryParams.append('page', params.page.toString())
-    if (params.size) queryParams.append('size', params.size.toString())
-    queryParams.append('clientCode', params.clientCode)
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.size) queryParams.append("size", params.size.toString());
+    queryParams.append("clientCode", params.clientCode);
+    if (params.status) queryParams.append("status", params.status);
+    if (params.sortBy) queryParams.append("sortBy", params.sortBy);
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.FOLLOW_UP}?${queryParams}`, {
-      headers: getHeaders()
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.FOLLOW_UP}?${queryParams}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.json();
   },
 
-  // Add follow-up
+  // Add follow-up for pending material
   addFollowUp: async (data: {
-    pendingMaterialRecordId: string
-    followUpMsg: string
-    nextFollowUpDate: string
-    followUpStatus: string
+    pendingMaterialRecordId: string;
+    followUpMsg: string;
+    nextFollowUpDate: string;
+    status: string;
   }) => {
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.ADD_FOLLOW_UP}`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.ADD_FOLLOW_UP}`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
   },
 
   // Import pending material data
   import: async (file: File) => {
-    const formData = new FormData()
-    formData.append('file', file)
+    const formData = new FormData();
+    formData.append("file", file);
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.IMPORT}`, {
-      method: 'POST',
-      headers: getUploadHeaders(),
-      body: formData,
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.IMPORT}`,
+      {
+        method: "POST",
+        headers: getUploadHeaders(),
+        body: formData,
+      }
+    );
+    return response.json();
   },
-}
+};
 
 // New Order APIs
 export const newOrderAPI = {
   // Get all new orders with pagination
   getAll: async (params?: {
-    page?: number
-    size?: number
-    clientCode?: string
+    page?: number;
+    size?: number;
+    clientCode?: string;
+    search?: string;
+    status?: string;
+    sortBy?: string;
   }) => {
-    const queryParams = new URLSearchParams()
-    if (params?.page) queryParams.append('page', params.page.toString())
-    if (params?.size) queryParams.append('size', params.size.toString())
-    if (params?.clientCode) queryParams.append('clientCode', params.clientCode)
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.size) queryParams.append("size", params.size.toString());
+    if (params?.clientCode) queryParams.append("clientCode", params.clientCode);
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.LIST}?${queryParams}`, {
-      headers: getHeaders()
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.LIST}?${queryParams}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.json();
+  },
+
+  // Create new order manually
+  create: async (data: {
+    salesExecCode: string;
+    clientCode: string;
+    subCategory: string;
+    lastSaleDate: string;
+    lastOrderDate: string;
+    clientCategoryName: string;
+    nextFollowUpDate: string;
+  }) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.LIST}`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
+  },
+
+  // Update new order
+  update: async (
+    id: string,
+    data: {
+      salesExecCode?: string;
+      clientCode?: string;
+      subCategory?: string;
+      lastSaleDate?: string;
+      lastOrderDate?: string;
+      clientCategoryName?: string;
+      nextFollowUpDate?: string;
+    }
+  ) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.LIST}/${id}`,
+      {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
   },
 
   // Get follow-ups by client code
   getFollowUpsByClientCode: async (params: {
-    page?: number
-    size?: number
-    clientCode?: string
+    page?: number;
+    size?: number;
+    clientCode?: string;
+    status?: string;
+    sortBy?: string;
   }) => {
-    const queryParams = new URLSearchParams()
-    if (params.page) queryParams.append('page', params.page.toString())
-    if (params.size) queryParams.append('size', params.size.toString())
-    if (params.clientCode) queryParams.append('clientCode', params.clientCode)
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.size) queryParams.append("size", params.size.toString());
+    if (params.clientCode) queryParams.append("clientCode", params.clientCode);
+    if (params.status) queryParams.append("status", params.status);
+    if (params.sortBy) queryParams.append("sortBy", params.sortBy);
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.FOLLOW_UP}?${queryParams}`, {
-      headers: getHeaders()
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.FOLLOW_UP}?${queryParams}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.json();
   },
 
   // Add follow-up
   addFollowUp: async (data: {
-    newOrderRecordId: string
-    followUpMsg: string
-    nextFollowUpDate: string
-    followUpStatus: string
+    newOrderRecordId: string;
+    followUpMsg: string;
+    nextFollowUpDate: string;
+    status: string;
   }) => {
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.ADD_FOLLOW_UP}`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.ADD_FOLLOW_UP}`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
   },
 
   // Import new order data
   import: async (file: File) => {
-    const formData = new FormData()
-    formData.append('file', file)
+    const formData = new FormData();
+    formData.append("file", file);
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.IMPORT}`, {
-      method: 'POST',
-      headers: getUploadHeaders(),
-      body: formData,
-    })
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.IMPORT}`,
+      {
+        method: "POST",
+        headers: getUploadHeaders(),
+        body: formData,
+      }
+    );
+    return response.json();
   },
-}
+};
 
 // Health check
 export const healthAPI = {
   check: async () => {
-    const response = await fetch(`${API_CONFIG.BASE_URL.replace('/api', '')}${API_CONFIG.ENDPOINTS.HEALTH}`)
-    return response.json()
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL.replace("/api", "")}${API_CONFIG.ENDPOINTS.HEALTH}`
+    );
+    return response.json();
   },
-}
+};

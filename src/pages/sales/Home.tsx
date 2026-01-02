@@ -1,329 +1,405 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CheckCircle, Clock, Package, ShoppingCart, Box, Loader2 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { newOrderAPI, pendingOrderAPI, pendingMaterialAPI } from '@/services/api'
-import { toast } from 'sonner'
-import { usePageHeader } from '@/contexts/PageHeaderProvider'
+  AlertCircle,
+  Clock,
+  CheckCircle,
+  Package,
+  ShoppingCart,
+  Box,
+  Loader2,
+  Plus,
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import {
+  newOrderAPI,
+  pendingOrderAPI,
+  pendingMaterialAPI,
+} from "@/services/api";
+import { toast } from "sonner";
+import { usePageHeader } from "@/contexts/PageHeaderProvider";
+import { useAuth } from "@/contexts/AuthContext";
+import { CreateTaskModal } from "@/components/modals/CreateTaskModal";
 
 interface FollowUp {
-  id: string
-  followUpMsg: string
-  nextFollowUpDate: string
-  followUpStatus: string
-  createdAt: string
-  clientCode?: string
-  clientName?: string
-  type?: string
+  id: string;
+  followUpMsg: string;
+  nextFollowUpDate: string;
+  followUpStatus: string;
+  createdAt: string;
+  clientCode?: string;
+  clientName?: string;
+  type?: string;
 }
 
-const getTypeIcon = (type: string) => {
-  if (type === 'New Order' || type === 'new-order') return Package
-  if (type === 'Pending Order' || type === 'pending-order') return ShoppingCart
-  if (type === 'Pending Material' || type === 'pending-material') return Box
-  return Clock
-}
-
-const getTypeColor = (type: string) => {
-  if (type === 'New Order' || type === 'new-order') return 'text-blue-500 dark:text-blue-400'
-  if (type === 'Pending Order' || type === 'pending-order') return 'text-orange-500 dark:text-orange-400'
-  if (type === 'Pending Material' || type === 'pending-material') return 'text-purple-500 dark:text-purple-400'
-  return 'text-gray-500 dark:text-gray-400'
+interface OverdueFollowUpItem {
+  id: string;
+  clientName: string;
+  clientCode: string;
+  type: string;
+  daysOverdue?: number;
+  nextFollowUpDate: string;
 }
 
 export default function SalesHome() {
-  const { setHeader } = usePageHeader()
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all')
-  const [loading, setLoading] = useState(false)
-  const [followUps, setFollowUps] = useState<FollowUp[]>([])
-  const [todayCount, setTodayCount] = useState(0)
-  const [pendingCount, setPendingCount] = useState(0)
-  const [overdueCount, setOverdueCount] = useState(0)
+  const { setHeader } = usePageHeader();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
+  const [overdueFollowups, setOverdueFollowups] = useState<OverdueFollowUpItem[]>([]);
+  const [todayCount, setTodayCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [overdueCount, setOverdueCount] = useState(0);
+  const [completedCount, setCompletedCount] = useState(0);
+  const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
 
   // Set header
   useEffect(() => {
-    setHeader({ title: 'Dashboard' })
-  }, [])
+    setHeader({
+      title: "Dashboard",
+      children: (
+        <Button
+          onClick={() => setShowCreateTaskModal(true)}
+          className="flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Create Task
+        </Button>
+      ),
+    });
+  }, []);
 
   // Load all follow-ups
   const loadFollowUps = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const [newOrderRes, pendingOrderRes, pendingMaterialRes] = await Promise.all([
-        newOrderAPI.getFollowUpsByClientCode({ page: 1, size: 1000 }),
-        pendingOrderAPI.getFollowUpsByClientCode({ page: 1, size: 1000, clientCode: '' }),
-        pendingMaterialAPI.getFollowUpsByClientCode({ page: 1, size: 1000, clientCode: '' })
-      ])
+      const [newOrderRes, pendingOrderRes, pendingMaterialRes] =
+        await Promise.all([
+          newOrderAPI.getFollowUpsByClientCode({ page: 1, size: 1000 }),
+          pendingOrderAPI.getFollowUpsByClientCode({
+            page: 1,
+            size: 1000,
+            clientCode: "",
+          }),
+          pendingMaterialAPI.getFollowUpsByClientCode({
+            page: 1,
+            size: 1000,
+            clientCode: "",
+          }),
+        ]);
 
-      const allFollowUps: FollowUp[] = []
+      const allFollowUps: FollowUp[] = [];
+      const allOverdueFollowUps: OverdueFollowUpItem[] = [];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const processApiResponse = (res: any, type: string) => {
+        if (res.data) {
+          res.data.forEach((item: any) => {
+            if (item.followUps && item.followUps.length > 0) {
+              // Filter by sales executive code if user is sales person
+              const shouldInclude =
+                user?.role === "admin" ||
+                (user?.role === "sales_executive" &&
+                  item.salesExecCode === user?.userCode);
+
+              if (shouldInclude) {
+                item.followUps.forEach((fu: any) => {
+                  const followUp: FollowUp = {
+                    ...fu,
+                    clientCode: item.clientCode,
+                    clientName: item.designName || item.orderId || item.materialName || item.clientCode,
+                    type: type,
+                  };
+                  allFollowUps.push(followUp);
+
+                  // Check for overdue
+                  const fuDate = new Date(fu.nextFollowUpDate);
+                  fuDate.setHours(0, 0, 0, 0);
+
+                  if (
+                    fuDate < today &&
+                    fu.followUpStatus?.toLowerCase() !== "completed"
+                  ) {
+                    const diffTime = Math.abs(today.getTime() - fuDate.getTime());
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    allOverdueFollowUps.push({
+                      id: fu._id || fu.id || Math.random().toString(),
+                      clientName: item.designName || item.orderId || item.materialName || item.clientCode,
+                      clientCode: item.clientCode,
+                      type: type,
+                      daysOverdue: diffDays,
+                      nextFollowUpDate: fu.nextFollowUpDate,
+                    });
+                  }
+                });
+              }
+            }
+          });
+        }
+      };
+
+      processApiResponse(newOrderRes, "New Order");
+      processApiResponse(pendingOrderRes, "Pending Order");
+      processApiResponse(pendingMaterialRes, "Pending Material");
+
+      setFollowUps(allFollowUps);
       
-      // Process new orders
-      if (newOrderRes.data) {
-        newOrderRes.data.forEach((item: any) => {
-          if (item.followUps && item.followUps.length > 0) {
-            item.followUps.forEach((fu: any) => {
-              allFollowUps.push({
-                ...fu,
-                clientCode: item.clientCode,
-                clientName: item.designName || item.clientCode,
-                type: 'New Order'
-              })
-            })
-          }
-        })
-      }
-
-      // Process pending orders
-      if (pendingOrderRes.data) {
-        pendingOrderRes.data.forEach((item: any) => {
-          if (item.followUps && item.followUps.length > 0) {
-            item.followUps.forEach((fu: any) => {
-              allFollowUps.push({
-                ...fu,
-                clientCode: item.clientCode,
-                clientName: item.orderId || item.clientCode,
-                type: 'Pending Order'
-              })
-            })
-          }
-        })
-      }
-
-      // Process pending materials
-      if (pendingMaterialRes.data) {
-        pendingMaterialRes.data.forEach((item: any) => {
-          if (item.followUps && item.followUps.length > 0) {
-            item.followUps.forEach((fu: any) => {
-              allFollowUps.push({
-                ...fu,
-                clientCode: item.clientCode,
-                clientName: item.materialName || item.clientCode,
-                type: 'Pending Material'
-              })
-            })
-          }
-        })
-      }
-
-      setFollowUps(allFollowUps)
-      calculateCounts(allFollowUps)
+      // Sort overdue by most overdue and limit to top 6
+      setOverdueFollowups(
+        allOverdueFollowUps
+          .sort((a, b) => (b.daysOverdue || 0) - (a.daysOverdue || 0))
+          .slice(0, 6)
+      );
+      
+      calculateCounts(allFollowUps);
     } catch (error: any) {
-      console.error('Error loading follow-ups:', error)
-      toast.error('Failed to load follow-ups')
+      console.error("Error loading follow-ups:", error);
+      toast.error("Failed to load follow-ups");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const calculateCounts = (followUpsList: FollowUp[]) => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    let todayC = 0
-    let pendingC = 0
-    let overdueC = 0
+    let todayC = 0;
+    let pendingC = 0;
+    let overdueC = 0;
+    let completedC = 0;
 
-    followUpsList.forEach(fu => {
-      const followUpDate = new Date(fu.nextFollowUpDate)
-      followUpDate.setHours(0, 0, 0, 0)
+    followUpsList.forEach((fu) => {
+      const followUpDate = new Date(fu.nextFollowUpDate);
+      followUpDate.setHours(0, 0, 0, 0);
 
-      const isCompleted = fu.followUpStatus?.toLowerCase() === 'completed'
+      const isCompleted = fu.followUpStatus?.toLowerCase() === "completed";
+
+      if (isCompleted) {
+        completedC++;
+      }
 
       if (followUpDate.getTime() === today.getTime()) {
-        todayC++
+        todayC++;
       }
-      
-      if (!isCompleted && followUpDate >= today) {
-        pendingC++
-      }
-      
-      if (!isCompleted && followUpDate < today) {
-        overdueC++
-      }
-    })
 
-    setTodayCount(todayC)
-    setPendingCount(pendingC)
-    setOverdueCount(overdueC)
-  }
+      if (!isCompleted && followUpDate >= today) {
+        pendingC++;
+      }
+
+      if (!isCompleted && followUpDate < today) {
+        overdueC++;
+      }
+    });
+
+    setTodayCount(todayC);
+    setPendingCount(pendingC);
+    setOverdueCount(overdueC);
+    setCompletedCount(completedC);
+  };
 
   useEffect(() => {
-    loadFollowUps()
-  }, [])
-
-  const filteredFollowups = followUps.filter((followup) => {
-    if (statusFilter === 'all') return true
-    if (statusFilter === 'completed') return followup.followUpStatus?.toLowerCase() === 'completed'
-    if (statusFilter === 'pending') return followup.followUpStatus?.toLowerCase() !== 'completed'
-    return true
-  })
+    loadFollowUps();
+  }, [user]);
 
   return (
-    <div className="bg-gray-50 pb-6">
-      <div className="p-4 lg:p-6 space-y-6">
+    <div className="pb-6">
+      <div className="p-6 space-y-6">
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="blur-bg border-blue-200/50 dark:border-blue-900/50">
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-2.5">
-                <Clock className="w-7 h-7 text-blue-500" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Today's Follow-ups</p>
-                  <p className="text-2xl font-bold">{loading ? '...' : todayCount}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="blur-bg border-yellow-200/50 dark:border-yellow-900/50">
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-2.5">
-                <Package className="w-7 h-7 text-yellow-500" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Pending Follow-ups</p>
-                  <p className="text-2xl font-bold">{loading ? '...' : pendingCount}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="blur-bg border-red-200/50 dark:border-red-900/50">
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-2.5">
-                <CheckCircle className="w-7 h-7 text-red-500" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Overdue Follow-ups</p>
-                  <p className="text-2xl font-bold">{loading ? '...' : overdueCount}</p>
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <StatCard
+            label="Today's Follow-ups"
+            value={todayCount}
+            icon={Clock}
+            color="blue"
+            loading={loading}
+          />
+          <StatCard
+            label="Pending Follow-ups"
+            value={pendingCount}
+            icon={Package}
+            color="orange"
+            loading={loading}
+          />
+          <StatCard
+            label="Overdue Follow-ups"
+            value={overdueCount}
+            icon={AlertCircle}
+            color="red"
+            loading={loading}
+          />
+          <StatCard
+            label="Completed Tasks"
+            value={completedCount}
+            icon={CheckCircle}
+            color="emerald"
+            loading={loading}
+          />
+        </div>
+
+        {/* Task Type Breakdown */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <TaskTypeSection
+            title="New Orders"
+            icon={Package}
+            color="emerald"
+            followUps={followUps.filter(fu => fu.type === "New Order")}
+          />
+          <TaskTypeSection
+            title="Pending Orders"
+            icon={ShoppingCart}
+            color="orange"
+            followUps={followUps.filter(fu => fu.type === "Pending Order")}
+          />
+          <TaskTypeSection
+            title="Pending Materials"
+            icon={Box}
+            color="purple"
+            followUps={followUps.filter(fu => fu.type === "Pending Material")}
+          />
+        </div>
+
+        {/* Overdue Follow-ups List */}
+        <div className="grid grid-cols-1 gap-6">
+          <Card className="border shadow-sm">
+            <CardHeader className="bg-gray-50/50 border-b py-3 px-4">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-red-500" />
+                Overdue Follow-ups
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-gray-100">
+                {loading ? (
+                  <div className="p-12 text-center text-gray-500 flex flex-col items-center gap-2">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <span>Loading overdue follow-ups...</span>
+                  </div>
+                ) : overdueFollowups.length === 0 ? (
+                  <div className="p-12 text-center text-gray-400 italic">
+                    No overdue follow-ups at the moment.
+                  </div>
+                ) : (
+                  overdueFollowups.map((item, idx) => (
+                    <div
+                      key={item.id + idx}
+                      className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                    >
+                      <div>
+                        <div className="font-medium text-sm text-gray-900">
+                          {item.clientName} ({item.clientCode})
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {item.type} • Due{" "}
+                          {new Date(item.nextFollowUpDate).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <Badge className="bg-red-50 text-red-600 border-red-100 hover:bg-red-50 shadow-none">
+                        {item.daysOverdue}d overdue
+                      </Badge>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
-
-        {/* Follow-ups List */}
-        <Card className="blur-bg border-purple-200/50 dark:border-purple-900/50">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>All Follow-ups</CardTitle>
-              </div>
-              <div className="flex items-center gap-2">
-                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as 'all' | 'pending' | 'completed')}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filter status..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredFollowups.length === 0 ? (
-                  <div className="col-span-full text-center py-12">
-                     <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                     <p className="text-muted-foreground">No follow-ups found</p>
-                  </div>
-                ) : (
-                  filteredFollowups.map((followup, index) => {
-                    const TypeIcon = getTypeIcon(followup.type || '')
-                    const followUpDate = new Date(followup.nextFollowUpDate)
-                    const today = new Date()
-                    today.setHours(0, 0, 0, 0)
-                    followUpDate.setHours(0, 0, 0, 0)
-                    
-                    const isOverdue = followUpDate < today && followup.followUpStatus?.toLowerCase() !== 'completed'
-                    const isToday = followUpDate.getTime() === today.getTime()
-
-                    return (
-                      <div
-                        key={`${followup.id}-${index}`}
-                        className="p-4 rounded-lg border border-border bg-card hover:border-primary/50 hover:shadow-sm transition-all"
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-start gap-3 flex-1">
-                            <div className={`p-2.5 rounded-lg ${
-                              followup.type === 'New Order' ? 'bg-blue-500/10 dark:bg-blue-400/10' :
-                              followup.type === 'Pending Order' ? 'bg-orange-500/10 dark:bg-orange-400/10' :
-                              followup.type === 'Pending Material' ? 'bg-purple-500/10 dark:bg-purple-400/10' :
-                              'bg-gray-500/10 dark:bg-gray-400/10'
-                            }`}>
-                              <TypeIcon className={`w-5 h-5 ${getTypeColor(followup.type || '')}`} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-base mb-2">
-                                {followup.clientName} ({followup.clientCode})
-                              </h3>
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className={`px-2.5 py-1 rounded text-[11px] font-bold uppercase tracking-wider ${
-                                  followup.type === 'New Order' ? 'text-blue-600 dark:text-blue-400 bg-blue-500/10 dark:bg-blue-400/10' :
-                                  followup.type === 'Pending Order' ? 'text-orange-600 dark:text-orange-400 bg-orange-500/10 dark:bg-orange-400/10' :
-                                  followup.type === 'Pending Material' ? 'text-purple-600 dark:text-purple-400 bg-purple-500/10 dark:bg-purple-400/10' :
-                                  'text-gray-600 dark:text-gray-400 bg-gray-500/10 dark:bg-gray-400/10'
-                                }`}>
-                                  {followup.type}
-                                </span>
-                                <span className={`px-2.5 py-1 rounded text-[11px] font-bold uppercase tracking-wider ${
-                                  followup.followUpStatus?.toLowerCase() === 'completed'
-                                    ? 'text-green-600 dark:text-green-400 bg-green-500/10 dark:bg-green-400/10'
-                                    : 'text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 dark:bg-yellow-400/10'
-                                }`}>
-                                  {followup.followUpStatus}
-                                </span>
-                                {isOverdue && (
-                                  <span className="px-2.5 py-1 rounded text-[11px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-500/10 dark:bg-red-400/10">
-                                    Overdue
-                                  </span>
-                                )}
-                                {isToday && (
-                                  <span className="px-2.5 py-1 rounded text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-500/10 dark:bg-blue-400/10">
-                                    Today
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {followup.followUpMsg && (
-                          <div className="mb-3 pt-3 border-t border-border/50">
-                            <p className="text-sm text-muted-foreground">
-                              <span className="font-medium text-foreground">Message: </span>
-                              {followup.followUpMsg}
-                            </p>
-                          </div>
-                        )}
-
-                        <div className="pt-2 border-t border-border/50 flex justify-between items-center">
-                          <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-tight">
-                            <span className="text-foreground">Next: </span>
-                            {new Date(followup.nextFollowUpDate).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  })
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
+
+      <CreateTaskModal
+        isOpen={showCreateTaskModal}
+        onClose={() => setShowCreateTaskModal(false)}
+        onSuccess={loadFollowUps}
+      />
     </div>
-  )
+  );
+}
+
+function StatCard({ label, value, icon: Icon, color, loading }: any) {
+  const colors: any = {
+    blue: "bg-blue-50 text-blue-600",
+    emerald: "bg-emerald-50 text-emerald-600",
+    purple: "bg-purple-50 text-purple-600",
+    orange: "bg-orange-50 text-orange-600",
+    red: "bg-red-50 text-red-600",
+  };
+
+  return (
+    <Card className="p-4 border-none shadow-sm bg-white ring-1 ring-black/[0.05]">
+      <div className="flex items-center gap-3">
+        <div
+          className={`w-10 h-10 ${colors[color]} rounded-full flex items-center justify-center shrink-0`}
+        >
+          <Icon className="w-5 h-5" />
+        </div>
+        <div>
+          <p className="text-xs font-medium text-gray-500">{label}</p>
+          <p className="text-xl font-bold text-gray-900">
+            {loading ? "..." : value}
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function TaskTypeSection({ title, icon: Icon, color, followUps }: any) {
+  const colors: any = {
+    emerald: "text-emerald-500",
+    orange: "text-orange-500",
+    purple: "text-purple-500",
+  };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const pending = followUps.filter((fu: FollowUp) => {
+    const fuDate = new Date(fu.nextFollowUpDate);
+    fuDate.setHours(0, 0, 0, 0);
+    return fu.followUpStatus?.toLowerCase() !== "completed" && fuDate >= today;
+  }).length;
+
+  const completed = followUps.filter((fu: FollowUp) => 
+    fu.followUpStatus?.toLowerCase() === "completed"
+  ).length;
+
+  const overdue = followUps.filter((fu: FollowUp) => {
+    const fuDate = new Date(fu.nextFollowUpDate);
+    fuDate.setHours(0, 0, 0, 0);
+    return fu.followUpStatus?.toLowerCase() !== "completed" && fuDate < today;
+  }).length;
+
+  return (
+    <Card className="border shadow-sm bg-white overflow-hidden">
+      <CardHeader className="bg-gray-50/50 border-b py-3 px-4">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <Icon className={`w-4 h-4 ${colors[color]}`} />
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-4 space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <div className="text-[10px] uppercase font-bold text-gray-400">
+              Pending
+            </div>
+            <div className="text-xl font-bold text-gray-900">{pending}</div>
+          </div>
+          <div className="space-y-1">
+            <div className="text-[10px] uppercase font-bold text-gray-400">
+              Completed
+            </div>
+            <div className="text-xl font-bold text-gray-900">{completed}</div>
+          </div>
+        </div>
+        <div className="pt-3 border-t flex items-center justify-between text-xs">
+          <span className="text-gray-500 italic">Overdue</span>
+          <span className="font-bold text-red-600">{overdue}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
