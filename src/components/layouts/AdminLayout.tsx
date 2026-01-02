@@ -8,6 +8,8 @@ import {
   LogOut,
   Search,
   FileText,
+  UsersRound,
+  Headset,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ConfirmationModal from "@/components/modals/ConfirmationModal";
@@ -29,9 +31,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const menuItems = [
     { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-    { label: "Clients", href: "/admin/clients", icon: Users },
+    { label: "Clients", href: "/admin/clients", icon: UsersRound },
     { label: "Sales Persons", href: "/admin/sales-persons", icon: Users },
     { label: "Reports", href: "/admin/reports", icon: FileText },
+    { label: "Followups", href: "/admin/followups", icon: Headset },
   ];
 
   const isActive = (href: string) => {

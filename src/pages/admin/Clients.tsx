@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { X, Calendar } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -26,10 +27,8 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  MessageSquare,
   Plus,
   Pencil,
-  Users,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -38,7 +37,6 @@ import {
   pendingOrderAPI,
   pendingMaterialAPI,
   newOrderAPI,
-  salesPersonAPI,
 } from "@/services/api";
 import { ClientModal } from "@/components/modals/ClientModal";
 import {
@@ -66,12 +64,7 @@ interface Client {
   pendingMaterial?: FollowUpSummary;
   pendingOrder?: FollowUpSummary;
   newOrder?: FollowUpSummary;
-}
-
-interface SalesPerson {
-  uuid: string;
-  userCode: string;
-  name: string;
+  status?: string;
 }
 
 interface FollowUpSummary {
@@ -115,6 +108,13 @@ export default function Clients() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [dateRange, setDateRange] = useState<{
+    startDate: string;
+    endDate: string;
+  }>({
+    startDate: "",
+    endDate: "",
+  });
 
   // Set header
   useEffect(() => {
@@ -127,6 +127,40 @@ export default function Clients() {
       },
       children: (
         <>
+          <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-2">
+              <Calendar className="w-4 h-4 text-gray-500" />
+              <input
+                type="date"
+                value={dateRange.startDate}
+                onChange={(e) =>
+                  setDateRange({ ...dateRange, startDate: e.target.value })
+                }
+                className="text-sm outline-none"
+                placeholder="Start Date"
+              />
+              <span className="text-gray-400">-</span>
+              <input
+                type="date"
+                value={dateRange.endDate}
+                onChange={(e) =>
+                  setDateRange({ ...dateRange, endDate: e.target.value })
+                }
+                className="text-sm outline-none"
+                placeholder="End Date"
+              />
+              {(dateRange.startDate || dateRange.endDate) && (
+                <button
+                  onClick={() =>
+                    setDateRange({ startDate: "", endDate: "" })
+                  }
+                  className="ml-2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div> */}
+          </div>
           <Button
             variant="outline"
             onClick={() => setShowUploadDialog(true)}
@@ -145,7 +179,7 @@ export default function Clients() {
         </>
       ),
     });
-  }, [searchQuery]);
+  }, [searchQuery, dateRange]);
 
   // Load clients data and stats
   const loadData = async () => {
@@ -160,6 +194,14 @@ export default function Clients() {
         role: "client",
       };
 
+      // Add date range filters if set
+      if (dateRange.startDate) {
+        params.startDate = dateRange.startDate;
+      }
+      if (dateRange.endDate) {
+        params.endDate = dateRange.endDate;
+      }
+
       // If user is sales executive, filter by their code
       if (user?.role === "sales_executive" && user?.userCode) {
         params.salesExecCode = user.userCode;
@@ -168,7 +210,6 @@ export default function Clients() {
       const response = await clientAPI.getAll(params);
 
       if (response.success !== false) {
-        // Handle both possible structures: response.data.data or response.data
         if (response.data?.data) {
           setClients(response.data.data);
           currentTotalItems = response.data.totalItems || 0;
@@ -193,7 +234,7 @@ export default function Clients() {
       loadData();
     }, 500);
     return () => clearTimeout(timer);
-  }, [currentPage, pageSize, searchQuery]);
+  }, [currentPage, pageSize, searchQuery, dateRange]);
 
   // Reset to first page when search changes
   useEffect(() => {
@@ -224,8 +265,8 @@ export default function Clients() {
       setImportResult(result);
       if (result.success) {
         toast.success(result.message || "Import processed");
-        loadData(); // Refresh list in background
-        resetUpload(); // Close modal on success
+        loadData();
+        resetUpload();
       }
     } catch (error: any) {
       toast.error("Upload failed: " + error.message);
@@ -242,11 +283,32 @@ export default function Clients() {
 
   const totalPages = Math.ceil(totalItems / pageSize);
 
-  // Render Helper for FollowUp Summary Cell
   const FollowUpCell = ({ data }: { data?: FollowUpSummary }) => {
     if (!data) return <span className="text-gray-400 text-xs">-</span>;
+
+    const getFollowUpColor = () => {
+      if (!data.nextFollowUpDate) return "bg-gray-50";
+
+      const nextDate = new Date(data.nextFollowUpDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      nextDate.setHours(0, 0, 0, 0);
+
+      const daysDiff = Math.floor(
+        (today.getTime() - nextDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      if (daysDiff >= 1 && daysDiff <= 2)
+        return "bg-blue-50 border-l-4 border-blue-500";
+      if (daysDiff >= 3 && daysDiff <= 4)
+        return "bg-yellow-50 border-l-4 border-yellow-500";
+      if (daysDiff >= 5) return "bg-red-50 border-l-4 border-red-500";
+    };
+
     return (
-      <div className="flex flex-col gap-1 min-w-[200px]">
+      <div
+        className={`flex flex-col gap-1 min-w-[200px] p-2 rounded ${getFollowUpColor()}`}
+      >
         <div className="flex items-start gap-1">
           <span
             className="text-sm font-medium text-gray-700 line-clamp-2"
@@ -276,55 +338,6 @@ export default function Clients() {
   return (
     <div className="bg-gray-50 pb-6">
       <div className="p-6 space-y-6">
-        {/* Statistics Cards */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="p-4 border-none shadow-sm bg-white ring-1 ring-black/[0.05]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shrink-0">
-                <Users className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500">
-                  Total Clients
-                </p>
-                <p className="text-xl font-bold text-gray-900">
-                  {loading ? "..." : totalItems}
-                </p>
-              </div>
-            </div>
-          </Card>
-          <Card className="p-4 border-none shadow-sm bg-white ring-1 ring-black/[0.05]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 shrink-0">
-                <Users className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500">
-                  Active Clients
-                </p>
-                <p className="text-xl font-bold text-gray-900">
-                  {loading ? "..." : clients.filter((c) => c.isActive).length}
-                </p>
-              </div>
-            </div>
-          </Card>
-          <Card className="p-4 border-none shadow-sm bg-white ring-1 ring-black/[0.05]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center text-red-600 shrink-0">
-                <Users className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500">
-                  Inactive Clients
-                </p>
-                <p className="text-xl font-bold text-gray-900">
-                  {loading ? "..." : clients.filter((c) => !c.isActive).length}
-                </p>
-              </div>
-            </div>
-          </Card>
-        </div> */}
-
         {/* Clients Table */}
         <Card className="overflow-hidden">
           {loading ? (
@@ -360,79 +373,81 @@ export default function Clients() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {clients.map((client) => (
-                    <TableRow key={client.uuid} className="hover:bg-gray-50">
-                      <TableCell className="align-top py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
-                            {client.name?.charAt(0) ||
-                              client.userCode?.charAt(0) ||
-                              "C"}
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-900">
-                              {client.name || "N/A"}
+                  {clients
+                    .filter((client) => client?.status !== "completed")
+                    .map((client) => (
+                      <TableRow key={client.uuid} className="hover:bg-gray-50">
+                        <TableCell className="align-center">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
+                              {client.name?.charAt(0) ||
+                                client.userCode?.charAt(0) ||
+                                "C"}
                             </div>
-                            <div className="text-xs text-gray-500">
-                              {client.city}
+                            <div>
+                              <div className="font-medium text-gray-900">
+                                {client.name || "N/A"}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {client.city}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium text-gray-900 align-top py-4">
-                        {client.userCode}
-                      </TableCell>
-                      <TableCell className="align-top py-4">
-                        {client.salesExecCode ? (
+                        </TableCell>
+                        <TableCell className="font-medium text-gray-900 align-center">
+                          {client.userCode}
+                        </TableCell>
+                        <TableCell className="align-center">
+                          {client.salesExecCode ? (
                             <div className="text-xs text-gray-500">
                               {client.salesExecCode}
                             </div>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </TableCell>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </TableCell>
 
-                      <TableCell className="align-top py-4">
-                        <FollowUpCell data={client.pendingMaterial} />
-                      </TableCell>
-                      <TableCell className="align-top py-4">
-                        <FollowUpCell data={client.pendingOrder} />
-                      </TableCell>
-                      <TableCell className="align-top py-4">
-                        <FollowUpCell data={client.newOrder} />
-                      </TableCell>
+                        <TableCell className="align-center">
+                          <FollowUpCell data={client.pendingMaterial} />
+                        </TableCell>
+                        <TableCell className="align-center">
+                          <FollowUpCell data={client.pendingOrder} />
+                        </TableCell>
+                        <TableCell className="align-center">
+                          <FollowUpCell data={client.newOrder} />
+                        </TableCell>
 
-                      <TableCell className="align-top py-4 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <Link
-                            to={`/admin/clients/${client.uuid}`}
-                            state={{ client }}
-                          >
+                        <TableCell className="align-center text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <Link
+                              to={`/admin/clients/${client.uuid}`}
+                              state={{ client }}
+                            >
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                                title="View Details"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </Link>
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                              title="View Details"
+                              title="Edit Client"
+                              onClick={() => {
+                                setEditingClient(client);
+                                setShowEditModal(true);
+                              }}
                             >
-                              <Eye className="h-4 w-4" />
+                              <Pencil className="h-4 w-4" />
                             </Button>
-                          </Link>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                            title="Edit Client"
-                            onClick={() => {
-                              setEditingClient(client);
-                              setShowEditModal(true);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   {clients.length === 0 && (
                     <TableRow>
                       <TableCell
@@ -450,7 +465,10 @@ export default function Clients() {
 
           <div className="p-4 border-t bg-white flex justify-between items-center">
             <div className="text-sm text-gray-600">
-              Total Clients: <span className="font-semibold text-gray-900">{loading ? "..." : totalItems}</span>
+              Total Clients:{" "}
+              <span className="font-semibold text-gray-900">
+                {loading ? "..." : totalItems}
+              </span>
             </div>
             <TablePagination
               currentPage={currentPage}
@@ -492,7 +510,6 @@ export default function Clients() {
           </DialogHeader>
 
           {!importResult ? (
-            // Original Upload Form
             <>
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -556,9 +573,7 @@ export default function Clients() {
               </DialogFooter>
             </>
           ) : (
-            // Enhanced Result View
             <div className="space-y-6">
-              {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-4">
                   <div className="p-3 bg-green-100 rounded-full text-green-600">
@@ -588,7 +603,6 @@ export default function Clients() {
                 </div>
               </div>
 
-              {/* Failed Records Table */}
               {importResult.data?.failedRecords &&
                 importResult.data?.failedRecords.length > 0 && (
                   <div className="border rounded-lg overflow-hidden">

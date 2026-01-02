@@ -605,7 +605,7 @@ export default function Reports() {
                     ) : (
                       paginatedFollowUps.map((fu) => (
                         <TableRow key={fu.id} className="hover:bg-gray-50">
-                          <TableCell className="align-top py-4">
+                          <TableCell className="align-center">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
                                 {fu.clientName?.charAt(0) ||
@@ -622,7 +622,7 @@ export default function Reports() {
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="align-top py-4">
+                          <TableCell className="align-center">
                             {fu.salesExecCode ? (
                               <div>
                                 <div className="font-medium text-gray-900">
@@ -636,7 +636,7 @@ export default function Reports() {
                               <span className="text-gray-400">-</span>
                             )}
                           </TableCell>
-                          <TableCell className="align-top py-4">
+                          <TableCell className="align-center">
                             <Badge
                               variant="outline"
                               className={`text-xs font-medium ${
@@ -650,7 +650,7 @@ export default function Reports() {
                               {fu.type}
                             </Badge>
                           </TableCell>
-                          <TableCell className="align-top py-4">
+                          <TableCell className="align-center">
                             <div
                               className="text-sm text-gray-700 line-clamp-2 leading-relaxed"
                               title={fu.followUpMsg}
@@ -662,14 +662,14 @@ export default function Reports() {
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className="align-top py-4">
+                          <TableCell className="align-center">
                             <div className="text-sm font-medium text-gray-900">
                               {new Date(
                                 fu.nextFollowUpDate
                               ).toLocaleDateString()}
                             </div>
                           </TableCell>
-                          <TableCell className="align-top py-4">
+                          <TableCell className="align-center">
                             {fu.lastFollowUpDate ? (
                               <div className="text-sm text-gray-900">
                                 {new Date(
@@ -680,7 +680,7 @@ export default function Reports() {
                               <span className="text-gray-400 text-sm">-</span>
                             )}
                           </TableCell>
-                          <TableCell className="align-top py-4">
+                          <TableCell className="align-center">
                             <Badge
                               variant="outline"
                               className={`text-xs font-medium ${

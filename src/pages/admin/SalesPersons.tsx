@@ -390,7 +390,7 @@ export default function SalesPersons() {
                 <TableBody>
                   {salesPersons.map((sp) => (
                     <TableRow key={sp.uuid} className="hover:bg-gray-50">
-                      <TableCell className="align-top py-4">
+                      <TableCell className="align-center">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs shrink-0">
                             {sp.name?.charAt(0).toUpperCase() || "U"}
@@ -400,10 +400,10 @@ export default function SalesPersons() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium text-gray-900 align-top py-4">
+                      <TableCell className="font-medium text-gray-900 align-center">
                         {sp.userCode}
                       </TableCell>
-                      <TableCell className="align-top py-4">
+                      <TableCell className="align-center">
                         <div className="flex flex-col gap-1">
                           {sp.email && (
                             <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -427,7 +427,7 @@ export default function SalesPersons() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="align-top py-4">
+                      <TableCell className="align-center">
                         <Badge
                           variant={sp.isActive ? "default" : "secondary"}
                           className={
@@ -439,7 +439,7 @@ export default function SalesPersons() {
                           {sp.isActive ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="align-top py-4">
+                      <TableCell className="align-center">
                         <div className="flex items-center justify-center gap-2">
                           <Button
                             variant="ghost"
