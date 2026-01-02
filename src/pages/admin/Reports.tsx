@@ -281,12 +281,10 @@ export default function Reports() {
       title: "Reports & Analytics",
       children: (
         <div className="flex items-center gap-2">
-          <Button
-            onClick={handleExport}
+           <Button
             variant="outline"
-            size="sm"
-            className="gap-2"
-            disabled={filteredFollowUps.length === 0}
+            onClick={handleExport}
+            className="flex items-center gap-2"
           >
             <Download className="w-4 h-4" />
             Export
