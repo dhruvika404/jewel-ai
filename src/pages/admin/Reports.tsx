@@ -227,7 +227,6 @@ export default function Reports() {
       setFollowUps(allFollowUps);
     } catch (error: any) {
       console.error("Error loading report data:", error);
-      toast.error("Error loading report data");
     } finally {
       setLoading(false);
     }
