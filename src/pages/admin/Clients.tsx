@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Calendar } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -128,38 +127,6 @@ export default function Clients() {
       children: (
         <>
           <div className="flex items-center gap-2">
-            {/* <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-2">
-              <Calendar className="w-4 h-4 text-gray-500" />
-              <input
-                type="date"
-                value={dateRange.startDate}
-                onChange={(e) =>
-                  setDateRange({ ...dateRange, startDate: e.target.value })
-                }
-                className="text-sm outline-none"
-                placeholder="Start Date"
-              />
-              <span className="text-gray-400">-</span>
-              <input
-                type="date"
-                value={dateRange.endDate}
-                onChange={(e) =>
-                  setDateRange({ ...dateRange, endDate: e.target.value })
-                }
-                className="text-sm outline-none"
-                placeholder="End Date"
-              />
-              {(dateRange.startDate || dateRange.endDate) && (
-                <button
-                  onClick={() =>
-                    setDateRange({ startDate: "", endDate: "" })
-                  }
-                  className="ml-2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div> */}
           </div>
           <Button
             variant="outline"
@@ -181,12 +148,10 @@ export default function Clients() {
     });
   }, [searchQuery, dateRange]);
 
-  // Load clients data and stats
   const loadData = async () => {
     setLoading(true);
     let currentTotalItems = 0;
     try {
-      // Load Clients List - filter by sales executive if user is sales person
       const params: any = {
         page: currentPage,
         size: pageSize,
@@ -194,7 +159,6 @@ export default function Clients() {
         role: "client",
       };
 
-      // Add date range filters if set
       if (dateRange.startDate) {
         params.startDate = dateRange.startDate;
       }
@@ -202,7 +166,6 @@ export default function Clients() {
         params.endDate = dateRange.endDate;
       }
 
-      // If user is sales executive, filter by their code
       if (user?.role === "sales_executive" && user?.userCode) {
         params.salesExecCode = user.userCode;
       }
@@ -236,7 +199,6 @@ export default function Clients() {
     return () => clearTimeout(timer);
   }, [currentPage, pageSize, searchQuery, dateRange]);
 
-  // Reset to first page when search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
@@ -338,7 +300,6 @@ export default function Clients() {
   return (
     <div className="bg-gray-50 pb-6">
       <div className="p-6 space-y-6">
-        {/* Clients Table */}
         <Card className="overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -352,8 +313,8 @@ export default function Clients() {
                     <TableHead className="font-medium text-gray-700 w-[200px]">
                       Client Name
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 w-[100px]">
-                      Code
+                    <TableHead className="font-medium text-gray-700 w-[130px]">
+                      Client Code
                     </TableHead>
                     <TableHead className="font-medium text-gray-700 w-[150px]">
                       Sales Person
@@ -387,9 +348,6 @@ export default function Clients() {
                             <div>
                               <div className="font-medium text-gray-900">
                                 {client.name || "N/A"}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {client.city}
                               </div>
                             </div>
                           </div>
@@ -465,7 +423,7 @@ export default function Clients() {
 
           <div className="p-4 border-t bg-white flex justify-between items-center">
             <div className="text-sm text-gray-600">
-              Total Clients:{" "}
+              Total:{" "}
               <span className="font-semibold text-gray-900">
                 {loading ? "..." : totalItems}
               </span>
@@ -481,7 +439,6 @@ export default function Clients() {
         </Card>
       </div>
 
-      {/* Upload Dialog */}
       <Dialog
         open={showUploadDialog}
         onOpenChange={(open) => {

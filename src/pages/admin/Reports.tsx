@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -22,7 +21,6 @@ import TablePagination from "@/components/ui/table-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Download,
   Loader2,
   Clock,
   AlertCircle,
@@ -30,8 +28,8 @@ import {
   Filter,
   Users,
   Building2,
-  Search,
   X,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -43,6 +41,8 @@ import {
 } from "@/services/api";
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import * as XLSX from "xlsx";
+import { DateRange } from "react-day-picker";
+import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 
 type ReportType = "todays-taken" | "pending" | "overdue";
 
@@ -76,9 +76,7 @@ interface Client {
 export default function Reports() {
   const { setHeader } = usePageHeader();
   const [reportType, setReportType] = useState<ReportType>("todays-taken");
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [salesPersonFilter, setSalesPersonFilter] = useState("all");
   const [clientFilter, setClientFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -126,24 +124,20 @@ export default function Reports() {
     try {
       const [newOrderRes, pendingOrderRes, pendingMaterialRes] =
         await Promise.all([
-          newOrderAPI.getFollowUpsByClientCode({ page: 1, size: 10000 }),
+          newOrderAPI.getFollowUpsByClientCode({ page: 1, size: 10 }),
           pendingOrderAPI.getFollowUpsByClientCode({
             page: 1,
-            size: 10000,
-            clientCode: "",
+            size: 10,
           }),
           pendingMaterialAPI.getFollowUpsByClientCode({
             page: 1,
-            size: 10000,
-            clientCode: "",
+            size: 10,
           }),
         ]);
 
       const allFollowUps: FollowUpRecord[] = [];
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const selectedDateObj = new Date(selectedDate);
-      selectedDateObj.setHours(0, 0, 0, 0);
 
       const processApiResponse = (res: any, type: string) => {
         let dataArray = [];
@@ -170,24 +164,52 @@ export default function Reports() {
 
               let includeRecord = false;
 
-              if (reportType === "todays-taken") {
+               if (reportType === "todays-taken") {
                 const createdDate = fu.createdAt
                   ? new Date(fu.createdAt)
                   : null;
                 if (createdDate) {
                   createdDate.setHours(0, 0, 0, 0);
-                  includeRecord =
-                    createdDate.getTime() === today.getTime() &&
-                    fu.followUpStatus?.toLowerCase() === "completed";
+                  if (dateRange?.from) {
+                     const from = new Date(dateRange.from);
+                     from.setHours(0, 0, 0, 0);
+                     const to = dateRange.to ? new Date(dateRange.to) : new Date(from);
+                     to.setHours(23, 59, 59, 999);
+                     
+                     includeRecord = createdDate >= from && createdDate <= to && fu.followUpStatus?.toLowerCase() === "completed";
+                  } else {
+                     includeRecord =
+                        createdDate.getTime() === today.getTime() &&
+                        fu.followUpStatus?.toLowerCase() === "completed";
+                  }
                 }
               } else if (reportType === "pending") {
-                includeRecord =
-                  fu.followUpStatus?.toLowerCase() !== "completed" &&
-                  fuDate >= selectedDateObj;
+                if (dateRange?.from) {
+                     const from = new Date(dateRange.from);
+                     from.setHours(0, 0, 0, 0);
+                     const to = dateRange.to ? new Date(dateRange.to) : new Date(from);
+                     to.setHours(23, 59, 59, 999);
+                     
+                     includeRecord = fu.followUpStatus?.toLowerCase() !== "completed" && fuDate >= from && fuDate <= to;
+                } else {
+                    // Default behavior: pending from today onwards
+                    includeRecord =
+                      fu.followUpStatus?.toLowerCase() !== "completed" &&
+                      fuDate >= today;
+                }
               } else if (reportType === "overdue") {
-                includeRecord =
-                  fu.followUpStatus?.toLowerCase() !== "completed" &&
-                  fuDate < today;
+                 if (dateRange?.from) {
+                     const from = new Date(dateRange.from);
+                     from.setHours(0, 0, 0, 0);
+                     const to = dateRange.to ? new Date(dateRange.to) : new Date(from);
+                     to.setHours(23, 59, 59, 999);
+                     
+                     includeRecord = fu.followUpStatus?.toLowerCase() !== "completed" && fuDate >= from && fuDate <= to;
+                 } else {
+                    includeRecord =
+                      fu.followUpStatus?.toLowerCase() !== "completed" &&
+                      fuDate < today;
+                 }
               }
 
               if (includeRecord) {
@@ -234,7 +256,7 @@ export default function Reports() {
 
   useEffect(() => {
     loadReportData();
-  }, [reportType, selectedDate]);
+  }, [reportType, dateRange]);
 
   useEffect(() => {
     if (clients.length > 0 && salesPersons.length > 0 && followUps.length > 0) {
@@ -273,11 +295,16 @@ export default function Reports() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [salesPersonFilter, clientFilter, reportType, selectedDate, searchTerm]);
+  }, [salesPersonFilter, clientFilter, reportType, dateRange, searchTerm]);
 
   useEffect(() => {
     setHeader({
       title: "Reports & Analytics",
+      search: {
+        placeholder: "Search reports...",
+        value: searchTerm,
+        onChange: (val) => setSearchTerm(val),
+      },
       children: (
         <div className="flex items-center gap-2">
            <Button
@@ -291,13 +318,13 @@ export default function Reports() {
         </div>
       ),
     });
-  }, [filteredFollowUps.length]);
+  }, [filteredFollowUps.length, searchTerm]);
 
   const clearFilters = () => {
     setSalesPersonFilter("all");
     setClientFilter("all");
     setSearchTerm("");
-    setSelectedDate(new Date().toISOString().split("T")[0]);
+    setDateRange(undefined);
   };
 
   const getActiveFilterCount = () => {
@@ -305,6 +332,7 @@ export default function Reports() {
     if (salesPersonFilter !== "all") count++;
     if (clientFilter !== "all") count++;
     if (searchTerm) count++;
+    if (dateRange) count++;
     return count;
   };
 
@@ -444,44 +472,12 @@ export default function Reports() {
                   : "grid-cols-1 md:grid-cols-3"
               }`}
             >
-              <div>
+              <div className="sm:col-span-1">
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Search Records
+                  Date Range
                 </Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 h-9"
-                  />
-                  {searchTerm && (
-                    <Button
-                      onClick={() => setSearchTerm("")}
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  )}
-                </div>
+                <DatePickerWithRange date={dateRange} setDate={setDateRange} className="w-full" />
               </div>
-
-              {reportType === "pending" && (
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    As on Date
-                  </Label>
-                  <Input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="h-9"
-                  />
-                </div>
-              )}
 
               <div>
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">

@@ -75,33 +75,21 @@ export default function ClientDetails() {
     location.state?.client || null
   );
   const [loading, setLoading] = useState(!location.state?.client);
-
-  // Data states
   const [materials, setMaterials] = useState<any[]>([]);
   const [pendingOrders, setPendingOrders] = useState<any[]>([]);
   const [newOrders, setNewOrders] = useState<any[]>([]);
-
-  // Loading states
   const [loadingPM, setLoadingPM] = useState(false);
   const [loadingPO, setLoadingPO] = useState(false);
   const [loadingNO, setLoadingNO] = useState(false);
-
-  // Follow-up states
   const [pmFollowUps, setPmFollowUps] = useState<any[]>([]);
   const [poFollowUps, setPoFollowUps] = useState<any[]>([]);
   const [noFollowUps, setNoFollowUps] = useState<any[]>([]);
-
-  // Follow-up loading states
   const [loadingPMFollowUps, setLoadingPMFollowUps] = useState(false);
   const [loadingPOFollowUps, setLoadingPOFollowUps] = useState(false);
   const [loadingNOFollowUps, setLoadingNOFollowUps] = useState(false);
-
-  // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  // Form states
   const [formData, setFormData] = useState({
     followUpMsg: "",
     nextFollowUpDate: "",
@@ -109,8 +97,6 @@ export default function ClientDetails() {
   });
 
   const [showEditModal, setShowEditModal] = useState(false);
-
-  // Add/Edit modals for PM, PO, NO
   const [showPMModal, setShowPMModal] = useState(false);
   const [showPOModal, setShowPOModal] = useState(false);
   const [showNOModal, setShowNOModal] = useState(false);
@@ -121,7 +107,6 @@ export default function ClientDetails() {
   const fetchClient = async () => {
     if (!id) return;
 
-    // If we already have client data from navigation state, don't show loading and don't fetch unless needed
     if (!client) setLoading(true);
 
     try {
@@ -129,7 +114,6 @@ export default function ClientDetails() {
       if (response.success !== false) {
         const clientData = response.data || response.client;
 
-        // Check if sales person has access to this client
         if (
           user?.role === "sales_executive" &&
           user?.userCode &&
@@ -142,7 +126,6 @@ export default function ClientDetails() {
 
         setClient(clientData);
       } else if (!client) {
-        // Only error if we don't have existing client data from state
         toast.error("Failed to load client details");
         navigate(user?.role === "admin" ? "/admin/clients" : "/sales");
       }
@@ -155,25 +138,22 @@ export default function ClientDetails() {
     }
   };
 
-  // Load client details
   useEffect(() => {
     fetchClient();
   }, [id, navigate]);
 
-  // Hide page header on mount and show on unmount
   useEffect(() => {
     setHeader({ visible: false });
     return () => clearHeader();
   }, []);
 
-  // Load relevant data when client is loaded
   const refreshData = () => {
     if (!client?.userCode) return;
 
     // 1. Pending Material
     setLoadingPM(true);
     pendingMaterialAPI
-      .getAll({ clientCode: client.userCode, page: 1, size: 100 })
+      .getAll({ clientCode: client.userCode, page: 1, size: 10 })
       .then((res) => {
         if (res.success && res.data?.data) {
           setMaterials(res.data.data);
@@ -185,7 +165,7 @@ export default function ClientDetails() {
     // 2. Pending Orders
     setLoadingPO(true);
     pendingOrderAPI
-      .getAll({ clientCode: client.userCode, page: 1, size: 100 })
+      .getAll({ clientCode: client.userCode, page: 1, size: 10 })
       .then((res) => {
         if (res.success && res.data?.data) {
           setPendingOrders(res.data.data);
@@ -197,7 +177,7 @@ export default function ClientDetails() {
     // 3. New Orders
     setLoadingNO(true);
     newOrderAPI
-      .getAll({ clientCode: client.userCode, page: 1, size: 100 })
+      .getAll({ clientCode: client.userCode, page: 1, size: 10 })
       .then((res) => {
         if (res.success && res.data?.data) {
           setNewOrders(res.data.data);
@@ -212,7 +192,7 @@ export default function ClientDetails() {
       .getFollowUpsByClientCode({
         clientCode: client.userCode,
         page: 1,
-        size: 100,
+        size: 10,
       })
       .then((res) => {
         if (res.success && res.data?.data) {
@@ -227,7 +207,7 @@ export default function ClientDetails() {
       .getFollowUpsByClientCode({
         clientCode: client.userCode,
         page: 1,
-        size: 100,
+        size: 10,
       })
       .then((res) => {
         if (res.success && res.data?.data) {
@@ -242,7 +222,7 @@ export default function ClientDetails() {
       .getFollowUpsByClientCode({
         clientCode: client.userCode,
         page: 1,
-        size: 100,
+        size: 10,
       })
       .then((res) => {
         if (res.success && res.data?.data) {
@@ -287,7 +267,6 @@ export default function ClientDetails() {
       return;
     }
 
-    // Assuming only one item, use the first one
     const recordId = items[0].uuid || items[0].id;
 
     if (!recordId) {
@@ -325,7 +304,7 @@ export default function ClientDetails() {
       }
       toast.success("Follow-up added successfully");
       setIsModalOpen(false);
-      refreshData(); // Reload data to show updated follow-up
+      refreshData();
     } catch (e: any) {
       toast.error("Failed to add follow-up: " + (e.message || "Unknown error"));
     } finally {
@@ -546,7 +525,6 @@ export default function ClientDetails() {
                           </div>
                         </>
                       )}
-
                       {type === "pending-order" && (
                         <>
                           <div className="grid grid-cols-3 gap-2.5">
@@ -750,7 +728,6 @@ export default function ClientDetails() {
                     className="bg-white rounded border border-gray-200 p-3 hover:border-gray-300 hover:shadow-sm transition-all"
                   >
                     <div className="space-y-2.5">
-                      {/* Message first */}
                       <div className="flex flex-col">
                         <span className="text-[10px] font-medium text-gray-600 mb-1 uppercase tracking-wide">
                           Message
@@ -764,7 +741,6 @@ export default function ClientDetails() {
                         </div>
                       </div>
 
-                      {/* Dates on same line */}
                       <div className="flex items-center gap-4 pt-2 border-t border-gray-100">
                         <div className="flex flex-col flex-1">
                           <span className="text-[10px] font-medium text-gray-600 mb-0.5 uppercase tracking-wide">
@@ -858,7 +834,6 @@ export default function ClientDetails() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col overflow-hidden h-screen">
-      {/* Header Section */}
       <header className="px-6 py-3 border-b bg-card border-border sticky top-0 z-20 min-h-16 flex items-center justify-between gap-4 shrink-0">
         <div className="flex items-center gap-4">
           <Button
@@ -876,7 +851,6 @@ export default function ClientDetails() {
           </h1>
         </div>
 
-        {/* Client Code, Email, Phone in one line */}
         <div className="flex items-center gap-5 flex-wrap">
           <div className="flex items-center gap-2 bg-muted px-3 py-1.5 rounded-md border border-border">
             <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">

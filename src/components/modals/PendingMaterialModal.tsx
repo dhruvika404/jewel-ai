@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react'
 import { pendingMaterialAPI, salesPersonAPI } from '@/services/api'
 import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import { formatDateForInput } from '@/lib/utils'
 
 interface PendingMaterialModalProps {
@@ -29,6 +30,8 @@ export function PendingMaterialModal({ isOpen, onClose, onSuccess, clientCode, m
     departmentName: '',
     totalNetWt: '',
     nextFollowUpDate: '',
+    status: 'pending',
+    remark: ''
   })
 
   useEffect(() => {
@@ -56,6 +59,8 @@ export function PendingMaterialModal({ isOpen, onClose, onSuccess, clientCode, m
         departmentName: material.departmentName || '',
         totalNetWt: material.totalNetWt || '',
         nextFollowUpDate: formatDateForInput(material.nextFollowUpDate),
+        status: material.status || 'pending',
+        remark: material.remark || ''
       })
     } else {
       setFormData({
@@ -67,6 +72,8 @@ export function PendingMaterialModal({ isOpen, onClose, onSuccess, clientCode, m
         departmentName: '',
         totalNetWt: '',
         nextFollowUpDate: '',
+        status: 'pending',
+        remark: ''
       })
     }
   }, [material, clientCode, isOpen])
@@ -190,6 +197,32 @@ export function PendingMaterialModal({ isOpen, onClose, onSuccess, clientCode, m
                 onChange={(e) => setFormData({ ...formData, nextFollowUpDate: e.target.value })}
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select value={formData.status} onValueChange={(val) => setFormData({ ...formData, status: val })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="remark">Remark</Label>
+            <Textarea
+              id="remark"
+              value={formData.remark}
+              onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
+              placeholder="Enter remark"
+              rows={3}
+            />
           </div>
 
           <DialogFooter>

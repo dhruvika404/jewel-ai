@@ -337,6 +337,10 @@ export const pendingOrderAPI = {
     search?: string;
     status?: string;
     sortBy?: string;
+    sortOrder?: string;
+    startDate?: string;
+    endDate?: string;
+    salesExecCode?: string;
   }) => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append("page", params.page.toString());
@@ -344,7 +348,11 @@ export const pendingOrderAPI = {
     if (params?.clientCode) queryParams.append("clientCode", params.clientCode);
     if (params?.search) queryParams.append("search", params.search);
     if (params?.status) queryParams.append("status", params.status);
-    if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
+    if (params?.sortBy) queryParams.append("shortBy", params.sortBy);
+    if (params?.sortOrder) queryParams.append("shortOrder", params.sortOrder);
+    if (params?.startDate) queryParams.append("startDate", params.startDate);
+    if (params?.endDate) queryParams.append("endDate", params.endDate);
+    if (params?.salesExecCode) queryParams.append("salesExecCode", params.salesExecCode);
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.LIST}?${queryParams}`,
@@ -365,6 +373,7 @@ export const pendingOrderAPI = {
     remark?: string;
     nextFollowUpDate?: string;
     lastFollowUpMsg?: string;
+    status?: string;
   }) => {
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.LIST}`,
@@ -389,6 +398,7 @@ export const pendingOrderAPI = {
       remark?: string;
       nextFollowUpDate?: string;
       lastFollowUpMsg?: string;
+      status?: string;
     }
   ) => {
     const response = await fetch(
@@ -406,14 +416,14 @@ export const pendingOrderAPI = {
   getFollowUpsByClientCode: async (params: {
     page?: number;
     size?: number;
-    clientCode: string;
+    clientCode?: string;
     status?: string;
     sortBy?: string;
   }) => {
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append("page", params.page.toString());
     if (params.size) queryParams.append("size", params.size.toString());
-    queryParams.append("clientCode", params.clientCode);
+    if (params.clientCode) queryParams.append("clientCode", params.clientCode);
     if (params.status) queryParams.append("status", params.status);
     if (params.sortBy) queryParams.append("sortBy", params.sortBy);
 
@@ -470,6 +480,10 @@ export const pendingMaterialAPI = {
     search?: string;
     status?: string;
     sortBy?: string;
+    sortOrder?: string;
+    startDate?: string;
+    endDate?: string;
+    salesExecCode?: string;
   }) => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append("page", params.page.toString());
@@ -477,7 +491,11 @@ export const pendingMaterialAPI = {
     if (params?.clientCode) queryParams.append("clientCode", params.clientCode);
     if (params?.search) queryParams.append("search", params.search);
     if (params?.status) queryParams.append("status", params.status);
-    if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
+    if (params?.sortBy) queryParams.append("shortBy", params.sortBy);
+    if (params?.sortOrder) queryParams.append("shortOrder", params.sortOrder);
+    if (params?.startDate) queryParams.append("startDate", params.startDate);
+    if (params?.endDate) queryParams.append("endDate", params.endDate);
+    if (params?.salesExecCode) queryParams.append("salesExecCode", params.salesExecCode);
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.LIST}?${queryParams}`,
@@ -543,14 +561,14 @@ export const pendingMaterialAPI = {
   getFollowUpsByClientCode: async (params: {
     page?: number;
     size?: number;
-    clientCode: string;
+    clientCode?: string;
     status?: string;
     sortBy?: string;
   }) => {
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append("page", params.page.toString());
     if (params.size) queryParams.append("size", params.size.toString());
-    queryParams.append("clientCode", params.clientCode);
+    if (params.clientCode) queryParams.append("clientCode", params.clientCode);
     if (params.status) queryParams.append("status", params.status);
     if (params.sortBy) queryParams.append("sortBy", params.sortBy);
 
@@ -608,6 +626,13 @@ export const newOrderAPI = {
     search?: string;
     status?: string;
     sortBy?: string;
+    sortOrder?: string;
+    searchClientCode?: string;
+    searchClientName?: string;
+    searchRemark?: string;
+    startDate?: string;
+    endDate?: string;
+    salesExecCode?: string;
   }) => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append("page", params.page.toString());
@@ -615,7 +640,14 @@ export const newOrderAPI = {
     if (params?.clientCode) queryParams.append("clientCode", params.clientCode);
     if (params?.search) queryParams.append("search", params.search);
     if (params?.status) queryParams.append("status", params.status);
-    if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
+    if (params?.sortBy) queryParams.append("shortBy", params.sortBy);
+    if (params?.sortOrder) queryParams.append("shortOrder", params.sortOrder);
+    if (params?.searchClientCode) queryParams.append("searchClientCode", params.searchClientCode);
+    if (params?.searchClientName) queryParams.append("searchClientName", params.searchClientName);
+    if (params?.searchRemark) queryParams.append("searchRemark", params.searchRemark);
+    if (params?.startDate) queryParams.append("startDate", params.startDate);
+    if (params?.endDate) queryParams.append("endDate", params.endDate);
+    if (params?.salesExecCode) queryParams.append("salesExecCode", params.salesExecCode);
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.LIST}?${queryParams}`,
@@ -635,6 +667,8 @@ export const newOrderAPI = {
     lastOrderDate: string;
     clientCategoryName: string;
     nextFollowUpDate: string;
+    status?: string;
+    remark?: string;
   }) => {
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.LIST}`,
@@ -658,6 +692,9 @@ export const newOrderAPI = {
       lastOrderDate?: string;
       clientCategoryName?: string;
       nextFollowUpDate?: string;
+      status?: string;
+      lastFollowUpMsg?: string;
+      remark?: string;
     }
   ) => {
     const response = await fetch(

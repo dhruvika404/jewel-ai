@@ -19,7 +19,7 @@ interface ClientModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
-  client?: any // If provided, we are in edit mode
+  client?: any
 }
 
 export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalProps) {

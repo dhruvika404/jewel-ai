@@ -29,6 +29,7 @@ export function PendingOrderModal({ isOpen, onClose, onSuccess, clientCode, orde
     grossWtTotal: '',
     remark: '',
     nextFollowUpDate: '',
+    status: 'pending',
   })
 
   useEffect(() => {
@@ -55,6 +56,7 @@ export function PendingOrderModal({ isOpen, onClose, onSuccess, clientCode, orde
         grossWtTotal: order.grossWtTotal?.toString() || '',
         remark: order.remark || '',
         nextFollowUpDate: formatDateForInput(order.nextFollowUpDate),
+        status: order.status || 'pending',
       })
     } else {
       setFormData({
@@ -65,6 +67,7 @@ export function PendingOrderModal({ isOpen, onClose, onSuccess, clientCode, orde
         grossWtTotal: '',
         remark: '',
         nextFollowUpDate: '',
+        status: 'pending',
       })
     }
   }, [order, clientCode, isOpen])
@@ -163,26 +166,29 @@ export function PendingOrderModal({ isOpen, onClose, onSuccess, clientCode, orde
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="nextFollowUpDate">Next Follow-up Date</Label>
+              <Label htmlFor="status">Status</Label>
+              <Select value={formData.status} onValueChange={(val) => setFormData({ ...formData, status: val })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="grossWtTotal">Gross Weight Total *</Label>
               <Input
-                id="nextFollowUpDate"
-                type="date"
-                value={formData.nextFollowUpDate}
-                onChange={(e) => setFormData({ ...formData, nextFollowUpDate: e.target.value })}
+                id="grossWtTotal"
+                type="number"
+                step="0.01"
+                value={formData.grossWtTotal}
+                onChange={(e) => setFormData({ ...formData, grossWtTotal: e.target.value })}
+                placeholder="e.g. 125.75"
               />
             </div>
-           <div className="space-y-2">
-            <Label htmlFor="grossWtTotal">Gross Weight Total *</Label>
-            <Input
-              id="grossWtTotal"
-              type="number"
-              step="0.01"
-              value={formData.grossWtTotal}
-              onChange={(e) => setFormData({ ...formData, grossWtTotal: e.target.value })}
-              placeholder="e.g. 125.75"
-            />
           </div>
-            </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>

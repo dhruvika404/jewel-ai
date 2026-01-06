@@ -86,12 +86,10 @@ export default function AdminHome() {
         pendingOrderAPI.getFollowUpsByClientCode({
           page: 1,
           size: 500,
-          clientCode: "",
         }),
         pendingMaterialAPI.getFollowUpsByClientCode({
           page: 1,
           size: 500,
-          clientCode: "",
         }),
       ]);
 

@@ -80,12 +80,10 @@ export default function SalesHome() {
           pendingOrderAPI.getFollowUpsByClientCode({
             page: 1,
             size: 1000,
-            clientCode: "",
           }),
           pendingMaterialAPI.getFollowUpsByClientCode({
             page: 1,
             size: 1000,
-            clientCode: "",
           }),
         ]);
 

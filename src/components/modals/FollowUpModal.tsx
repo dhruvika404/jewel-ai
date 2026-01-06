@@ -1,0 +1,157 @@
+import { useState, useEffect } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Loader2 } from 'lucide-react'
+import { newOrderAPI, pendingOrderAPI, pendingMaterialAPI } from '@/services/api'
+import { toast } from 'sonner'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { formatDateForInput } from '@/lib/utils'
+
+interface FollowUpModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: () => void
+  type: 'new-order' | 'pending-order' | 'pending-material'
+  data: any
+}
+
+export function FollowUpModal({ isOpen, onClose, onSuccess, type, data }: FollowUpModalProps) {
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    salesExecCode: '',
+    nextFollowUpDate: '',
+    status: '',
+    remark: ''
+  })
+
+  useEffect(() => {
+    if (data) {
+      setFormData({
+        salesExecCode: data.salesExecCode || data.salesExecutive || '',
+        nextFollowUpDate: formatDateForInput(data.nextFollowUpDate),
+        status: (data.status || 'pending').toLowerCase(),
+        remark: data.remark || ''
+      })
+    }
+  }, [data, isOpen])
+
+  useEffect(() => {
+    if (formData.status === 'completed') {
+      setFormData(prev => ({ ...prev, nextFollowUpDate: '' }))
+    }
+  }, [formData.status])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (formData.status === 'pending') {
+      if (!formData.nextFollowUpDate) {
+        toast.error('Next Follow-up Date is required for Pending status')
+        return
+      }
+    }
+    
+    setLoading(true)
+    try {
+      const payload: any = {
+        nextFollowUpDate: formData.nextFollowUpDate,
+        status: formData.status,
+        remark: formData.remark
+      }
+
+      const id = data.uuid || data.id || data._id
+
+      if (type === 'new-order') {
+        await newOrderAPI.update(id, payload)
+      } else if (type === 'pending-order') {
+        await pendingOrderAPI.update(id, payload)
+      } else if (type === 'pending-material') {
+        await pendingMaterialAPI.update(id, payload)
+      }
+      onSuccess()
+      onClose()
+    } catch (error: any) {
+      toast.error(error.message || 'Operation failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getTitle = () => {
+    switch (type) {
+      case 'new-order': return 'Edit New Order Follow-up'
+      case 'pending-order': return 'Edit Pending Order Follow-up'
+      case 'pending-material': return 'Edit Pending Material Follow-up'
+      default: return 'Edit Follow-up'
+    }
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{getTitle()}</DialogTitle>
+          <DialogDescription>
+            Update follow-up details
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          
+
+          <div className="space-y-2">
+            <Label htmlFor="nextFollowUpDate">Next Follow-up Date {formData.status === 'pending' && '*'}</Label>
+            <Input
+              id="nextFollowUpDate"
+              type="date"
+              value={formData.nextFollowUpDate}
+              onChange={(e) => setFormData({ ...formData, nextFollowUpDate: e.target.value })}
+              disabled={formData.status === 'completed'}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select 
+              value={formData.status} 
+              onValueChange={(val) => setFormData({ ...formData, status: val })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          
+            <div className="space-y-2">
+
+              <Label htmlFor="remark">Remark</Label>
+              <Textarea
+                id="remark"
+                value={formData.remark}
+                onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
+                placeholder="Enter follow-up notes"
+                rows={3}
+              />
+            </div>
+
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Update
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}

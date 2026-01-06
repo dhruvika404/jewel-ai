@@ -10,6 +10,7 @@ import {
   FileText,
   UsersRound,
   Headset,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ConfirmationModal from "@/components/modals/ConfirmationModal";
@@ -21,20 +22,37 @@ interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
+interface MenuItem {
+  label: string;
+  href?: string;
+  icon: any;
+  submenu?: { label: string; href: string }[];
+}
+
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const { logout, user } = useAuth();
   const { header } = usePageHeader();
   const location = useLocation();
   const [isSidebar, setIsSidebar] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const sideBarref = useRef<HTMLDivElement>(null);
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { label: "Clients", href: "/admin/clients", icon: UsersRound },
     { label: "Sales Persons", href: "/admin/sales-persons", icon: Users },
     { label: "Reports", href: "/admin/reports", icon: FileText },
-    { label: "Followups", href: "/admin/followups", icon: Headset },
+    {
+      label: "Followups",
+      icon: Headset,
+      submenu: [
+        { label: "New Order", href: "/admin/followups/new-order" },
+        { label: "Pending Order", href: "/admin/followups/pending-order" },
+        { label: "Pending Material", href: "/admin/followups/pending-material" },
+        { label: "CAD Order", href: "/admin/followups/cad-order" },
+      ],
+    },
   ];
 
   const isActive = (href: string) => {
@@ -42,6 +60,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       return location.pathname === "/admin";
     }
     return location.pathname.startsWith(href);
+  };
+
+  const isSubmenuActive = (submenu?: { label: string; href: string }[]) => {
+    if (!submenu) return false;
+    return submenu.some((item) => location.pathname === item.href);
   };
 
   return (
@@ -75,21 +98,75 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <ul className="space-y-1">
               {menuItems.map((item) => {
                 const Icon = item.icon;
+                const hasSubmenu = item.submenu && item.submenu.length > 0;
+                const isExpanded = expandedMenu === item.label;
+                const isItemActive = item.href ? isActive(item.href) : isSubmenuActive(item.submenu);
+
                 return (
-                  <li key={item.href}>
-                    <Link
-                      to={item.href}
-                      onClick={() => setIsSidebar(false)}
-                      className={cn(
-                        "w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md transition-colors",
-                        isActive(item.href)
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      )}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {item.label}
-                    </Link>
+                  <li key={item.label}>
+                    {hasSubmenu ? (
+                      <>
+                        <button
+                          onClick={() =>
+                            setExpandedMenu(isExpanded ? null : item.label)
+                          }
+                          className={cn(
+                            "w-full flex items-center justify-between gap-2 px-2 py-2 text-sm rounded-md transition-colors",
+                            isItemActive || isExpanded
+                              ? "bg-primary/10 text-primary"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon className="w-4 h-4" />
+                            {item.label}
+                          </div>
+                          <ChevronDown
+                            className={cn(
+                              "w-4 h-4 transition-transform",
+                              isExpanded && "rotate-180"
+                            )}
+                          />
+                        </button>
+                        {isExpanded && (
+                          <ul className="mt-1 ml-4 space-y-1 border-l border-border pl-2">
+                            {item.submenu?.map((subitem) => (
+                              <li key={subitem.href}>
+                                <Link
+                                  to={subitem.href}
+                                  onClick={() => setIsSidebar(false)}
+                                  className={cn(
+                                    "w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md transition-colors",
+                                    location.pathname === subitem.href
+                                      ? "bg-primary/10 text-primary font-medium"
+                                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                  )}
+                                >
+                                  {subitem.label}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </>
+                    ) : (
+                      <Link
+                        to={item.href || "#"}
+                        onClick={() => {
+                          setIsSidebar(false);
+                          setExpandedMenu(null);
+                        }}
+                        className={cn(
+                          "w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md transition-colors",
+                          isActive(item.href || "")
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        )}
+                      >
+                        <Icon className="w-4 h-4" />
+                        {item.label}
+                      </Link>
+                    )}
                   </li>
                 );
               })}

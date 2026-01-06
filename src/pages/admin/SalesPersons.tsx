@@ -292,54 +292,6 @@ export default function SalesPersons() {
   return (
     <div className="bg-gray-50 pb-6">
       <div className="p-6 space-y-6">
-        {/* Statistics Cards */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="p-4 border-none shadow-sm bg-white ring-1 ring-black/[0.05]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shrink-0">
-                <Users className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500">Total Users</p>
-                <p className="text-xl font-bold text-gray-900">
-                  {loading ? "..." : stats.total}
-                </p>
-              </div>
-            </div>
-          </Card>
-          <Card className="p-4 border-none shadow-sm bg-white ring-1 ring-black/[0.05]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 shrink-0">
-                <Users className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500">
-                  Active Users
-                </p>
-                <p className="text-xl font-bold text-gray-900">
-                  {loading ? "..." : stats.active}
-                </p>
-              </div>
-            </div>
-          </Card>
-          <Card className="p-4 border-none shadow-sm bg-white ring-1 ring-black/[0.05]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center text-red-600 shrink-0">
-                <Users className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500">
-                  Inactive Users
-                </p>
-                <p className="text-xl font-bold text-gray-900">
-                  {loading ? "..." : stats.inactive}
-                </p>
-              </div>
-            </div>
-          </Card>
-        </div> */}
-
-        {/* Sales Persons Table */}
         <Card className="overflow-hidden">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24 text-gray-500">
@@ -474,7 +426,7 @@ export default function SalesPersons() {
           {totalItems > 0 && (
             <div className="p-4 border-t bg-white flex justify-between items-center">
               <div className="text-sm text-gray-600">
-                Total Sales Persons: <span className="font-semibold text-gray-900">{loading ? "..." : totalItems}</span>
+                Total : <span className="font-semibold text-gray-900">{loading ? "..." : totalItems}</span>
               </div>
               <TablePagination
                 currentPage={currentPage}
