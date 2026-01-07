@@ -424,12 +424,12 @@ export default function Followups() {
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       const matchesSearch =
-        fu.userCode.toLowerCase().includes(searchLower) ||
-        fu.name.toLowerCase().includes(searchLower) ||
-        fu.salesExecutive.toLowerCase().includes(searchLower);
+        (fu.userCode?.toLowerCase() || "").includes(searchLower) ||
+        (fu.name?.toLowerCase() || "").includes(searchLower) ||
+        (fu.salesExecutive?.toLowerCase() || "").includes(searchLower);
 
       if (fu.type === "pending-order") {
-        return matchesSearch || fu.orderNo.toLowerCase().includes(searchLower);
+        return matchesSearch || (fu.orderNo?.toLowerCase() || "").includes(searchLower);
       }
       if (!matchesSearch) return false;
     }
