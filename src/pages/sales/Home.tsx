@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import { useAuth } from "@/contexts/AuthContext";
 import { CreateTaskModal } from "@/components/modals/CreateTaskModal";
+import { formatDisplayDate } from "@/lib/utils";
 
 interface FollowUp {
   id: string;
@@ -292,7 +293,7 @@ export default function SalesHome() {
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
                           {item.type} • Due{" "}
-                          {new Date(item.nextFollowUpDate).toLocaleDateString()}
+                          {formatDisplayDate(item.nextFollowUpDate)}
                         </div>
                       </div>
                       <Badge className="bg-red-50 text-red-600 border-red-100 hover:bg-red-50 shadow-none">

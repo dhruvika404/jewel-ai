@@ -42,6 +42,7 @@ import {
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import * as XLSX from "xlsx";
 import { DateRange } from "react-day-picker";
+import { formatDisplayDate } from "@/lib/utils";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 
 type ReportType = "todays-taken" | "pending" | "overdue";
@@ -164,52 +165,67 @@ export default function Reports() {
 
               let includeRecord = false;
 
-               if (reportType === "todays-taken") {
+              if (reportType === "todays-taken") {
                 const createdDate = fu.createdAt
                   ? new Date(fu.createdAt)
                   : null;
                 if (createdDate) {
                   createdDate.setHours(0, 0, 0, 0);
                   if (dateRange?.from) {
-                     const from = new Date(dateRange.from);
-                     from.setHours(0, 0, 0, 0);
-                     const to = dateRange.to ? new Date(dateRange.to) : new Date(from);
-                     to.setHours(23, 59, 59, 999);
-                     
-                     includeRecord = createdDate >= from && createdDate <= to && fu.followUpStatus?.toLowerCase() === "completed";
+                    const from = new Date(dateRange.from);
+                    from.setHours(0, 0, 0, 0);
+                    const to = dateRange.to
+                      ? new Date(dateRange.to)
+                      : new Date(from);
+                    to.setHours(23, 59, 59, 999);
+
+                    includeRecord =
+                      createdDate >= from &&
+                      createdDate <= to &&
+                      fu.followUpStatus?.toLowerCase() === "completed";
                   } else {
-                     includeRecord =
-                        createdDate.getTime() === today.getTime() &&
-                        fu.followUpStatus?.toLowerCase() === "completed";
+                    includeRecord =
+                      createdDate.getTime() === today.getTime() &&
+                      fu.followUpStatus?.toLowerCase() === "completed";
                   }
                 }
               } else if (reportType === "pending") {
                 if (dateRange?.from) {
-                     const from = new Date(dateRange.from);
-                     from.setHours(0, 0, 0, 0);
-                     const to = dateRange.to ? new Date(dateRange.to) : new Date(from);
-                     to.setHours(23, 59, 59, 999);
-                     
-                     includeRecord = fu.followUpStatus?.toLowerCase() !== "completed" && fuDate >= from && fuDate <= to;
+                  const from = new Date(dateRange.from);
+                  from.setHours(0, 0, 0, 0);
+                  const to = dateRange.to
+                    ? new Date(dateRange.to)
+                    : new Date(from);
+                  to.setHours(23, 59, 59, 999);
+
+                  includeRecord =
+                    fu.followUpStatus?.toLowerCase() !== "completed" &&
+                    fuDate >= from &&
+                    fuDate <= to;
                 } else {
-                    // Default behavior: pending from today onwards
-                    includeRecord =
-                      fu.followUpStatus?.toLowerCase() !== "completed" &&
-                      fuDate >= today;
+                  // Default behavior: pending from today onwards
+                  includeRecord =
+                    fu.followUpStatus?.toLowerCase() !== "completed" &&
+                    fuDate >= today;
                 }
               } else if (reportType === "overdue") {
-                 if (dateRange?.from) {
-                     const from = new Date(dateRange.from);
-                     from.setHours(0, 0, 0, 0);
-                     const to = dateRange.to ? new Date(dateRange.to) : new Date(from);
-                     to.setHours(23, 59, 59, 999);
-                     
-                     includeRecord = fu.followUpStatus?.toLowerCase() !== "completed" && fuDate >= from && fuDate <= to;
-                 } else {
-                    includeRecord =
-                      fu.followUpStatus?.toLowerCase() !== "completed" &&
-                      fuDate < today;
-                 }
+                if (dateRange?.from) {
+                  const from = new Date(dateRange.from);
+                  from.setHours(0, 0, 0, 0);
+                  const to = dateRange.to
+                    ? new Date(dateRange.to)
+                    : new Date(from);
+                  to.setHours(23, 59, 59, 999);
+
+                  includeRecord =
+                    fu.followUpStatus?.toLowerCase() !== "completed" &&
+                    fuDate >= from &&
+                    fuDate <= to;
+                } else {
+                  includeRecord =
+                    fu.followUpStatus?.toLowerCase() !== "completed" &&
+                    fuDate < today;
+                }
               }
 
               if (includeRecord) {
@@ -307,7 +323,7 @@ export default function Reports() {
       },
       children: (
         <div className="flex items-center gap-2">
-           <Button
+          <Button
             variant="outline"
             onClick={handleExport}
             className="flex items-center gap-2"
@@ -344,19 +360,15 @@ export default function Reports() {
 
     const exportData = filteredFollowUps.map((fu, index) => ({
       "S.No": index + 1,
-      "Client Code": fu.clientCode,
       "Client Name": fu.clientName,
-      "Sales Person Code": fu.salesExecCode || "-",
+      "Client Code": fu.clientCode,
       "Sales Person Name": fu.salesExecName || "-",
+      "Sales Person Code": fu.salesExecCode || "-",
       Type: fu.type,
       "Follow-up Message": fu.followUpMsg,
-      "Next Follow-up Date": new Date(fu.nextFollowUpDate).toLocaleDateString(),
-      "Last Follow-up Date": fu.lastFollowUpDate
-        ? new Date(fu.lastFollowUpDate).toLocaleDateString()
-        : "-",
+      "Next Follow-up Date": formatDisplayDate(fu.nextFollowUpDate),
+      "Last Follow-up Date": formatDisplayDate(fu.lastFollowUpDate),
       Status: fu.followUpStatus,
-      "Export Date": new Date().toLocaleDateString(),
-      "Export Time": new Date().toLocaleTimeString(),
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -659,17 +671,13 @@ export default function Reports() {
                           </TableCell>
                           <TableCell className="align-center">
                             <div className="text-sm font-medium text-gray-900">
-                              {new Date(
-                                fu.nextFollowUpDate
-                              ).toLocaleDateString()}
+                              {formatDisplayDate(fu.nextFollowUpDate)}
                             </div>
                           </TableCell>
                           <TableCell className="align-center">
                             {fu.lastFollowUpDate ? (
                               <div className="text-sm text-gray-900">
-                                {new Date(
-                                  fu.lastFollowUpDate
-                                ).toLocaleDateString()}
+                                {formatDisplayDate(fu.lastFollowUpDate)}
                               </div>
                             ) : (
                               <span className="text-gray-400 text-sm">-</span>

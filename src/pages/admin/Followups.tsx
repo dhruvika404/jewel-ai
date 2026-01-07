@@ -52,6 +52,7 @@ import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import * as XLSX from "xlsx";
 import { DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import { formatDisplayDate } from "@/lib/utils";
 
 type FollowupType =
   | "new-order"
@@ -403,6 +404,113 @@ export default function Followups() {
     }
   };
 
+  const getFollowupTypeTitle = () => {
+    switch (followupType) {
+      case "new-order":
+        return "New Order Followups";
+      case "pending-order":
+        return "Pending Order Followups";
+      case "pending-material":
+        return "Pending Material Followups";
+      case "cad-order":
+        return "CAD Order Followups";
+      default:
+        return "Followups";
+    }
+  };
+
+  const clearFilters = () => {
+    setSalesPersonFilter("all");
+    setClientFilter("all");
+    setSearchTerm("");
+    setDateRangeFilter("all");
+    setDateRange(undefined);
+    setPendingRangeFilter("all");
+    setDaysFilter("all");
+    setStatusFilter("all");
+    setSortBy(null);
+    setSortOrder(null);
+    // Explicitly reload data when filters are cleared
+    setTimeout(() => {
+      loadFollowupData();
+    }, 0);
+  };
+
+  const handleDateOpenChange = (open: boolean) => {
+    if (!open && dateRange?.from && dateRange?.to) {
+      loadFollowupData();
+    }
+  };
+
+  const handleExport = () => {
+    if (filteredFollowups.length === 0) {
+      return;
+    }
+
+    const exportData = filteredFollowups.map((fu, index) => {
+      const baseRow = {
+        "S.No": index + 1,
+        "Client Code": fu.userCode,
+        "Client Name": fu.name,
+        "Sales Executive": fu.salesExecutive || "-",
+      };
+
+      if (fu.type === "new-order") {
+        return {
+          ...baseRow,
+          "Last Order Date": formatDisplayDate(fu.lastOrderDate),
+          "No Order Since": `${fu.noOrderSince} Days`,
+          "Next Follow-up": formatDisplayDate(fu.nextFollowupDate),
+          "Remark": fu.remark || "-",
+          "Status": fu.status,
+        };
+      } else if (fu.type === "pending-order") {
+        return {
+          ...baseRow,
+          "Order No": fu.orderNo,
+          "Order Date": formatDisplayDate(fu.orderDate),
+          "Pending Since": `${fu.pendingSince} Days`,
+          "Pending Pcs": fu.pendingPcs,
+          "Next Follow-up": formatDisplayDate(fu.nextFollowupDate),
+          "Remark": fu.remark || "-",
+          "Status": fu.status,
+        };
+      } else if (fu.type === "pending-material") {
+        return {
+          ...baseRow,
+          "Order No": fu.orderNo,
+          "Order Date": formatDisplayDate(fu.orderDate),
+          "Pending For": fu.pendingFor,
+          "Pending Since": `${fu.pendingSinceDays} Days`,
+          "Next Follow-up": formatDisplayDate(fu.nextFollowupDate),
+          "Remark": fu.remark || "-",
+          "Status": fu.status,
+        };
+      } else {
+        return {
+          ...baseRow,
+          "Design No": fu.designNo,
+        };
+      }
+    });
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const colWidths = Object.keys(exportData[0] || {}).map((key) => ({
+      wch: Math.max(key.length, 15),
+    }));
+    ws["!cols"] = colWidths;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Followups");
+
+    const fileName = `Followups_${followupType}_${
+      new Date().toISOString().split("T")[0]
+    }.xlsx`;
+
+    XLSX.writeFile(wb, fileName);
+    toast.success(`Exported successfully as ${fileName}`);
+  };
+
   useEffect(() => {
     loadFollowupData();
   }, [followupType, sortBy, sortOrder, statusFilter, currentPage, pageSize]);
@@ -432,34 +540,6 @@ export default function Followups() {
         return matchesSearch || (fu.orderNo?.toLowerCase() || "").includes(searchLower);
       }
       if (!matchesSearch) return false;
-    }
-
-    if (dateRange?.from) {
-      let dateToCheck: Date | null = null;
-
-      if (followupType === "new-order") {
-        dateToCheck = new Date((fu as NewOrderFollowup).lastOrderDate);
-      } else if (followupType === "pending-order") {
-        dateToCheck = new Date((fu as PendingOrderFollowup).orderDate);
-      } else if (followupType === "pending-material") {
-        dateToCheck = (fu as PendingMaterialFollowup).expectedDeliveryDate ? new Date((fu as PendingMaterialFollowup).expectedDeliveryDate) : null;
-      }
-      
-      if (dateToCheck) {
-        const fromDate = dateRange.from;
-        const toDate = dateRange.to || dateRange.from;
-        
-        // Reset time for comparison
-        dateToCheck.setHours(0, 0, 0, 0);
-        const from = new Date(fromDate);
-        from.setHours(0, 0, 0, 0);
-        const to = new Date(toDate);
-        to.setHours(23, 59, 59, 999);
-
-        if (dateToCheck < from || dateToCheck > to) {
-          return false;
-        }
-      }
     }
 
     if (followupType === "new-order" && dateRangeFilter !== "all") {
@@ -540,8 +620,7 @@ export default function Followups() {
     searchTerm,
     dateRangeFilter,
     pendingRangeFilter,
-    daysFilter,
-    dateRange
+    daysFilter
   ]);
 
   useEffect(() => {
@@ -576,18 +655,6 @@ export default function Followups() {
     });
   }, [filteredFollowups.length, followupType, searchTerm]);
 
-  const clearFilters = () => {
-    setSalesPersonFilter("all");
-    setClientFilter("all");
-    setSearchTerm("");
-    setDateRangeFilter("all");
-    setDateRange(undefined);
-    setPendingRangeFilter("all");
-    setDaysFilter("all");
-    setStatusFilter("all");
-    setSortBy(null);
-    setSortOrder(null);
-  };
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
@@ -624,74 +691,6 @@ export default function Followups() {
     return count;
   };
 
-  const handleExport = () => {
-    if (filteredFollowups.length === 0) {
-      return;
-    }
-
-    const exportData = filteredFollowups.map((fu, index) => {
-      const baseRow = {
-        "S.No": index + 1,
-        "Client Code": fu.userCode,
-        "Client Name": fu.name,
-        "Sales Executive": fu.salesExecutive || "-",
-      };
-
-      if (fu.type === "new-order") {
-        return {
-          ...baseRow,
-          "Last Order Date": new Date(fu.lastOrderDate).toLocaleDateString(),
-          "No Order Since": `${fu.noOrderSince} Days`,
-          "Next Follow-up": fu.nextFollowupDate ? new Date(fu.nextFollowupDate).toLocaleDateString() : "-",
-          "Remark": fu.remark || "-",
-          "Status": fu.status,
-        };
-      } else if (fu.type === "pending-order") {
-        return {
-          ...baseRow,
-          "Order No": fu.orderNo,
-          "Order Date": new Date(fu.orderDate).toLocaleDateString(),
-          "Pending Since": `${fu.pendingSince} Days`,
-          "Pending Pcs": fu.pendingPcs,
-          "Next Follow-up": fu.nextFollowupDate ? new Date(fu.nextFollowupDate).toLocaleDateString() : "-",
-          "Remark": fu.remark || "-",
-          "Status": fu.status,
-        };
-      } else if (fu.type === "pending-material") {
-        return {
-          ...baseRow,
-          "Order No": fu.orderNo,
-          "Order Date": new Date(fu.orderDate).toLocaleDateString(),
-          "Pending For": fu.pendingFor,
-          "Pending Since": `${fu.pendingSinceDays} Days`,
-          "Next Follow-up": fu.nextFollowupDate ? new Date(fu.nextFollowupDate).toLocaleDateString() : "-",
-          "Remark": fu.remark || "-",
-          "Status": fu.status,
-        };
-      } else {
-        return {
-          ...baseRow,
-          "Design No": fu.designNo,
-        };
-      }
-    });
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const colWidths = Object.keys(exportData[0] || {}).map((key) => ({
-      wch: Math.max(key.length, 15),
-    }));
-    ws["!cols"] = colWidths;
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Followups");
-
-    const fileName = `Followups_${followupType}_${
-      new Date().toISOString().split("T")[0]
-    }.xlsx`;
-
-    XLSX.writeFile(wb, fileName);
-    toast.success(`Exported successfully as ${fileName}`);
-  };
 
   const handleImport = async () => {
     if (!uploadFile) return;
@@ -749,20 +748,6 @@ export default function Followups() {
     setEditingItem(null);
   };
 
-  const getFollowupTypeTitle = () => {
-    switch (followupType) {
-      case "new-order":
-        return "New Order Followups";
-      case "pending-order":
-        return "Pending Order Followups";
-      case "pending-material":
-        return "Pending Material Followups";
-      case "cad-order":
-        return "CAD Order Followups";
-      default:
-        return "Followups";
-    }
-  };
 
   return (
     <div className="bg-gray-50 pb-6">
@@ -775,7 +760,7 @@ export default function Followups() {
               <SelectValue placeholder="Sales Person" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Sales Persons</SelectItem>
+              <SelectItem value="all">Select Sales Person</SelectItem>
               {salesPersons.map((sp) => (
                 <SelectItem key={sp.uuid} value={sp.userCode}>
                   {sp.name} ({sp.userCode})
@@ -790,7 +775,7 @@ export default function Followups() {
               <SelectValue placeholder="Client" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Clients</SelectItem>
+              <SelectItem value="all">Select Client</SelectItem>
               {clients.map((client) => (
                 <SelectItem key={client.uuid} value={client.userCode}>
                   {client.name} ({client.userCode})
@@ -805,7 +790,7 @@ export default function Followups() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="all">Select Status</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
@@ -813,7 +798,12 @@ export default function Followups() {
           )}
 
           <div className="flex-shrink-0">
-            <DatePickerWithRange date={dateRange} setDate={setDateRange} className="h-9" />
+            <DatePickerWithRange 
+              date={dateRange} 
+              setDate={setDateRange} 
+              onOpenChange={handleDateOpenChange}
+              className="h-9" 
+            />
           </div>
 
 
@@ -1135,7 +1125,7 @@ export default function Followups() {
                             <>
                               <TableCell className="align-center">
                                 <div className="text-sm text-gray-900">
-                                  {new Date(fu.lastOrderDate).toLocaleDateString()}
+                                  {formatDisplayDate(fu.lastOrderDate)}
                                 </div>
                               </TableCell>
                               <TableCell className="align-center">
@@ -1162,7 +1152,7 @@ export default function Followups() {
                             <>
                               <TableCell className="align-center">
                                 <div className="text-sm text-gray-900">
-                                  {fu.nextFollowupDate ? new Date(fu.nextFollowupDate).toLocaleDateString() : "-"}
+                                  {formatDisplayDate(fu.nextFollowupDate)}
                                 </div>
                               </TableCell>
                               <TableCell className="align-center">
@@ -1234,7 +1224,7 @@ export default function Followups() {
                               </TableCell>
                               <TableCell className="align-center">
                                 <div className="text-sm text-gray-900">
-                                  {new Date(fu.orderDate).toLocaleDateString()}
+                                  {formatDisplayDate(fu.orderDate)}
                                 </div>
                               </TableCell>
                               <TableCell className="align-center">
@@ -1249,7 +1239,7 @@ export default function Followups() {
                               </TableCell>
                               <TableCell className="align-center">
                                 <div className="text-sm text-gray-900">
-                                  {fu.nextFollowupDate ? new Date(fu.nextFollowupDate).toLocaleDateString() : "-"}
+                                  {formatDisplayDate(fu.nextFollowupDate)}
                                 </div>
                               </TableCell>
                               <TableCell className="align-center">
@@ -1316,7 +1306,7 @@ export default function Followups() {
                               </TableCell>
                               <TableCell className="align-center">
                                 <div className="text-sm text-gray-900">
-                                  {new Date(fu.orderDate).toLocaleDateString()}
+                                  {formatDisplayDate(fu.orderDate)}
                                 </div>
                               </TableCell>
 
@@ -1334,7 +1324,7 @@ export default function Followups() {
 
                               <TableCell className="align-center">
                                 <div className="text-sm text-gray-900">
-                                  {fu.nextFollowupDate ? new Date(fu.nextFollowupDate).toLocaleDateString() : "-"}
+                                  {formatDisplayDate(fu.nextFollowupDate)}
                                 </div>
                               </TableCell>
                               <TableCell className="align-center">

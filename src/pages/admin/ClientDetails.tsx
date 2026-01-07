@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/select";
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import { useAuth } from "@/contexts/AuthContext";
+import { formatDisplayDate } from "@/lib/utils";
 
 interface Client {
   uuid: string;
@@ -511,15 +512,7 @@ export default function ClientDetails() {
                                 Next Follow-up
                               </p>
                               <p className="text-xs font-bold text-primary">
-                                {item.nextFollowUpDate
-                                  ? new Date(
-                                      item.nextFollowUpDate
-                                    ).toLocaleDateString(undefined, {
-                                      day: "numeric",
-                                      month: "short",
-                                      year: "numeric",
-                                    })
-                                  : "-"}
+                                {formatDisplayDate(item.nextFollowUpDate)}
                               </p>
                             </div>
                           </div>
@@ -549,16 +542,7 @@ export default function ClientDetails() {
                                 Order Date
                               </p>
                               <p className="text-xs font-semibold text-gray-900">
-                                {item.orderDate
-                                  ? new Date(item.orderDate).toLocaleDateString(
-                                      undefined,
-                                      {
-                                        day: "numeric",
-                                        month: "short",
-                                        year: "numeric",
-                                      }
-                                    )
-                                  : "-"}
+                                {formatDisplayDate(item.orderDate)}
                               </p>
                             </div>
                           </div>
@@ -568,15 +552,7 @@ export default function ClientDetails() {
                                 Last Follow-up
                               </p>
                               <p className="text-xs font-semibold text-gray-900">
-                                {item.lastFollowUpDate
-                                  ? new Date(
-                                      item.lastFollowUpDate
-                                    ).toLocaleDateString(undefined, {
-                                      day: "numeric",
-                                      month: "short",
-                                      year: "numeric",
-                                    })
-                                  : "-"}
+                                {formatDisplayDate(item.lastFollowUpDate)}
                               </p>
                             </div>
                             <div className="space-y-0.5 text-center">
@@ -747,16 +723,7 @@ export default function ClientDetails() {
                             Last Follow-up Date
                           </span>
                           <span className="text-xs font-semibold text-gray-900">
-                            {fu.createdAt
-                              ? new Date(fu.createdAt).toLocaleDateString(
-                                  undefined,
-                                  {
-                                    day: "numeric",
-                                    month: "short",
-                                    year: "numeric",
-                                  }
-                                )
-                              : "Not set"}
+                            {formatDisplayDate(fu.createdAt)}
                           </span>
                         </div>
 
@@ -765,15 +732,7 @@ export default function ClientDetails() {
                             Next Follow-up Date
                           </span>
                           <span className="text-xs font-semibold text-primary">
-                            {fu.nextFollowUpDate
-                              ? new Date(
-                                  fu.nextFollowUpDate
-                                ).toLocaleDateString(undefined, {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                })
-                              : "Not set"}
+                            {formatDisplayDate(fu.nextFollowUpDate)}
                           </span>
                         </div>
                       </div>

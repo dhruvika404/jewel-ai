@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+import { formatDisplayDate } from "@/lib/utils";
 
 interface Client {
   uuid: string;
@@ -283,13 +284,13 @@ export default function Clients() {
           {data.lastFollowUpDate && (
             <span className="whitespace-nowrap">
               Last Follow up:{" "}
-              {new Date(data.lastFollowUpDate).toLocaleDateString()}
+              {formatDisplayDate(data.lastFollowUpDate)}
             </span>
           )}
           {data.nextFollowUpDate && (
             <span className="whitespace-nowrap font-medium text-blue-600">
               Next Follow up:{" "}
-              {new Date(data.nextFollowUpDate).toLocaleDateString()}
+              {formatDisplayDate(data.nextFollowUpDate)}
             </span>
           )}
         </div>

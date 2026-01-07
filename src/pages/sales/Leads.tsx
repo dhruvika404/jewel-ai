@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { clientAPI } from '@/services/api'
+import { formatDisplayDate } from '@/lib/utils'
 
 export default function SalesLeads() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'New' | 'Contacted' | 'Qualified' | 'Proposal'>('all')
@@ -51,7 +52,7 @@ export default function SalesLeads() {
     customerCode: client.customerCode || client.code || 'N/A',
     status: client.status || 'New',
     value: client.value || '$0',
-    date: client.createdAt ? new Date(client.createdAt).toLocaleDateString() : new Date().toLocaleDateString(),
+    date: formatDisplayDate(client.createdAt),
     contactNo: client.phone || client.contactNo || 'N/A',
     salesExecutive: client.salesExecutive || client.assignedTo || 'N/A',
     leadType: client.leadType || 'New Order',

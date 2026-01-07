@@ -15,16 +15,18 @@ import {
 interface DatePickerWithRangeProps extends React.HTMLAttributes<HTMLDivElement> {
   date: DateRange | undefined
   setDate: (date: DateRange | undefined) => void
+  onOpenChange?: (open: boolean) => void
 }
 
 export function DatePickerWithRange({
   className,
   date,
   setDate,
+  onOpenChange,
 }: DatePickerWithRangeProps) {
   return (
     <div className={cn("grid gap-2", className)}>
-      <Popover>
+      <Popover onOpenChange={onOpenChange}>
         <PopoverTrigger asChild>
           <Button
             id="date"
