@@ -642,20 +642,31 @@ export default function Followups() {
           ...baseRow,
           "Last Order Date": new Date(fu.lastOrderDate).toLocaleDateString(),
           "No Order Since": `${fu.noOrderSince} Days`,
+          "Next Follow-up": fu.nextFollowupDate ? new Date(fu.nextFollowupDate).toLocaleDateString() : "-",
+          "Remark": fu.remark || "-",
           "Status": fu.status,
         };
       } else if (fu.type === "pending-order") {
         return {
           ...baseRow,
           "Order No": fu.orderNo,
-          "Total Order Pcs": fu.totalOrderPcs,
+          "Order Date": new Date(fu.orderDate).toLocaleDateString(),
+          "Pending Since": `${fu.pendingSince} Days`,
           "Pending Pcs": fu.pendingPcs,
+          "Next Follow-up": fu.nextFollowupDate ? new Date(fu.nextFollowupDate).toLocaleDateString() : "-",
+          "Remark": fu.remark || "-",
+          "Status": fu.status,
         };
       } else if (fu.type === "pending-material") {
         return {
           ...baseRow,
+          "Order No": fu.orderNo,
+          "Order Date": new Date(fu.orderDate).toLocaleDateString(),
           "Pending For": fu.pendingFor,
-          "Pending Since": fu.pendingSinceDays,
+          "Pending Since": `${fu.pendingSinceDays} Days`,
+          "Next Follow-up": fu.nextFollowupDate ? new Date(fu.nextFollowupDate).toLocaleDateString() : "-",
+          "Remark": fu.remark || "-",
+          "Status": fu.status,
         };
       } else {
         return {
