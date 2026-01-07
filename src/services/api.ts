@@ -341,6 +341,9 @@ export const pendingOrderAPI = {
     startDate?: string;
     endDate?: string;
     salesExecCode?: string;
+    todayDueFollowUp?: boolean;
+    todayCompletedFollowUp?: boolean;
+    sevenDayPendingFollowUp?: boolean;
   }) => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append("page", params.page.toString());
@@ -353,6 +356,9 @@ export const pendingOrderAPI = {
     if (params?.startDate) queryParams.append("startDate", params.startDate);
     if (params?.endDate) queryParams.append("endDate", params.endDate);
     if (params?.salesExecCode) queryParams.append("salesExecCode", params.salesExecCode);
+    if (params?.todayDueFollowUp) queryParams.append("todayDueFollowUp", "true");
+    if (params?.todayCompletedFollowUp) queryParams.append("todayCompletedFollowUp", "true");
+    if (params?.sevenDayPendingFollowUp) queryParams.append("sevenDayPendingFollowUp", "true");
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.LIST}?${queryParams}`,
@@ -484,6 +490,9 @@ export const pendingMaterialAPI = {
     startDate?: string;
     endDate?: string;
     salesExecCode?: string;
+    todayDueFollowUp?: boolean;
+    todayCompletedFollowUp?: boolean;
+    sevenDayPendingFollowUp?: boolean;
   }) => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append("page", params.page.toString());
@@ -496,6 +505,9 @@ export const pendingMaterialAPI = {
     if (params?.startDate) queryParams.append("startDate", params.startDate);
     if (params?.endDate) queryParams.append("endDate", params.endDate);
     if (params?.salesExecCode) queryParams.append("salesExecCode", params.salesExecCode);
+    if (params?.todayDueFollowUp) queryParams.append("todayDueFollowUp", "true");
+    if (params?.todayCompletedFollowUp) queryParams.append("todayCompletedFollowUp", "true");
+    if (params?.sevenDayPendingFollowUp) queryParams.append("sevenDayPendingFollowUp", "true");
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.LIST}?${queryParams}`,
@@ -633,6 +645,9 @@ export const newOrderAPI = {
     startDate?: string;
     endDate?: string;
     salesExecCode?: string;
+    todayDueFollowUp?: boolean;
+    todayCompletedFollowUp?: boolean;
+    sevenDayPendingFollowUp?: boolean;
   }) => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append("page", params.page.toString());
@@ -648,6 +663,9 @@ export const newOrderAPI = {
     if (params?.startDate) queryParams.append("startDate", params.startDate);
     if (params?.endDate) queryParams.append("endDate", params.endDate);
     if (params?.salesExecCode) queryParams.append("salesExecCode", params.salesExecCode);
+    if (params?.todayDueFollowUp) queryParams.append("todayDueFollowUp", "true");
+    if (params?.todayCompletedFollowUp) queryParams.append("todayCompletedFollowUp", "true");
+    if (params?.sevenDayPendingFollowUp) queryParams.append("sevenDayPendingFollowUp", "true");
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.LIST}?${queryParams}`,

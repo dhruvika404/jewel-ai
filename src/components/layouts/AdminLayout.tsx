@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -37,6 +37,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const sideBarref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (location.pathname.startsWith("/admin/followups")) {
+      setExpandedMenu("Followups");
+    }
+  }, [location.pathname]);
 
   const menuItems: MenuItem[] = [
     { label: "Dashboard", href: "/admin", icon: LayoutDashboard },

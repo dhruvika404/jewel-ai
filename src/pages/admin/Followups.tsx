@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, useSearchParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -145,12 +145,24 @@ interface Client {
 
 export default function Followups() {
   const { type } = useParams<{ type: FollowupType }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { setHeader } = usePageHeader();
   const followupType = (type as FollowupType) || "new-order";
   const [salesPersonFilter, setSalesPersonFilter] = useState("all");
   const [clientFilter, setClientFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
+    const from = searchParams.get("startDate");
+    const to = searchParams.get("endDate");
+    if (from) {
+      return {
+        from: new Date(from),
+        to: to ? new Date(to) : new Date(from)
+      };
+    }
+    return undefined;
+  });
   const [dateRangeFilter, setDateRangeFilter] = useState("all");
   const [pendingRangeFilter, setPendingRangeFilter] = useState("all");
   const [daysFilter, setDaysFilter] = useState("all");
@@ -339,6 +351,22 @@ export default function Followups() {
         } else {
           params.endDate = format(dateRange.from, "yyyy-MM-dd");
         }
+      } else {
+        // Check URL params if state is not set
+        const urlStartDate = searchParams.get("startDate");
+        const urlEndDate = searchParams.get("endDate");
+        if (urlStartDate) params.startDate = urlStartDate;
+        if (urlEndDate) params.endDate = urlEndDate;
+      }
+
+      if (searchParams.get("todayDueFollowUp") === "true") {
+        params.todayDueFollowUp = true;
+      }
+      if (searchParams.get("todayCompletedFollowUp") === "true") {
+        params.todayCompletedFollowUp = true;
+      }
+      if (searchParams.get("sevenDayPendingFollowUp") === "true") {
+        params.sevenDayPendingFollowUp = true;
       }
 
       if (salesPersonFilter !== "all") {
@@ -372,7 +400,8 @@ export default function Followups() {
       } else if (followupType === "pending-material") {
         const res = await pendingMaterialAPI.getAll(params);
         data = processPendingMaterialData(res);
-        // For client-side pagination types, we don't set total pages/items from API pagination
+        setTotalPages(res.data?.totalPages || 1);
+        setTotalItems(res.data?.totalItems || 0);
       } else if (followupType === "cad-order") {
         data = [];
         setTotalPages(1);
@@ -430,10 +459,10 @@ export default function Followups() {
     setStatusFilter("all");
     setSortBy(null);
     setSortOrder(null);
-    // Explicitly reload data when filters are cleared
-    setTimeout(() => {
-      loadFollowupData();
-    }, 0);
+    
+    // Clear URL parameters
+    // Keep page/size if needed, but usually clear all means reset
+    navigate(`/admin/followups/${followupType}`, { replace: true });
   };
 
   const handleDateOpenChange = (open: boolean) => {
@@ -511,9 +540,24 @@ export default function Followups() {
     toast.success(`Exported successfully as ${fileName}`);
   };
 
+  // Consolidating data loading into a single useEffect with all necessary dependencies
   useEffect(() => {
     loadFollowupData();
-  }, [followupType, sortBy, sortOrder, statusFilter, currentPage, pageSize]);
+  }, [
+    followupType,
+    sortBy,
+    sortOrder,
+    statusFilter,
+    currentPage,
+    pageSize,
+    salesPersonFilter,
+    clientFilter,
+    searchTerm,
+    dateRangeFilter,
+    pendingRangeFilter,
+    daysFilter,
+    dateRange
+  ]);
 
 
 
@@ -588,8 +632,21 @@ export default function Followups() {
     : filteredFollowups;
 
 
+  const isInitialMount = useState(true);
+
   useEffect(() => {
-    // Clear all filters when switching tabs
+    // Determine if we should skip clearing (e.g., on initial redirect from dashboard)
+    const hasUrlParams = searchParams.get("startDate") || 
+                        searchParams.get("todayDueFollowUp") || 
+                        searchParams.get("todayCompletedFollowUp") || 
+                        searchParams.get("sevenDayPendingFollowUp");
+
+    if (hasUrlParams && isInitialMount[0]) {
+      isInitialMount[1](false);
+      return;
+    }
+
+    // Clear all filters when switching tabs manually
     setSalesPersonFilter("all");
     setClientFilter("all");
     setSearchTerm("");
@@ -605,23 +662,9 @@ export default function Followups() {
     followupType
   ]);
 
-  useEffect(() => {
-    // Refetch data when filters change (preserved relevant dependencies)
-    loadFollowupData();
-  }, [
-    followupType,
-    sortBy,
-    sortOrder,
-    statusFilter,
-    currentPage,
-    pageSize,
-    salesPersonFilter,
-    clientFilter,
-    searchTerm,
-    dateRangeFilter,
-    pendingRangeFilter,
-    daysFilter
-  ]);
+  // Removed redundant useEffects to prevent double calls.
+  // The state is now initialized from the URL parameters directly.
+  
 
   useEffect(() => {
     setHeader({
