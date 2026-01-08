@@ -582,14 +582,8 @@ export default function Reports() {
             </div>
           </CardHeader>
 
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <Table>
+          <div className="overflow-x-auto">
+            <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50">
                       <TableHead className="font-medium text-gray-700 w-[200px]">
@@ -616,7 +610,13 @@ export default function Reports() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedFollowUps.length === 0 ? (
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-12">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                        </TableCell>
+                      </TableRow>
+                    ) : paginatedFollowUps.length === 0 ? (
                       <TableRow>
                         <TableCell
                           colSpan={7}
@@ -736,8 +736,6 @@ export default function Reports() {
                   setPageSize={setPageSize}
                 />
               </div>
-            </>
-          )}
         </Card>
       </div>
     </div>

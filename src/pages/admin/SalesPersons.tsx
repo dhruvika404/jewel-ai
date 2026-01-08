@@ -293,33 +293,8 @@ export default function SalesPersons() {
     <div className="bg-gray-50 pb-6">
       <div className="p-6 space-y-6">
         <Card className="overflow-hidden">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-24 text-gray-500">
-              <Loader2 className="h-10 w-10 animate-spin mb-4 text-primary" />
-              <p>Loading team members...</p>
-            </div>
-          ) : salesPersons.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-gray-500">
-              <Users className="h-16 w-16 text-gray-200 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">
-                No sales persons found
-              </h3>
-              <p className="text-sm max-w-sm text-center mt-2">
-                Get started by adding a new sales person or importing from an
-                Excel file.
-              </p>
-              <Button
-                onClick={handleOpenAdd}
-                variant="outline"
-                className="mt-6 gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Sales Person
-              </Button>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
+          <div className="overflow-x-auto">
+            <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
                     <TableHead className="font-medium text-gray-700 w-[100px]">
@@ -340,7 +315,23 @@ export default function SalesPersons() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {salesPersons.map((sp) => (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-12">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                      </TableCell>
+                    </TableRow>
+                  ) : salesPersons.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-24 text-gray-500">
+                        <Users className="h-12 w-12 text-gray-200 mb-4 mx-auto" />
+                        <h3 className="text-lg font-medium text-gray-900">
+                          No sales persons found
+                        </h3>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    salesPersons.map((sp) => (
                     <TableRow key={sp.uuid} className="hover:bg-gray-50">
                       <TableCell className="align-center">
                         <div className="flex items-center gap-3">
@@ -417,11 +408,11 @@ export default function SalesPersons() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
-          )}
 
           {totalItems > 0 && (
             <div className="p-4 border-t bg-white flex justify-between items-center">

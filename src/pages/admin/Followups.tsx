@@ -933,14 +933,8 @@ export default function Followups() {
             </CardTitle>
           </CardHeader>
 
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <Table>
+          <div className="overflow-x-auto">
+            <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50">
                       {followupType !== "pending-order" && followupType !== "pending-material" && (
@@ -1131,17 +1125,30 @@ export default function Followups() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedFollowups.length === 0 ? (
+                    {loading ? (
                       <TableRow>
                         <TableCell
                           colSpan={
                             followupType === "new-order"
                               ? 9
-                              : followupType === "pending-order"
-                              ? 10
-                              : followupType === "pending-material"
+                              : followupType === "pending-order" || followupType === "pending-material"
                               ? 11
                               : 4
+                          }
+                          className="text-center py-12"
+                        >
+                          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                        </TableCell>
+                      </TableRow>
+                    ) : paginatedFollowups.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={
+                              followupType === "new-order"
+                                ? 9
+                                : followupType === "pending-order" || followupType === "pending-material"
+                                ? 11
+                                : 4
                           }
                           className="text-center py-8 text-muted-foreground"
                         >
@@ -1437,8 +1444,6 @@ export default function Followups() {
                   setPageSize={setPageSize}
                 />
               </div>
-            </>
-          )}
         </Card>
         
         <FollowUpModal

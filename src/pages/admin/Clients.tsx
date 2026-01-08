@@ -302,13 +302,8 @@ export default function Clients() {
     <div className="bg-gray-50 pb-6">
       <div className="p-6 space-y-6">
         <Card className="overflow-hidden">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
+          <div className="overflow-x-auto">
+            <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
                     <TableHead className="font-medium text-gray-700 w-[200px]">
@@ -335,9 +330,25 @@ export default function Clients() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {clients
-                    .filter((client) => client?.status !== "completed")
-                    .map((client) => (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-12">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                      </TableCell>
+                    </TableRow>
+                  ) : clients.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={7}
+                        className="text-center py-8 text-muted-foreground"
+                      >
+                        No clients found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    clients
+                      .filter((client) => client?.status !== "completed")
+                      .map((client) => (
                       <TableRow key={client.uuid} className="hover:bg-gray-50">
                         <TableCell className="align-center">
                           <div className="flex items-center gap-3">
@@ -406,21 +417,11 @@ export default function Clients() {
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
-                  {clients.length === 0 && (
-                    <TableRow>
-                      <TableCell
-                        colSpan={7}
-                        className="text-center py-8 text-muted-foreground"
-                      >
-                        No clients found
-                      </TableCell>
-                    </TableRow>
+                    ))
                   )}
                 </TableBody>
               </Table>
             </div>
-          )}
 
           <div className="p-4 border-t bg-white flex justify-between items-center">
             <div className="text-sm text-gray-600">
