@@ -148,14 +148,14 @@ export default function AdminHome() {
       {/* ===== TOP SUMMARY ===== */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
-          label="Follow-ups Due Today"
+          label="Due Today Follow-ups"
           value={systemStats.todaysTotalPendingFollowUps}
           icon={Clock}
           color="blue"
           loading={loading}
         />
         <StatCard
-          label="Follow-ups Completed Today"
+          label="Today's Taken Follow-ups"
           value={systemStats.todaysTotalTakenFollowUps}
           icon={CheckCircle}
           color="emerald"
@@ -172,6 +172,15 @@ export default function AdminHome() {
 
       {/* ===== DETAILED BREAKDOWN ===== */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <BreakdownSection
+          title="New Order Follow-ups"
+          icon={FileSpreadsheet}
+          color="purple"
+          pending={systemStats.todaysTotalPendingFollowUpsOfNewOrder}
+          taken={systemStats.todaysTotalTakenFollowUpsOfNewOrder}
+          last7={systemStats.last7DayPendingFollowUpsOfNewOrder}
+          onStatClick={(filterType: any) => handleSectionClick("New Order Follow-ups", filterType)}
+        />
         <BreakdownSection
           title="Pending Orders Follow-ups"
           icon={ShoppingCart}
@@ -190,16 +199,6 @@ export default function AdminHome() {
           taken={systemStats.todaysTotalTakenFollowUpsOfPendingMaterial}
           last7={systemStats.last7DayPendingFollowUpsOfPendingMaterial}
           onStatClick={(filterType: any) => handleSectionClick("Pending Material Follow-ups", filterType)}
-        />
-
-        <BreakdownSection
-          title="New Order Follow-ups"
-          icon={FileSpreadsheet}
-          color="purple"
-          pending={systemStats.todaysTotalPendingFollowUpsOfNewOrder}
-          taken={systemStats.todaysTotalTakenFollowUpsOfNewOrder}
-          last7={systemStats.last7DayPendingFollowUpsOfNewOrder}
-          onStatClick={(filterType: any) => handleSectionClick("New Order Follow-ups", filterType)}
         />
       </div>
 
@@ -274,7 +273,7 @@ function BreakdownSection({
             }`}
             onClick={pending > 0 ? () => onStatClick('due') : undefined}
           >
-            <p className="text-[11px] text-gray-500">Due Today</p>
+            <p className="text-[12px] text-gray-500">Due Today</p>
             <p className="text-xl font-bold">{pending}</p>
           </div>
           <div 
@@ -285,7 +284,7 @@ function BreakdownSection({
             }`}
             onClick={taken > 0 ? () => onStatClick('completed') : undefined}
           >
-            <p className="text-[11px] text-gray-500">Completed Today</p>
+            <p className="text-[12px] text-gray-500">Today's Taken</p>
             <p className="text-xl font-bold">{taken}</p>
           </div>
           <div 
@@ -296,7 +295,7 @@ function BreakdownSection({
             }`}
             onClick={last7 > 0 ? () => onStatClick('pending7') : undefined}
           >
-            <p className="text-[11px] text-gray-500">Pending (7 Days)</p>
+            <p className="text-[12px] text-gray-500">Pending (7 Days)</p>
             <p className="text-xl font-bold">{last7}</p>
           </div>
         </div>
