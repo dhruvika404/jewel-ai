@@ -153,7 +153,6 @@ export default function AdminHome() {
           icon={Clock}
           color="blue"
           loading={loading}
-          onClick={() => handleStatCardClick('due')}
         />
         <StatCard
           label="Follow-ups Completed Today"
@@ -161,7 +160,6 @@ export default function AdminHome() {
           icon={CheckCircle}
           color="emerald"
           loading={loading}
-          onClick={() => handleStatCardClick('completed')}
         />
         <StatCard
           label="Pending Follow-ups (Last 7 Days)"
@@ -169,7 +167,6 @@ export default function AdminHome() {
           icon={AlertCircle}
           color="orange"
           loading={loading}
-          onClick={() => handleStatCardClick('pending7')}
         />
       </div>
 
@@ -217,23 +214,16 @@ export default function AdminHome() {
 
 /* ================= COMPONENTS ================= */
 
-function StatCard({ label, value, icon: Icon, color, loading, onClick }: any) {
+function StatCard({ label, value, icon: Icon, color, loading }: any) {
   const colors: any = {
     blue: "bg-blue-100 text-blue-600",
     emerald: "bg-emerald-100 text-emerald-600",
     orange: "bg-orange-100 text-orange-600",
   };
 
-  const isClickable = value > 0 && onClick;
-
   return (
     <Card 
-      className={`p-4 shadow-sm ${
-        isClickable 
-          ? 'cursor-pointer hover:bg-gray-50 transition-colors' 
-          : 'cursor-not-allowed'
-      }`}
-      onClick={isClickable ? onClick : undefined}
+      className="p-4 shadow-sm"
     >
       <div className="flex items-center gap-3">
         <div

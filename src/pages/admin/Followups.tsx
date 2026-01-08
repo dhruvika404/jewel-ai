@@ -334,7 +334,9 @@ export default function Followups() {
     });
   };
 
-  const loadFollowupData = async () => {
+  const loadFollowupData = async (options?: { overrideDateRange?: DateRange | null, skipAllFilters?: boolean }) => {
+    const activeDateRange = options?.overrideDateRange !== undefined ? options.overrideDateRange : dateRange;
+    const skipAllFilters = options?.skipAllFilters || false;
     try {
       setLoading(true);
       let data: any[] = [];
@@ -344,29 +346,30 @@ export default function Followups() {
         size: pageSize,
       };
 
-      if (dateRange?.from) {
-        params.startDate = format(dateRange.from, "yyyy-MM-dd");
-        if (dateRange.to) {
-          params.endDate = format(dateRange.to, "yyyy-MM-dd");
+      if (activeDateRange?.from && !skipAllFilters) {
+        params.startDate = format(activeDateRange.from, "yyyy-MM-dd");
+        if (activeDateRange.to) {
+          params.endDate = format(activeDateRange.to, "yyyy-MM-dd");
         } else {
-          params.endDate = format(dateRange.from, "yyyy-MM-dd");
+          params.endDate = format(activeDateRange.from, "yyyy-MM-dd");
         }
-      } else {
-        // Check URL params if state is not set
+      } else if (!activeDateRange && !skipAllFilters) {
         const urlStartDate = searchParams.get("startDate");
         const urlEndDate = searchParams.get("endDate");
         if (urlStartDate) params.startDate = urlStartDate;
         if (urlEndDate) params.endDate = urlEndDate;
       }
 
-      if (searchParams.get("todayDueFollowUp") === "true") {
-        params.todayDueFollowUp = true;
-      }
-      if (searchParams.get("todayCompletedFollowUp") === "true") {
-        params.todayCompletedFollowUp = true;
-      }
-      if (searchParams.get("sevenDayPendingFollowUp") === "true") {
-        params.sevenDayPendingFollowUp = true;
+      if (!skipAllFilters) {
+        if (searchParams.get("todayDueFollowUp") === "true") {
+          params.todayDueFollowUp = true;
+        }
+        if (searchParams.get("todayCompletedFollowUp") === "true") {
+          params.todayCompletedFollowUp = true;
+        }
+        if (searchParams.get("sevenDayPendingFollowUp") === "true") {
+          params.sevenDayPendingFollowUp = true;
+        }
       }
 
       if (salesPersonFilter !== "all") {
@@ -463,6 +466,7 @@ export default function Followups() {
     // Clear URL parameters
     // Keep page/size if needed, but usually clear all means reset
     navigate(`/admin/followups/${followupType}`, { replace: true });
+    loadFollowupData({ overrideDateRange: null, skipAllFilters: true });
   };
 
   const handleDateOpenChange = (open: boolean) => {
@@ -555,8 +559,7 @@ export default function Followups() {
     searchTerm,
     dateRangeFilter,
     pendingRangeFilter,
-    daysFilter,
-    dateRange
+    daysFilter
   ]);
 
 
@@ -658,6 +661,7 @@ export default function Followups() {
     setSortBy(null);
     setSortOrder(null);
     setCurrentPage(1);
+    loadFollowupData({ overrideDateRange: null, skipAllFilters: true });
   }, [
     followupType
   ]);

@@ -120,7 +120,9 @@ export default function Reports() {
     return sp?.name || "";
   };
 
-  const loadReportData = async () => {
+  const loadReportData = async (options?: { overrideDateRange?: DateRange | null, skipAllFilters?: boolean }) => {
+    const activeDateRange = options?.overrideDateRange !== undefined ? options.overrideDateRange : dateRange;
+    const skipAllFilters = options?.skipAllFilters || false;
     setLoading(true);
     try {
       const [newOrderRes, pendingOrderRes, pendingMaterialRes] =
@@ -171,11 +173,11 @@ export default function Reports() {
                   : null;
                 if (createdDate) {
                   createdDate.setHours(0, 0, 0, 0);
-                  if (dateRange?.from) {
-                    const from = new Date(dateRange.from);
+                  if (activeDateRange?.from && !skipAllFilters) {
+                    const from = new Date(activeDateRange.from);
                     from.setHours(0, 0, 0, 0);
-                    const to = dateRange.to
-                      ? new Date(dateRange.to)
+                    const to = activeDateRange.to
+                      ? new Date(activeDateRange.to)
                       : new Date(from);
                     to.setHours(23, 59, 59, 999);
 
@@ -183,37 +185,37 @@ export default function Reports() {
                       createdDate >= from &&
                       createdDate <= to &&
                       fu.followUpStatus?.toLowerCase() === "completed";
-                  } else {
+                  } else if (!activeDateRange || skipAllFilters) {
                     includeRecord =
                       createdDate.getTime() === today.getTime() &&
                       fu.followUpStatus?.toLowerCase() === "completed";
                   }
                 }
               } else if (reportType === "pending") {
-                if (dateRange?.from) {
-                  const from = new Date(dateRange.from);
-                  from.setHours(0, 0, 0, 0);
-                  const to = dateRange.to
-                    ? new Date(dateRange.to)
-                    : new Date(from);
-                  to.setHours(23, 59, 59, 999);
+                  if (activeDateRange?.from && !skipAllFilters) {
+                    const from = new Date(activeDateRange.from);
+                    from.setHours(0, 0, 0, 0);
+                    const to = activeDateRange.to
+                      ? new Date(activeDateRange.to)
+                      : new Date(from);
+                    to.setHours(23, 59, 59, 999);
 
-                  includeRecord =
-                    fu.followUpStatus?.toLowerCase() !== "completed" &&
-                    fuDate >= from &&
-                    fuDate <= to;
-                } else {
+                    includeRecord =
+                      fu.followUpStatus?.toLowerCase() !== "completed" &&
+                      fuDate >= from &&
+                      fuDate <= to;
+                  } else if (!activeDateRange || skipAllFilters) {
                   // Default behavior: pending from today onwards
                   includeRecord =
                     fu.followUpStatus?.toLowerCase() !== "completed" &&
                     fuDate >= today;
                 }
               } else if (reportType === "overdue") {
-                if (dateRange?.from) {
-                  const from = new Date(dateRange.from);
+                if (activeDateRange?.from && !skipAllFilters) {
+                  const from = new Date(activeDateRange.from);
                   from.setHours(0, 0, 0, 0);
-                  const to = dateRange.to
-                    ? new Date(dateRange.to)
+                  const to = activeDateRange.to
+                    ? new Date(activeDateRange.to)
                     : new Date(from);
                   to.setHours(23, 59, 59, 999);
 
@@ -221,7 +223,7 @@ export default function Reports() {
                     fu.followUpStatus?.toLowerCase() !== "completed" &&
                     fuDate >= from &&
                     fuDate <= to;
-                } else {
+                } else if (!activeDateRange || skipAllFilters) {
                   includeRecord =
                     fu.followUpStatus?.toLowerCase() !== "completed" &&
                     fuDate < today;
@@ -271,8 +273,12 @@ export default function Reports() {
   };
 
   useEffect(() => {
-    loadReportData();
-  }, [reportType, dateRange]);
+    setSalesPersonFilter("all");
+    setClientFilter("all");
+    setSearchTerm("");
+    setDateRange(undefined);
+    loadReportData({ overrideDateRange: null, skipAllFilters: true });
+  }, [reportType]);
 
   useEffect(() => {
     if (clients.length > 0 && salesPersons.length > 0 && followUps.length > 0) {
@@ -311,7 +317,7 @@ export default function Reports() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [salesPersonFilter, clientFilter, reportType, dateRange, searchTerm]);
+  }, [salesPersonFilter, clientFilter, reportType, searchTerm]);
 
   useEffect(() => {
     setHeader({
@@ -341,6 +347,7 @@ export default function Reports() {
     setClientFilter("all");
     setSearchTerm("");
     setDateRange(undefined);
+    loadReportData({ overrideDateRange: null, skipAllFilters: true });
   };
 
   const getActiveFilterCount = () => {
@@ -488,7 +495,16 @@ export default function Reports() {
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">
                   Date Range
                 </Label>
-                <DatePickerWithRange date={dateRange} setDate={setDateRange} className="w-full" />
+                <DatePickerWithRange 
+                  date={dateRange} 
+                  setDate={setDateRange} 
+                  className="w-full" 
+                  onOpenChange={(open) => {
+                    if (!open && dateRange?.from && dateRange?.to) {
+                      loadReportData();
+                    }
+                  }}
+                />
               </div>
 
               <div>
