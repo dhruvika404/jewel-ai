@@ -78,6 +78,26 @@ export function PendingMaterialModal({ isOpen, onClose, onSuccess, clientCode, m
     }
   }, [material, clientCode, isOpen])
 
+  const resetForm = () => {
+    setFormData({
+      salesExecCode: '',
+      clientCode: clientCode,
+      styleNo: '',
+      orderNo: '',
+      expectedDeliveryDate: '',
+      departmentName: '',
+      totalNetWt: '',
+      nextFollowUpDate: '',
+      status: 'pending',
+      remark: ''
+    })
+  }
+
+  const handleClose = () => {
+    resetForm()
+    onClose()
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -88,14 +108,22 @@ export function PendingMaterialModal({ isOpen, onClose, onSuccess, clientCode, m
 
     setLoading(true)
     try {
+      let response
       if (material) {
-        await pendingMaterialAPI.update(material.uuid || material.id, formData)
-        toast.success('Pending material updated successfully')
+        response = await pendingMaterialAPI.update(material.uuid || material.id, formData)
       } else {
-        await pendingMaterialAPI.create(formData)
-        toast.success('Pending material created successfully')
+        response = await pendingMaterialAPI.create(formData)
       }
+
+      // Check if response indicates failure
+      if (response && response.success === false) {
+        toast.error(response.message || 'Operation failed')
+        return
+      }
+
+      toast.success(material ? 'Pending material updated successfully' : 'Pending material created successfully')
       onSuccess()
+      resetForm()
       onClose()
     } catch (error: any) {
       toast.error(error.message || 'Operation failed')
@@ -105,7 +133,7 @@ export function PendingMaterialModal({ isOpen, onClose, onSuccess, clientCode, m
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{material ? 'Edit' : 'Add'} Pending Material</DialogTitle>
@@ -226,7 +254,7 @@ export function PendingMaterialModal({ isOpen, onClose, onSuccess, clientCode, m
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>

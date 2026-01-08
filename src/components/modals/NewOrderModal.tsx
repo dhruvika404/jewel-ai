@@ -75,6 +75,25 @@ export function NewOrderModal({ isOpen, onClose, onSuccess, clientCode, order }:
     }
   }, [order, clientCode, isOpen])
 
+  const resetForm = () => {
+    setFormData({
+      salesExecCode: '',
+      clientCode: clientCode,
+      subCategory: '',
+      lastSaleDate: '',
+      lastOrderDate: '',
+      clientCategoryName: '',
+      nextFollowUpDate: '',
+      status: 'pending',
+      remark: ''
+    })
+  }
+
+  const handleClose = () => {
+    resetForm()
+    onClose()
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -85,14 +104,22 @@ export function NewOrderModal({ isOpen, onClose, onSuccess, clientCode, order }:
 
     setLoading(true)
     try {
+      let response
       if (order) {
-        await newOrderAPI.update(order.uuid || order.id, formData)
-        toast.success('New order updated successfully')
+        response = await newOrderAPI.update(order.uuid || order.id, formData)
       } else {
-        await newOrderAPI.create(formData)
-        toast.success('New order created successfully')
+        response = await newOrderAPI.create(formData)
       }
+
+      // Check if response indicates failure
+      if (response && response.success === false) {
+        toast.error(response.message || 'Operation failed')
+        return
+      }
+
+      toast.success(order ? 'New order updated successfully' : 'New order created successfully')
       onSuccess()
+      resetForm()
       onClose()
     } catch (error: any) {
       toast.error(error.message || 'Operation failed')
@@ -102,7 +129,7 @@ export function NewOrderModal({ isOpen, onClose, onSuccess, clientCode, order }:
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{order ? 'Edit' : 'Add'} New Order</DialogTitle>
@@ -211,7 +238,7 @@ export function NewOrderModal({ isOpen, onClose, onSuccess, clientCode, order }:
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>

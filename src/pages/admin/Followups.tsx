@@ -731,6 +731,7 @@ export default function Followups() {
     if (pendingRangeFilter !== "all") count++;
     if (daysFilter !== "all") count++;
     if (statusFilter !== "all") count++;
+    if (sortBy) count++;
     return count;
   };
 

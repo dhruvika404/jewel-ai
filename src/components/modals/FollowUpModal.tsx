@@ -38,11 +38,19 @@ export function FollowUpModal({ isOpen, onClose, onSuccess, type, data }: Follow
     }
   }, [data, isOpen])
 
-  useEffect(() => {
-    if (formData.status === 'completed') {
-      setFormData(prev => ({ ...prev, nextFollowUpDate: '' }))
-    }
-  }, [formData.status])
+  const resetForm = () => {
+    setFormData({
+      salesExecCode: '',
+      nextFollowUpDate: '',
+      status: '',
+      remark: ''
+    })
+  }
+
+  const handleClose = () => {
+    resetForm()
+    onClose()
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,14 +72,24 @@ export function FollowUpModal({ isOpen, onClose, onSuccess, type, data }: Follow
 
       const id = data.uuid || data.id || data._id
 
+      let response
       if (type === 'new-order') {
-        await newOrderAPI.update(id, payload)
+        response = await newOrderAPI.update(id, payload)
       } else if (type === 'pending-order') {
-        await pendingOrderAPI.update(id, payload)
+        response = await pendingOrderAPI.update(id, payload)
       } else if (type === 'pending-material') {
-        await pendingMaterialAPI.update(id, payload)
+        response = await pendingMaterialAPI.update(id, payload)
       }
+
+      // Check if response indicates failure
+      if (response && response.success === false) {
+        toast.error(response.message || 'Operation failed')
+        return
+      }
+
+      toast.success('Follow-up updated successfully')
       onSuccess()
+      resetForm()
       onClose()
     } catch (error: any) {
       toast.error(error.message || 'Operation failed')
@@ -90,7 +108,7 @@ export function FollowUpModal({ isOpen, onClose, onSuccess, type, data }: Follow
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{getTitle()}</DialogTitle>
@@ -108,7 +126,6 @@ export function FollowUpModal({ isOpen, onClose, onSuccess, type, data }: Follow
               type="date"
               value={formData.nextFollowUpDate}
               onChange={(e) => setFormData({ ...formData, nextFollowUpDate: e.target.value })}
-              disabled={formData.status === 'completed'}
             />
           </div>
           <div className="space-y-2">
@@ -142,7 +159,7 @@ export function FollowUpModal({ isOpen, onClose, onSuccess, type, data }: Follow
 
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>

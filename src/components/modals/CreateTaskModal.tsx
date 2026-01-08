@@ -130,7 +130,7 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
           clientCode: formData.clientCode,
           orderNo: formData.orderNo,
           orderDate: formData.orderDate,
-          grossWtTotal: parseFloat(formData.grossWtTotal),
+          grossWtTotal: formData.grossWtTotal,
           remark: formData.remarks,
           nextFollowUpDate: formData.nextFollowUpDate,
           lastFollowUpMsg: formData.taskDetails
@@ -154,9 +154,9 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
 
       if (response && response.success !== false) {
         toast.success('Task created successfully')
+        onSuccess?.()
         resetForm()
         onClose()
-        onSuccess?.()
       } else {
         toast.error(response?.message || 'Failed to create task')
       }

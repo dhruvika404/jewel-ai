@@ -72,6 +72,24 @@ export function PendingOrderModal({ isOpen, onClose, onSuccess, clientCode, orde
     }
   }, [order, clientCode, isOpen])
 
+  const resetForm = () => {
+    setFormData({
+      salesExecCode: '',
+      clientCode: clientCode,
+      orderNo: '',
+      orderDate: '',
+      grossWtTotal: '',
+      remark: '',
+      nextFollowUpDate: '',
+      status: 'pending',
+    })
+  }
+
+  const handleClose = () => {
+    resetForm()
+    onClose()
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -82,14 +100,22 @@ export function PendingOrderModal({ isOpen, onClose, onSuccess, clientCode, orde
 
     setLoading(true)
     try {
+      let response
       if (order) {
-        await pendingOrderAPI.update(order.uuid || order.id, formData)
-        toast.success('Pending order updated successfully')
+        response = await pendingOrderAPI.update(order.uuid || order.id, formData)
       } else {
-        await pendingOrderAPI.create(formData)
-        toast.success('Pending order created successfully')
+        response = await pendingOrderAPI.create(formData)
       }
+
+      // Check if response indicates failure
+      if (response && response.success === false) {
+        toast.error(response.message || 'Operation failed')
+        return
+      }
+
+      toast.success(order ? 'Pending order updated successfully' : 'Pending order created successfully')
       onSuccess()
+      resetForm()
       onClose()
     } catch (error: any) {
       toast.error(error.message || 'Operation failed')
@@ -99,7 +125,7 @@ export function PendingOrderModal({ isOpen, onClose, onSuccess, clientCode, orde
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{order ? 'Edit' : 'Add'} Pending Order</DialogTitle>
@@ -191,7 +217,7 @@ export function PendingOrderModal({ isOpen, onClose, onSuccess, clientCode, orde
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>

@@ -224,10 +224,16 @@ function StatCard({ label, value, icon: Icon, color, loading, onClick }: any) {
     orange: "bg-orange-100 text-orange-600",
   };
 
+  const isClickable = value > 0 && onClick;
+
   return (
     <Card 
-      className={`p-4 shadow-sm ${onClick ? 'cursor-pointer hover:bg-gray-50 transition-colors' : ''}`}
-      onClick={onClick}
+      className={`p-4 shadow-sm ${
+        isClickable 
+          ? 'cursor-pointer hover:bg-gray-50 transition-colors' 
+          : 'cursor-not-allowed'
+      }`}
+      onClick={isClickable ? onClick : undefined}
     >
       <div className="flex items-center gap-3">
         <div
@@ -271,22 +277,34 @@ function BreakdownSection({
       <CardContent className="p-4 space-y-4">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div 
-            className="cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
-            onClick={() => onStatClick('due')}
+            className={`p-2 rounded transition-colors ${
+              pending > 0 
+                ? 'cursor-pointer hover:bg-gray-50' 
+                : 'cursor-not-allowed'
+            }`}
+            onClick={pending > 0 ? () => onStatClick('due') : undefined}
           >
             <p className="text-[11px] text-gray-500">Due Today</p>
             <p className="text-xl font-bold">{pending}</p>
           </div>
           <div 
-            className="cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
-            onClick={() => onStatClick('completed')}
+            className={`p-2 rounded transition-colors ${
+              taken > 0 
+                ? 'cursor-pointer hover:bg-gray-50' 
+                : 'cursor-not-allowed'
+            }`}
+            onClick={taken > 0 ? () => onStatClick('completed') : undefined}
           >
             <p className="text-[11px] text-gray-500">Completed Today</p>
             <p className="text-xl font-bold">{taken}</p>
           </div>
           <div 
-            className="cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
-            onClick={() => onStatClick('pending7')}
+            className={`p-2 rounded transition-colors ${
+              last7 > 0 
+                ? 'cursor-pointer hover:bg-gray-50' 
+                : 'cursor-not-allowed'
+            }`}
+            onClick={last7 > 0 ? () => onStatClick('pending7') : undefined}
           >
             <p className="text-[11px] text-gray-500">Pending (7 Days)</p>
             <p className="text-xl font-bold">{last7}</p>

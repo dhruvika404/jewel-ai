@@ -70,6 +70,21 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
     }
   }, [client, isOpen])
 
+  const resetForm = () => {
+    setFormData({
+      userCode: '',
+      name: '',
+      email: '',
+      phone: '',
+      salesExecCode: '',
+    })
+  }
+
+  const handleClose = () => {
+    resetForm()
+    onClose()
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -108,6 +123,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
       if (response.success !== false) {
         toast.success(client ? 'Client updated successfully' : 'Client added successfully')
         onSuccess()
+        resetForm()
         onClose()
       } else {
         toast.error(response.message || 'Something went wrong')
@@ -120,7 +136,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{client ? 'Edit Client' : 'Add New Client'}</DialogTitle>
@@ -198,7 +214,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
           </div>
           
           <DialogFooter className="pt-4">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
