@@ -127,25 +127,12 @@ export default function AdminHome() {
     navigate(`/admin/followups/${endpoint}${params}`);
   };
 
-  const handleStatCardClick = (filterType: 'due' | 'completed' | 'pending7') => {
-    const today = format(new Date(), "yyyy-MM-dd");
-    let params = `?startDate=${today}&endDate=${today}`;
-    if (filterType === 'due') params += `&todayDueFollowUp=true`;
-    else if (filterType === 'completed') params += `&todayCompletedFollowUp=true`;
-    else if (filterType === 'pending7') {
-      const sevenDaysAgo = format(subDays(new Date(), 7), "yyyy-MM-dd");
-      params = `?startDate=${sevenDaysAgo}&endDate=${today}&sevenDayPendingFollowUp=true`;
-    }
-    navigate(`/admin/followups/new-order${params}`);
-  };
-
   useEffect(() => {
     loadData();
   }, []);
 
   return (
     <div className="p-6 space-y-8">
-      {/* ===== TOP SUMMARY ===== */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
           label="Due Today Follow-ups"
@@ -170,7 +157,6 @@ export default function AdminHome() {
         />
       </div>
 
-      {/* ===== DETAILED BREAKDOWN ===== */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <BreakdownSection
           title="New Order Follow-ups"
@@ -210,8 +196,6 @@ export default function AdminHome() {
     </div>
   );
 }
-
-/* ================= COMPONENTS ================= */
 
 function StatCard({ label, value, icon: Icon, color, loading }: any) {
   const colors: any = {
