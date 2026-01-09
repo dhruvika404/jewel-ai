@@ -1,14 +1,6 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card,  CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -19,16 +11,8 @@ import {
 } from "@/components/ui/table";
 import TablePagination from "@/components/ui/table-pagination";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Loader2,
-  Clock,
-  AlertCircle,
-  CheckCircle,
-  Filter,
-  Users,
-  Building2,
-  X,
   Download,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -43,7 +27,6 @@ import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import * as XLSX from "xlsx";
 import { DateRange } from "react-day-picker";
 import { formatDisplayDate } from "@/lib/utils";
-import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 
 type ReportType = "todays-taken" | "pending" | "overdue";
 
@@ -342,23 +325,6 @@ export default function Reports() {
     });
   }, [filteredFollowUps.length, searchTerm]);
 
-  const clearFilters = () => {
-    setSalesPersonFilter("all");
-    setClientFilter("all");
-    setSearchTerm("");
-    setDateRange(undefined);
-    loadReportData({ overrideDateRange: null, skipAllFilters: true });
-  };
-
-  const getActiveFilterCount = () => {
-    let count = 0;
-    if (salesPersonFilter !== "all") count++;
-    if (clientFilter !== "all") count++;
-    if (searchTerm) count++;
-    if (dateRange) count++;
-    return count;
-  };
-
   const handleExport = () => {
     if (filteredFollowUps.length === 0) {
       toast.error("No data to export");
@@ -419,158 +385,6 @@ export default function Reports() {
   return (
     <div className="bg-gray-50 pb-6">
       <div className="p-6 space-y-6">
-        <Card className="overflow-hidden">
-          <Tabs
-            value={reportType}
-            onValueChange={(value) => setReportType(value as ReportType)}
-            className="w-full"
-          >
-            <div className="border-b bg-gray-50 px-6 py-4">
-              <TabsList className="grid w-full grid-cols-3 bg-white">
-                <TabsTrigger
-                  value="todays-taken"
-                  className="flex items-center gap-2 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Today's Taken
-                </TabsTrigger>
-                <TabsTrigger
-                  value="pending"
-                  className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
-                >
-                  <Clock className="w-4 h-4" />
-                  Pending
-                </TabsTrigger>
-                <TabsTrigger
-                  value="overdue"
-                  className="flex items-center gap-2 data-[state=active]:bg-red-50 data-[state=active]:text-red-700"
-                >
-                  <AlertCircle className="w-4 h-4" />
-                  Overdue
-                </TabsTrigger>
-              </TabsList>
-            </div>
-          </Tabs>
-        </Card>
-
-        <Card className="overflow-hidden">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-gray-600" />
-                <CardTitle className="text-base font-semibold">
-                  Filters & Search
-                </CardTitle>
-                {getActiveFilterCount() > 0 && (
-                  <Badge variant="secondary" className="ml-2">
-                    {getActiveFilterCount()} active
-                  </Badge>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {getActiveFilterCount() > 0 && (
-                  <Button
-                    onClick={clearFilters}
-                    variant="ghost"
-                    size="sm"
-                    className="text-gray-600 hover:text-gray-900"
-                  >
-                    <X className="w-4 h-4 mr-1" />
-                    Clear All
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="pt-0">
-            <div
-              className={`grid gap-4 ${
-                reportType === "pending"
-                  ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
-                  : "grid-cols-1 md:grid-cols-3"
-              }`}
-            >
-              <div className="sm:col-span-1">
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Date Range
-                </Label>
-                <DatePickerWithRange 
-                  date={dateRange} 
-                  setDate={setDateRange} 
-                  className="w-full" 
-                  onOpenChange={(open) => {
-                    if (!open && dateRange?.from && dateRange?.to) {
-                      loadReportData();
-                    }
-                  }}
-                />
-              </div>
-
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Sales Person
-                </Label>
-                <Select
-                  value={salesPersonFilter}
-                  onValueChange={setSalesPersonFilter}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="All Sales Persons" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        All Sales Persons
-                      </div>
-                    </SelectItem>
-                    {salesPersons.map((sp) => (
-                      <SelectItem key={sp.uuid} value={sp.userCode}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{sp.name}</span>
-                          <span className="text-xs text-gray-500">
-                            {sp.userCode}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Client
-                </Label>
-                <Select value={clientFilter} onValueChange={setClientFilter}>
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="All Clients" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4" />
-                        All Clients
-                      </div>
-                    </SelectItem>
-                    {clients.map((client) => (
-                      <SelectItem key={client.uuid} value={client.userCode}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{client.name}</span>
-                          <span className="text-xs text-gray-500">
-                            {client.userCode}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         <Card className="overflow-hidden">
           <CardHeader className="bg-gray-50 border-b py-4 px-6">
             <div className="flex items-center justify-between">
