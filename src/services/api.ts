@@ -9,7 +9,7 @@ export const authAPI = {
     password: string;
     role?: string;
   }) => {
-    try {
+
       const response = await fetch(
         `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`,
         {
@@ -31,15 +31,6 @@ export const authAPI = {
       }
 
       return data;
-    } catch (error: any) {
-      console.error("Auth API Error:", error);
-      if (error.name === "TypeError" && error.message.includes("fetch")) {
-        throw new Error(
-          "Unable to connect to server. Please check your internet connection."
-        );
-      }
-      throw error;
-    }
   },
 
   // Set login password for sales person
