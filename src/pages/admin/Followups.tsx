@@ -798,7 +798,7 @@ export default function Followups() {
 
 
   return (
-    <div className="bg-gray-50 pb-6">
+    <div className="bg-gray-50">
       <div className="p-6 space-y-6">
         {/* Inline Filter Bar */}
         <div className="flex items-center gap-3 overflow-x-auto p-1">
@@ -927,12 +927,6 @@ export default function Followups() {
         </Dialog>
 
         <Card className="overflow-hidden">
-          <CardHeader className="bg-gray-50 border-b py-4 px-6">
-            <CardTitle className="text-lg font-semibold text-gray-900">
-              {getFollowupTypeTitle()}
-            </CardTitle>
-          </CardHeader>
-
           <div className="overflow-x-auto">
             <Table>
                   <TableHeader>
