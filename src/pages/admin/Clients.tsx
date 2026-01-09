@@ -247,7 +247,7 @@ export default function Clients() {
   const totalPages = Math.ceil(totalItems / pageSize);
 
   const FollowUpCell = ({ data }: { data?: FollowUpSummary }) => {
-    if (!data) return <span className="text-gray-400 text-xs">-</span>;
+    if (!data || data.status === "completed") return <span className="text-gray-400 text-xs">-</span>;
 
     const getFollowUpColor = () => {
       if (!data.nextFollowUpDate) return "bg-gray-50";
@@ -261,6 +261,8 @@ export default function Clients() {
         (today.getTime() - nextDate.getTime()) / (1000 * 60 * 60 * 24)
       );
 
+      if (daysDiff <= 0)
+        return "bg-purple-50 border-l-4 border-purple-500";
       if (daysDiff >= 1 && daysDiff <= 2)
         return "bg-blue-50 border-l-4 border-blue-500";
       if (daysDiff >= 3 && daysDiff <= 4)
@@ -302,6 +304,24 @@ export default function Clients() {
     <div className="bg-gray-50 pb-6">
       <div className="p-6 space-y-6">
         <Card className="overflow-hidden">
+          <div className="p-4 border-b bg-white flex flex-wrap items-center gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+              <span className="text-gray-600">Upcoming</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              <span className="text-gray-600">1-2 Days Overdue</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+              <span className="text-gray-600">3-4 Days Overdue</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <span className="text-gray-600">5+ Days Overdue</span>
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <Table>
                 <TableHeader>
@@ -346,9 +366,7 @@ export default function Clients() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    clients
-                      .filter((client) => client?.status !== "completed")
-                      .map((client) => (
+                    clients.map((client) => (
                       <TableRow key={client.uuid} className="hover:bg-gray-50">
                         <TableCell className="align-center">
                           <div className="flex items-center gap-3">

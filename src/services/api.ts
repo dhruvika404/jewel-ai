@@ -367,6 +367,8 @@ export const pendingOrderAPI = {
     orderNo: string;
     orderDate: string;
     grossWtTotal: string;
+    totalOrderPcs: number;
+    pendingPcs: number;
     remark?: string;
     nextFollowUpDate?: string;
     lastFollowUpMsg?: string;
@@ -392,6 +394,8 @@ export const pendingOrderAPI = {
       orderNo?: string;
       orderDate?: string;
       grossWtTotal?: string;
+      totalOrderPcs?: number;
+      pendingPcs?: number;
       remark?: string;
       nextFollowUpDate?: string;
       lastFollowUpMsg?: string;

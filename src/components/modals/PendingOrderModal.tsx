@@ -27,6 +27,8 @@ export function PendingOrderModal({ isOpen, onClose, onSuccess, clientCode, orde
     orderNo: '',
     orderDate: '',
     grossWtTotal: '',
+    totalOrderPcs: '',
+    pendingPcs: '',
     remark: '',
     nextFollowUpDate: '',
     status: 'pending',
@@ -54,6 +56,8 @@ export function PendingOrderModal({ isOpen, onClose, onSuccess, clientCode, orde
         orderNo: order.orderNo || '',
         orderDate: formatDateForInput(order.orderDate),
         grossWtTotal: order.grossWtTotal?.toString() || '',
+        totalOrderPcs: order.totalOrderPcs?.toString() || '',
+        pendingPcs: order.pendingPcs?.toString() || '',
         remark: order.remark || '',
         nextFollowUpDate: formatDateForInput(order.nextFollowUpDate),
         status: order.status || 'pending',
@@ -65,6 +69,8 @@ export function PendingOrderModal({ isOpen, onClose, onSuccess, clientCode, orde
         orderNo: '',
         orderDate: '',
         grossWtTotal: '',
+        totalOrderPcs: '',
+        pendingPcs: '',
         remark: '',
         nextFollowUpDate: '',
         status: 'pending',
@@ -79,6 +85,8 @@ export function PendingOrderModal({ isOpen, onClose, onSuccess, clientCode, orde
       orderNo: '',
       orderDate: '',
       grossWtTotal: '',
+      totalOrderPcs: '',
+      pendingPcs: '',
       remark: '',
       nextFollowUpDate: '',
       status: 'pending',
@@ -93,18 +101,38 @@ export function PendingOrderModal({ isOpen, onClose, onSuccess, clientCode, orde
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.salesExecCode || !formData.orderNo || !formData.orderDate || !formData.grossWtTotal) {
+    if (!formData.salesExecCode || !formData.orderNo || !formData.orderDate || !formData.grossWtTotal || !formData.totalOrderPcs || !formData.pendingPcs) {
       toast.error('Please fill in all required fields')
+      return
+    }
+
+    if (!formData.nextFollowUpDate) {
+      toast.error('Next follow-up date is required')
       return
     }
 
     setLoading(true)
     try {
+      const payload: any = {
+        salesExecCode: formData.salesExecCode,
+        clientCode: formData.clientCode,
+        orderNo: formData.orderNo,
+        orderDate: formData.orderDate,
+        grossWtTotal: formData.grossWtTotal,
+        totalOrderPcs: Number(formData.totalOrderPcs),
+        pendingPcs: Number(formData.pendingPcs),
+        remark: formData.remark,
+        nextFollowUpDate: formData.nextFollowUpDate,
+      };
+
+      // Only include status if explicitly needed, but user says it's not allowed
+      // if (formData.status) payload.status = formData.status;
+
       let response
       if (order) {
-        response = await pendingOrderAPI.update(order.uuid || order.id, formData)
+        response = await pendingOrderAPI.update(order.uuid || order.id, payload)
       } else {
-        response = await pendingOrderAPI.create(formData)
+        response = await pendingOrderAPI.create(payload)
       }
 
       // Check if response indicates failure
@@ -192,16 +220,36 @@ export function PendingOrderModal({ isOpen, onClose, onSuccess, clientCode, orde
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select value={formData.status} onValueChange={(val) => setFormData({ ...formData, status: val })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="totalOrderPcs">Total Order Pcs *</Label>
+              <Input
+                id="totalOrderPcs"
+                type="number"
+                value={formData.totalOrderPcs}
+                onChange={(e) => setFormData({ ...formData, totalOrderPcs: e.target.value })}
+                placeholder="e.g. 100"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pendingPcs">Pending Pcs *</Label>
+              <Input
+                id="pendingPcs"
+                type="number"
+                value={formData.pendingPcs}
+                onChange={(e) => setFormData({ ...formData, pendingPcs: e.target.value })}
+                placeholder="e.g. 50"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="nextFollowUpDate">Next Follow-up Date *</Label>
+              <Input
+                id="nextFollowUpDate"
+                type="date"
+                value={formData.nextFollowUpDate}
+                onChange={(e) => setFormData({ ...formData, nextFollowUpDate: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="grossWtTotal">Gross Weight Total *</Label>
