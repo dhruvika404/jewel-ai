@@ -303,11 +303,14 @@ export const clientAPI = {
       }
 
       if (!response.ok) {
-        throw new Error(
-          result.message ||
-            result.error ||
-            `HTTP error! status: ${response.status}`
-        );
+        let errorMessage = result.message || result.error || `HTTP error! status: ${response.status}`;
+        
+        if (typeof errorMessage === 'object') {
+          const msg = errorMessage.message || JSON.stringify(errorMessage);
+          errorMessage = errorMessage.rowNo ? `Row ${errorMessage.rowNo}: ${msg}` : msg;
+        }
+
+        throw new Error(errorMessage);
       }
 
       return result;
