@@ -1,21 +1,21 @@
-import * as React from "react"
-import { format } from "date-fns"
-import { Calendar as CalendarIcon } from "lucide-react"
-import { DateRange } from "react-day-picker"
-
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
+import * as React from "react";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { DateRange } from "react-day-picker";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
 
-interface DatePickerWithRangeProps extends React.HTMLAttributes<HTMLDivElement> {
-  date: DateRange | undefined
-  setDate: (date: DateRange | undefined) => void
-  onOpenChange?: (open: boolean) => void
+interface DatePickerWithRangeProps
+  extends React.HTMLAttributes<HTMLDivElement> {
+  date: DateRange | undefined;
+  setDate: (date: DateRange | undefined) => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function DatePickerWithRange({
@@ -60,16 +60,20 @@ export function DatePickerWithRange({
             onSelect={setDate}
             numberOfMonths={1}
             classNames={{
-              selected: "bg-primary text-primary-foreground hover:bg-primary/90 focus:bg-primary/90",
+              selected:
+                "bg-primary text-primary-foreground hover:bg-primary/90 focus:bg-primary/90",
               today: "bg-accent text-accent-foreground",
               outside: "text-muted-foreground opacity-50",
-              range_middle: "aria-selected:bg-primary/20 aria-selected:text-primary",
-              range_start: "bg-primary text-primary-foreground rounded-l-md hover:bg-primary/90 hover:text-primary-foreground focus:bg-primary/90 focus:text-primary-foreground",
-              range_end: "bg-primary text-primary-foreground rounded-r-md hover:bg-primary/90 hover:text-primary-foreground focus:bg-primary/90 focus:text-primary-foreground",
+              range_middle:
+                "aria-selected:bg-primary/20 aria-selected:text-primary",
+              range_start:
+                "bg-primary text-primary-foreground rounded-l-md hover:bg-primary/90 hover:text-primary-foreground focus:bg-primary/90 focus:text-primary-foreground",
+              range_end:
+                "bg-primary text-primary-foreground rounded-r-md hover:bg-primary/90 hover:text-primary-foreground focus:bg-primary/90 focus:text-primary-foreground",
             }}
           />
         </PopoverContent>
       </Popover>
     </div>
-  )
+  );
 }

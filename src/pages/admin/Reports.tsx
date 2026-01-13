@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card,  CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -11,10 +11,7 @@ import {
 } from "@/components/ui/table";
 import TablePagination from "@/components/ui/table-pagination";
 import { Badge } from "@/components/ui/badge";
-import {
-  Loader2,
-  Download,
-} from "lucide-react";
+import { Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
 import {
   newOrderAPI,
@@ -103,8 +100,14 @@ export default function Reports() {
     return sp?.name || "";
   };
 
-  const loadReportData = async (options?: { overrideDateRange?: DateRange | null, skipAllFilters?: boolean }) => {
-    const activeDateRange = options?.overrideDateRange !== undefined ? options.overrideDateRange : dateRange;
+  const loadReportData = async (options?: {
+    overrideDateRange?: DateRange | null;
+    skipAllFilters?: boolean;
+  }) => {
+    const activeDateRange =
+      options?.overrideDateRange !== undefined
+        ? options.overrideDateRange
+        : dateRange;
     const skipAllFilters = options?.skipAllFilters || false;
     setLoading(true);
     try {
@@ -175,19 +178,19 @@ export default function Reports() {
                   }
                 }
               } else if (reportType === "pending") {
-                  if (activeDateRange?.from && !skipAllFilters) {
-                    const from = new Date(activeDateRange.from);
-                    from.setHours(0, 0, 0, 0);
-                    const to = activeDateRange.to
-                      ? new Date(activeDateRange.to)
-                      : new Date(from);
-                    to.setHours(23, 59, 59, 999);
+                if (activeDateRange?.from && !skipAllFilters) {
+                  const from = new Date(activeDateRange.from);
+                  from.setHours(0, 0, 0, 0);
+                  const to = activeDateRange.to
+                    ? new Date(activeDateRange.to)
+                    : new Date(from);
+                  to.setHours(23, 59, 59, 999);
 
-                    includeRecord =
-                      fu.followUpStatus?.toLowerCase() !== "completed" &&
-                      fuDate >= from &&
-                      fuDate <= to;
-                  } else if (!activeDateRange || skipAllFilters) {
+                  includeRecord =
+                    fu.followUpStatus?.toLowerCase() !== "completed" &&
+                    fuDate >= from &&
+                    fuDate <= to;
+                } else if (!activeDateRange || skipAllFilters) {
                   // Default behavior: pending from today onwards
                   includeRecord =
                     fu.followUpStatus?.toLowerCase() !== "completed" &&
@@ -398,158 +401,157 @@ export default function Reports() {
 
           <div className="overflow-x-auto">
             <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead className="font-medium text-gray-700 w-[200px]">
-                        Client Details
-                      </TableHead>
-                      <TableHead className="font-medium text-gray-700 w-[150px]">
-                        Sales Person
-                      </TableHead>
-                      <TableHead className="font-medium text-gray-700 w-[120px]">
-                        Type
-                      </TableHead>
-                      <TableHead className="font-medium text-gray-700 w-[250px]">
-                        Follow-up Message
-                      </TableHead>
-                      <TableHead className="font-medium text-gray-700 w-[130px]">
-                        Next Follow-up
-                      </TableHead>
-                      <TableHead className="font-medium text-gray-700 w-[130px]">
-                        Last Follow-up
-                      </TableHead>
-                      <TableHead className="font-medium text-gray-700 w-[100px]">
-                        Status
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-12">
-                          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-                        </TableCell>
-                      </TableRow>
-                    ) : paginatedFollowUps.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={7}
-                          className="text-center py-8 text-muted-foreground"
+              <TableHeader>
+                <TableRow className="bg-gray-50">
+                  <TableHead className="font-medium text-gray-700 w-[200px]">
+                    Client Details
+                  </TableHead>
+                  <TableHead className="font-medium text-gray-700 w-[150px]">
+                    Sales Person
+                  </TableHead>
+                  <TableHead className="font-medium text-gray-700 w-[120px]">
+                    Type
+                  </TableHead>
+                  <TableHead className="font-medium text-gray-700 w-[250px]">
+                    Follow-up Message
+                  </TableHead>
+                  <TableHead className="font-medium text-gray-700 w-[130px]">
+                    Next Follow-up
+                  </TableHead>
+                  <TableHead className="font-medium text-gray-700 w-[130px]">
+                    Last Follow-up
+                  </TableHead>
+                  <TableHead className="font-medium text-gray-700 w-[100px]">
+                    Status
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-12">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedFollowUps.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="text-center py-8 text-muted-foreground"
+                    >
+                      No records found for the selected criteria
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedFollowUps.map((fu) => (
+                    <TableRow key={fu.id} className="hover:bg-gray-50">
+                      <TableCell className="align-center">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
+                            {fu.clientName?.charAt(0) ||
+                              fu.clientCode?.charAt(0) ||
+                              "C"}
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {fu.clientName}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {fu.clientCode}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="align-center">
+                        {fu.salesExecCode ? (
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {fu.salesExecName || "Unknown"}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {fu.salesExecCode}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="align-center">
+                        <Badge
+                          variant="outline"
+                          className={`text-xs font-medium ${
+                            fu.type === "New Order"
+                              ? "bg-blue-50 text-blue-700 border-blue-200"
+                              : fu.type === "Pending Order"
+                              ? "bg-orange-50 text-orange-700 border-orange-200"
+                              : "bg-purple-50 text-purple-700 border-purple-200"
+                          }`}
                         >
-                          No records found for the selected criteria
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      paginatedFollowUps.map((fu) => (
-                        <TableRow key={fu.id} className="hover:bg-gray-50">
-                          <TableCell className="align-center">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
-                                {fu.clientName?.charAt(0) ||
-                                  fu.clientCode?.charAt(0) ||
-                                  "C"}
-                              </div>
-                              <div>
-                                <div className="font-medium text-gray-900">
-                                  {fu.clientName}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {fu.clientCode}
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="align-center">
-                            {fu.salesExecCode ? (
-                              <div>
-                                <div className="font-medium text-gray-900">
-                                  {fu.salesExecName || "Unknown"}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {fu.salesExecCode}
-                                </div>
-                              </div>
-                            ) : (
-                              <span className="text-gray-400">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="align-center">
-                            <Badge
-                              variant="outline"
-                              className={`text-xs font-medium ${
-                                fu.type === "New Order"
-                                  ? "bg-blue-50 text-blue-700 border-blue-200"
-                                  : fu.type === "Pending Order"
-                                  ? "bg-orange-50 text-orange-700 border-orange-200"
-                                  : "bg-purple-50 text-purple-700 border-purple-200"
-                              }`}
-                            >
-                              {fu.type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="align-center">
-                            <div
-                              className="text-sm text-gray-700 line-clamp-2 leading-relaxed"
-                              title={fu.followUpMsg}
-                            >
-                              {fu.followUpMsg || (
-                                <span className="text-gray-400 italic">
-                                  No message
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="align-center">
-                            <div className="text-sm font-medium text-gray-900">
-                              {formatDisplayDate(fu.nextFollowUpDate)}
-                            </div>
-                          </TableCell>
-                          <TableCell className="align-center">
-                            {fu.lastFollowUpDate ? (
-                              <div className="text-sm text-gray-900">
-                                {formatDisplayDate(fu.lastFollowUpDate)}
-                              </div>
-                            ) : (
-                              <span className="text-gray-400 text-sm">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="align-center">
-                            <Badge
-                              variant="outline"
-                              className={`text-xs font-medium ${
-                                fu.followUpStatus?.toLowerCase() === "completed"
-                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                  : fu.followUpStatus?.toLowerCase() ===
-                                    "pending"
-                                  ? "bg-amber-50 text-amber-700 border-amber-200"
-                                  : "bg-gray-50 text-gray-700 border-gray-200"
-                              }`}
-                            >
-                              {fu.followUpStatus || "Unknown"}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                          {fu.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="align-center">
+                        <div
+                          className="text-sm text-gray-700 line-clamp-2 leading-relaxed"
+                          title={fu.followUpMsg}
+                        >
+                          {fu.followUpMsg || (
+                            <span className="text-gray-400 italic">
+                              No message
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="align-center">
+                        <div className="text-sm font-medium text-gray-900">
+                          {formatDisplayDate(fu.nextFollowUpDate)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="align-center">
+                        {fu.lastFollowUpDate ? (
+                          <div className="text-sm text-gray-900">
+                            {formatDisplayDate(fu.lastFollowUpDate)}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="align-center">
+                        <Badge
+                          variant="outline"
+                          className={`text-xs font-medium ${
+                            fu.followUpStatus?.toLowerCase() === "completed"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : fu.followUpStatus?.toLowerCase() === "pending"
+                              ? "bg-amber-50 text-amber-700 border-amber-200"
+                              : "bg-gray-50 text-gray-700 border-gray-200"
+                          }`}
+                        >
+                          {fu.followUpStatus || "Unknown"}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
-              <div className="p-4 border-t bg-white flex justify-between items-center">
-                <div className="text-sm text-gray-600">
-                  Total Records:{" "}
-                  <span className="font-semibold text-gray-900">
-                    {filteredFollowUps.length}
-                  </span>
-                </div>
-                <TablePagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  pageSize={pageSize}
-                  setPageSize={setPageSize}
-                />
-              </div>
+          <div className="p-4 border-t bg-white flex justify-between items-center">
+            <div className="text-sm text-gray-600">
+              Total Records:{" "}
+              <span className="font-semibold text-gray-900">
+                {filteredFollowUps.length}
+              </span>
+            </div>
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              pageSize={pageSize}
+              setPageSize={setPageSize}
+            />
+          </div>
         </Card>
       </div>
     </div>

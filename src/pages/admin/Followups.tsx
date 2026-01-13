@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
-import { useParams, Navigate, useSearchParams, useNavigate } from "react-router-dom";
+import {
+  useParams,
+  Navigate,
+  useSearchParams,
+  useNavigate,
+} from "react-router-dom";
 import { format } from "date-fns";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -83,7 +88,6 @@ interface PendingOrderFollowup {
   pendingPcs: number;
   salesExecutive: string;
   type: "pending-order";
-  // New fields
   orderDate: string;
   pendingSince: number;
   nextFollowupDate?: string;
@@ -100,7 +104,6 @@ interface PendingMaterialFollowup {
   pendingSinceDays: number;
   salesExecutive: string;
   nextFollowupDate?: string;
-  // New fields from JSON
   styleNo: string;
   orderNo: string;
   orderDate: string;
@@ -151,14 +154,16 @@ export default function Followups() {
   const followupType = (type as FollowupType) || "new-order";
   const [salesPersonFilter, setSalesPersonFilter] = useState("all");
   const [clientFilter, setClientFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get("search") || ""
+  );
   const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
     const from = searchParams.get("startDate");
     const to = searchParams.get("endDate");
     if (from) {
       return {
         from: new Date(from),
-        to: to ? new Date(to) : new Date(from)
+        to: to ? new Date(to) : new Date(from),
       };
     }
     return undefined;
@@ -174,24 +179,20 @@ export default function Followups() {
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  
-  // New Order specific states
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC" | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
-
-  // Dialog states
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  
-  // Modals state
-  // Modals state
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [editingType, setEditingType] = useState<FollowupType>("new-order");
-
-  const MANUAL_SORT_COLUMNS = ["noOrderSince", "pendingSince", "pendingSinceDays"];
+  const MANUAL_SORT_COLUMNS = [
+    "noOrderSince",
+    "pendingSince",
+    "pendingSinceDays",
+  ];
 
   const validTypes: FollowupType[] = [
     "new-order",
@@ -236,7 +237,8 @@ export default function Followups() {
     else if (res.data) dataArray = res.data;
 
     return dataArray.map((item: any) => {
-      const lastOrderDate = item.lastOrderDate || item.lastSaleDate || new Date().toISOString();
+      const lastOrderDate =
+        item.lastOrderDate || item.lastSaleDate || new Date().toISOString();
       const date = new Date(lastOrderDate);
       const now = new Date();
       const daysDiff = Math.floor(
@@ -249,12 +251,14 @@ export default function Followups() {
         name: item.clientData?.name || item.name || item.userCode,
         lastOrderDate: lastOrderDate,
         noOrderSince: daysDiff,
-        salesExecutive: item.salesExecData?.userCode || item.salesExecCode || "",
+        salesExecutive:
+          item.salesExecData?.userCode || item.salesExecCode || "",
         status: (item.status || "pending").toLowerCase(),
-        nextFollowupDate: item.nextFollowUpDate || item.nextFollowupDate || null,
+        nextFollowupDate:
+          item.nextFollowUpDate || item.nextFollowupDate || null,
         remark: item.remark || "",
         type: "new-order" as const,
-        originalData: item
+        originalData: item,
       };
     });
   };
@@ -266,7 +270,6 @@ export default function Followups() {
     else if (res.data) dataArray = res.data;
 
     return dataArray.map((item: any) => {
-      // Calculate pending since days based on order date
       const orderDate = item.orderDate || new Date().toISOString();
       const date = new Date(orderDate);
       const now = new Date();
@@ -280,18 +283,21 @@ export default function Followups() {
         name: item.clientData?.name || item.name || item.userCode,
         orderNo: item.orderNo || "",
         totalOrderPcs: item.totalOrderPcs || 0,
-        pendingPcs: item.pendingPcs ?? ((item.totalOrderPcs || 0) - (item.deliveredPcs || 0)),
-        salesExecutive: item.salesExecData?.userCode || item.salesExecCode || "",
+        pendingPcs:
+          item.pendingPcs ??
+          (item.totalOrderPcs || 0) - (item.deliveredPcs || 0),
+        salesExecutive:
+          item.salesExecData?.userCode || item.salesExecCode || "",
         type: "pending-order" as const,
-        
-        // New mappings
+
         orderDate: orderDate,
         pendingSince: daysDiff,
-        nextFollowupDate: item.nextFollowUpDate || item.nextFollowupDate || null,
+        nextFollowupDate:
+          item.nextFollowUpDate || item.nextFollowupDate || null,
         remark: item.remark || "",
         status: (item.status || "pending").toLowerCase(),
-        
-        originalData: item
+
+        originalData: item,
       };
     });
   };
@@ -316,7 +322,8 @@ export default function Followups() {
         name: item.clientData?.name || item.name || item.userCode,
         pendingFor: item.departmentName || "",
         pendingSinceDays: daysDiff,
-        salesExecutive: item.salesExecData?.userCode || item.salesExecCode || "",
+        salesExecutive:
+          item.salesExecData?.userCode || item.salesExecCode || "",
         remark: item.remark || "",
         styleNo: item.styleNo || "",
         orderNo: item.orderNo || "",
@@ -328,14 +335,21 @@ export default function Followups() {
         lastFollowUpMsg: item.lastFollowUpMsg || "",
         status: item.status || "pending",
         type: "pending-material" as const,
-        nextFollowupDate: item.nextFollowUpDate || item.nextFollowupDate || null,
-        originalData: item
+        nextFollowupDate:
+          item.nextFollowUpDate || item.nextFollowupDate || null,
+        originalData: item,
       };
     });
   };
 
-  const loadFollowupData = async (options?: { overrideDateRange?: DateRange | null, skipAllFilters?: boolean }) => {
-    const activeDateRange = options?.overrideDateRange !== undefined ? options.overrideDateRange : dateRange;
+  const loadFollowupData = async (options?: {
+    overrideDateRange?: DateRange | null;
+    skipAllFilters?: boolean;
+  }) => {
+    const activeDateRange =
+      options?.overrideDateRange !== undefined
+        ? options.overrideDateRange
+        : dateRange;
     const skipAllFilters = options?.skipAllFilters || false;
     try {
       setLoading(true);
@@ -410,12 +424,8 @@ export default function Followups() {
         setTotalPages(1);
         setTotalItems(0);
       }
-
       setFollowups(data);
 
-      setFollowups(data);
-
-      // Perform manual sorting if needed
       if (isManualSort && sortOrder) {
         setFollowups((currentData) => {
           const sorted = [...currentData].sort((a: any, b: any) => {
@@ -462,9 +472,6 @@ export default function Followups() {
     setStatusFilter("all");
     setSortBy(null);
     setSortOrder(null);
-    
-    // Clear URL parameters
-    // Keep page/size if needed, but usually clear all means reset
     navigate(`/admin/followups/${followupType}`, { replace: true });
     loadFollowupData({ overrideDateRange: null, skipAllFilters: true });
   };
@@ -494,8 +501,8 @@ export default function Followups() {
           "Last Order Date": formatDisplayDate(fu.lastOrderDate),
           "No Order Since": `${fu.noOrderSince} Days`,
           "Next Follow-up": formatDisplayDate(fu.nextFollowupDate),
-          "Remark": fu.remark || "-",
-          "Status": fu.status,
+          Remark: fu.remark || "-",
+          Status: fu.status,
         };
       } else if (fu.type === "pending-order") {
         return {
@@ -505,8 +512,8 @@ export default function Followups() {
           "Pending Since": `${fu.pendingSince} Days`,
           "Pending Pcs": fu.pendingPcs,
           "Next Follow-up": formatDisplayDate(fu.nextFollowupDate),
-          "Remark": fu.remark || "-",
-          "Status": fu.status,
+          Remark: fu.remark || "-",
+          Status: fu.status,
         };
       } else if (fu.type === "pending-material") {
         return {
@@ -516,8 +523,8 @@ export default function Followups() {
           "Pending For": fu.pendingFor,
           "Pending Since": `${fu.pendingSinceDays} Days`,
           "Next Follow-up": formatDisplayDate(fu.nextFollowupDate),
-          "Remark": fu.remark || "-",
-          "Status": fu.status,
+          Remark: fu.remark || "-",
+          Status: fu.status,
         };
       } else {
         return {
@@ -544,7 +551,6 @@ export default function Followups() {
     toast.success(`Exported successfully as ${fileName}`);
   };
 
-  // Consolidating data loading into a single useEffect with all necessary dependencies
   useEffect(() => {
     loadFollowupData();
   }, [
@@ -559,10 +565,8 @@ export default function Followups() {
     searchTerm,
     dateRangeFilter,
     pendingRangeFilter,
-    daysFilter
+    daysFilter,
   ]);
-
-
 
   const filteredFollowups = followups.filter((fu) => {
     if (
@@ -584,7 +588,10 @@ export default function Followups() {
         (fu.salesExecutive?.toLowerCase() || "").includes(searchLower);
 
       if (fu.type === "pending-order") {
-        return matchesSearch || (fu.orderNo?.toLowerCase() || "").includes(searchLower);
+        return (
+          matchesSearch ||
+          (fu.orderNo?.toLowerCase() || "").includes(searchLower)
+        );
       }
       if (!matchesSearch) return false;
     }
@@ -626,30 +633,35 @@ export default function Followups() {
   });
 
   const isManualSort = sortBy && MANUAL_SORT_COLUMNS.includes(sortBy);
-  
-  const displayTotalItems = isManualSort ? filteredFollowups.length : totalItems;
-  const displayTotalPages = isManualSort ? Math.ceil(displayTotalItems / pageSize) : totalPages;
 
-  const paginatedFollowups = isManualSort 
-    ? filteredFollowups.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const displayTotalItems = isManualSort
+    ? filteredFollowups.length
+    : totalItems;
+  const displayTotalPages = isManualSort
+    ? Math.ceil(displayTotalItems / pageSize)
+    : totalPages;
+
+  const paginatedFollowups = isManualSort
+    ? filteredFollowups.slice(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize
+      )
     : filteredFollowups;
-
 
   const isInitialMount = useState(true);
 
   useEffect(() => {
-    // Determine if we should skip clearing (e.g., on initial redirect from dashboard)
-    const hasUrlParams = searchParams.get("startDate") || 
-                        searchParams.get("todayDueFollowUp") || 
-                        searchParams.get("todayCompletedFollowUp") || 
-                        searchParams.get("sevenDayPendingFollowUp");
+    const hasUrlParams =
+      searchParams.get("startDate") ||
+      searchParams.get("todayDueFollowUp") ||
+      searchParams.get("todayCompletedFollowUp") ||
+      searchParams.get("sevenDayPendingFollowUp");
 
     if (hasUrlParams && isInitialMount[0]) {
       isInitialMount[1](false);
       return;
     }
 
-    // Clear all filters when switching tabs manually
     setSalesPersonFilter("all");
     setClientFilter("all");
     setSearchTerm("");
@@ -662,13 +674,7 @@ export default function Followups() {
     setSortOrder(null);
     setCurrentPage(1);
     loadFollowupData({ overrideDateRange: null, skipAllFilters: true });
-  }, [
-    followupType
-  ]);
-
-  // Removed redundant useEffects to prevent double calls.
-  // The state is now initialized from the URL parameters directly.
-  
+  }, [followupType]);
 
   useEffect(() => {
     setHeader({
@@ -702,13 +708,10 @@ export default function Followups() {
     });
   }, [filteredFollowups.length, followupType, searchTerm]);
 
-
   const handleSort = (column: string) => {
     if (sortBy === column) {
-      // Toggle sort order
       setSortOrder(sortOrder === "ASC" ? "DESC" : "ASC");
     } else {
-      // New column, default to ASC
       setSortBy(column);
       setSortOrder("ASC");
     }
@@ -739,7 +742,6 @@ export default function Followups() {
     return count;
   };
 
-
   const handleImport = async () => {
     if (!uploadFile) return;
 
@@ -753,16 +755,12 @@ export default function Followups() {
       } else if (followupType === "pending-material") {
         response = await pendingMaterialAPI.import(uploadFile);
       } else if (followupType === "cad-order") {
-        // Mock success for cad-order as requested
         await new Promise((resolve) => setTimeout(resolve, 1000));
         response = {
           success: true,
           message: "CAD orders imported successfully",
         };
       }
-
-      // Check for success property or if it's a direct array/object without explicit success flag (depending on API)
-      // Assuming standard API response structure as seen in other files { success: boolean, ... }
       if (response && (response.success || response.status === 200)) {
         toast.success(`${getFollowupTypeTitle()} imported successfully`);
         setShowUploadDialog(false);
@@ -780,11 +778,12 @@ export default function Followups() {
     }
   };
 
-
   const handleEditClick = (followup: FollowupRecord) => {
-    setEditingItem(followup.type !== 'cad-order' ? (followup as any).originalData : null);
+    setEditingItem(
+      followup.type !== "cad-order" ? (followup as any).originalData : null
+    );
 
-    if (followup.type !== 'cad-order') {
+    if (followup.type !== "cad-order") {
       setEditingType(followup.type);
       setShowFollowUpModal(true);
     }
@@ -796,14 +795,14 @@ export default function Followups() {
     setEditingItem(null);
   };
 
-
   return (
     <div className="bg-gray-50">
       <div className="p-6 space-y-6">
-        {/* Inline Filter Bar */}
         <div className="flex items-center gap-3 overflow-x-auto p-1">
-          {/* Sales Person Filter */}
-          <Select value={salesPersonFilter} onValueChange={setSalesPersonFilter}>
+          <Select
+            value={salesPersonFilter}
+            onValueChange={setSalesPersonFilter}
+          >
             <SelectTrigger className="h-9 bg-white w-[180px] flex-shrink-0">
               <SelectValue placeholder="Sales Person" />
             </SelectTrigger>
@@ -816,8 +815,6 @@ export default function Followups() {
               ))}
             </SelectContent>
           </Select>
-
-          {/* Client Filter */}
           <Select value={clientFilter} onValueChange={setClientFilter}>
             <SelectTrigger className="h-9 bg-white w-[180px] flex-shrink-0">
               <SelectValue placeholder="Client" />
@@ -832,7 +829,9 @@ export default function Followups() {
             </SelectContent>
           </Select>
 
-          {(followupType === "new-order" || followupType === "pending-order" || followupType === "pending-material") && (
+          {(followupType === "new-order" ||
+            followupType === "pending-order" ||
+            followupType === "pending-material") && (
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="h-9 bg-white w-[140px] flex-shrink-0">
                 <SelectValue placeholder="Status" />
@@ -846,14 +845,13 @@ export default function Followups() {
           )}
 
           <div className="flex-shrink-0">
-            <DatePickerWithRange 
-              date={dateRange} 
-              setDate={setDateRange} 
+            <DatePickerWithRange
+              date={dateRange}
+              setDate={setDateRange}
               onOpenChange={handleDateOpenChange}
-              className="h-9" 
+              className="h-9"
             />
           </div>
-
 
           {getActiveFilterCount() > 0 && (
             <Button
@@ -867,7 +865,6 @@ export default function Followups() {
           )}
         </div>
 
-        {/* Upload Dialog */}
         <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -929,517 +926,577 @@ export default function Followups() {
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      {followupType !== "pending-order" && followupType !== "pending-material" && (
-                        <>
-                          <TableHead className="font-medium text-gray-700 ">
-                            Client Code
-                          </TableHead>
-                          <TableHead className="font-medium text-gray-700 ">
-                            Client Name
-                          </TableHead>
-                        </>
-                      )}
-                      
-                      {followupType === "new-order" && (
-                        <>
-                          <TableHead 
-                            className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-                            onClick={() => handleSort("lastOrderDate")}
-                          >
-                            <div className="flex items-center">
-                              Last Order Date
-                              {getSortIcon("lastOrderDate")}
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-                            onClick={() => handleSort("noOrderSince")}
-                          >
-                            <div className="flex items-center">
-                              No Order Since
-                              {getSortIcon("noOrderSince")}
-                            </div>
-                          </TableHead>
-                        </>
-                      )}
-                      {followupType !== "pending-order" && followupType !== "pending-material" && (
-                        <TableHead className="font-medium text-gray-700">
-                          Sales Executive
+              <TableHeader>
+                <TableRow className="bg-gray-50">
+                  {followupType !== "pending-order" &&
+                    followupType !== "pending-material" && (
+                      <>
+                        <TableHead className="font-medium text-gray-700 ">
+                          Client Code
                         </TableHead>
-                      )}
-                      {followupType === "new-order" && (
-                        <>
-                          <TableHead 
-                            className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-                            onClick={() => handleSort("nextFollowUpDate")}
-                          >
-                            <div className="flex items-center">
-                              Next Followup
-                              {getSortIcon("nextFollowUpDate")}
-                            </div>
-                          </TableHead>
-                          <TableHead className="font-medium text-gray-700">
-                            Remark
-                          </TableHead>
-                        </>
-                      )}
-                      {followupType === "new-order" && (
-                         <>
-                           <TableHead className="font-medium text-gray-700">
-                             Status
-                           </TableHead>
-                           <TableHead className="font-medium text-gray-700">
-                             Actions
-                           </TableHead>
-                         </>
-                      )}
-                      {followupType === "pending-order" && (
-                        <>
-                          <TableHead className="font-medium text-gray-700">
-                            Order No
-                          </TableHead>
-                          <TableHead className="font-medium text-gray-700 ">
-                            Client Code
-                          </TableHead>
-                          <TableHead className="font-medium text-gray-700 ">
-                            Client Name
-                          </TableHead>
-                          <TableHead className="font-medium text-gray-700">
-                            Sales Executive
-                          </TableHead>
-                          <TableHead 
-                            className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-                            onClick={() => handleSort("orderDate")}
-                          >
-                            <div className="flex items-center">
-                              Order Date
-                              {getSortIcon("orderDate")}
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-                            onClick={() => handleSort("pendingSince")}
-                          >
-                            <div className="flex items-center">
-                              Pending Since
-                              {getSortIcon("pendingSince")}
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-                            onClick={() => handleSort("pendingPcs")}
-                          >
-                            <div className="flex items-center">
-                              Pending Pcs
-                              {getSortIcon("pendingPcs")}
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-                            onClick={() => handleSort("nextFollowUpDate")}
-                          >
-                            <div className="flex items-center">
-                              Next Followup
-                              {getSortIcon("nextFollowUpDate")}
-                            </div>
-                          </TableHead>
-                           <TableHead className="font-medium text-gray-700">
-                             Remark
-                           </TableHead>
-                           <TableHead className="font-medium text-gray-700">
-                             Status
-                           </TableHead>
-                           <TableHead className="font-medium text-gray-700">
-                             Actions
-                           </TableHead>
-                        </>
-                      )}
-                      {followupType === "pending-material" && (
-                        <>
-                          <TableHead className="font-medium text-gray-700">
-                            Order No
-                          </TableHead>
-                          <TableHead className="font-medium text-gray-700 ">
-                            Client Code
-                          </TableHead>
-                          <TableHead className="font-medium text-gray-700 ">
-                            Client Name
-                          </TableHead>
-                          <TableHead className="font-medium text-gray-700">
-                            Sales Executive
-                          </TableHead>
-                          <TableHead 
-                            className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-                            onClick={() => handleSort("orderDate")}
-                          >
-                            <div className="flex items-center">
-                              Order Date
-                              {getSortIcon("orderDate")}
-                            </div>
-                          </TableHead>
-                          <TableHead className="font-medium text-gray-700">
-                            Pending Dept
-                          </TableHead>
-                           <TableHead 
-                            className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-                            onClick={() => handleSort("pendingSinceDays")}
-                          >
-                            <div className="flex items-center">
-                              Pending Since
-                              {getSortIcon("pendingSinceDays")}
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-                            onClick={() => handleSort("nextFollowupDate")}
-                          >
-                            <div className="flex items-center">
-                              Next Followup
-                              {getSortIcon("nextFollowupDate")}
-                            </div>
-                          </TableHead>
-                           <TableHead className="font-medium text-gray-700">
-                             Remark
-                           </TableHead>
-                          <TableHead className="font-medium text-gray-700">
-                            Status
-                          </TableHead>
-                          <TableHead className="font-medium text-gray-700">
-                            Actions
-                          </TableHead>
-                        </>
-                      )}
-                      {followupType === "cad-order" && (
-                        <TableHead className="font-medium text-gray-700">
-                          Design No
+                        <TableHead className="font-medium text-gray-700 ">
+                          Client Name
                         </TableHead>
-                      )}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={
-                            followupType === "new-order"
-                              ? 9
-                              : followupType === "pending-order" || followupType === "pending-material"
-                              ? 11
-                              : 4
-                          }
-                          className="text-center py-12"
-                        >
-                          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-                        </TableCell>
-                      </TableRow>
-                    ) : paginatedFollowups.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={
-                              followupType === "new-order"
-                                ? 9
-                                : followupType === "pending-order" || followupType === "pending-material"
-                                ? 11
-                                : 4
-                          }
-                          className="text-center py-8 text-muted-foreground"
-                        >
-                          No records found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      paginatedFollowups.map((fu) => (
-                        <TableRow key={fu.id} className="hover:bg-gray-50">
-                          {followupType !== "pending-order" && followupType !== "pending-material" && (
-                            <>
-                              <TableCell className="font-medium text-gray-900 align-center">
-                                {fu.userCode}
-                              </TableCell>
-                              <TableCell className="align-center">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
-                                    {fu.name?.charAt(0) || fu.userCode?.charAt(0) || "C"}
-                                  </div>
-                                  <div className="font-medium text-gray-900 max-w-[150px] truncate" title={fu.name || "N/A"}>
-                                    {fu.name || "N/A"}
-                                  </div>
-                                </div>
-                              </TableCell>
-                            </>
-                          )}
-                          
-                          {fu.type === "new-order" && (
-                            <>
-                              <TableCell className="align-center">
-                                <div className="text-sm text-gray-900">
-                                  {formatDisplayDate(fu.lastOrderDate)}
-                                </div>
-                              </TableCell>
-                              <TableCell className="align-center">
-                                <div className="text-sm text-gray-900">
-                                  {fu.noOrderSince} Days
-                                </div>
-                              </TableCell>
-                            </>
-                          )}
+                      </>
+                    )}
 
-                          {followupType !== "pending-order" && followupType !== "pending-material" && (
-                            <TableCell className="align-center">
-                              {fu.salesExecutive ? (
-                                <div className="text-sm text-gray-900">
-                                  {fu.salesExecutive}
-                                </div>
-                              ) : (
-                                <span className="text-gray-400">-</span>
-                              )}
+                  {followupType === "new-order" && (
+                    <>
+                      <TableHead
+                        className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort("lastOrderDate")}
+                      >
+                        <div className="flex items-center">
+                          Last Order Date
+                          {getSortIcon("lastOrderDate")}
+                        </div>
+                      </TableHead>
+                      <TableHead
+                        className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort("noOrderSince")}
+                      >
+                        <div className="flex items-center">
+                          No Order Since
+                          {getSortIcon("noOrderSince")}
+                        </div>
+                      </TableHead>
+                    </>
+                  )}
+                  {followupType !== "pending-order" &&
+                    followupType !== "pending-material" && (
+                      <TableHead className="font-medium text-gray-700">
+                        Sales Executive
+                      </TableHead>
+                    )}
+                  {followupType === "new-order" && (
+                    <>
+                      <TableHead
+                        className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort("nextFollowUpDate")}
+                      >
+                        <div className="flex items-center">
+                          Next Followup
+                          {getSortIcon("nextFollowUpDate")}
+                        </div>
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700">
+                        Remark
+                      </TableHead>
+                    </>
+                  )}
+                  {followupType === "new-order" && (
+                    <>
+                      <TableHead className="font-medium text-gray-700">
+                        Status
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700">
+                        Actions
+                      </TableHead>
+                    </>
+                  )}
+                  {followupType === "pending-order" && (
+                    <>
+                      <TableHead className="font-medium text-gray-700">
+                        Order No
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700 ">
+                        Client Code
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700 ">
+                        Client Name
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700">
+                        Sales Executive
+                      </TableHead>
+                      <TableHead
+                        className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort("orderDate")}
+                      >
+                        <div className="flex items-center">
+                          Order Date
+                          {getSortIcon("orderDate")}
+                        </div>
+                      </TableHead>
+                      <TableHead
+                        className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort("pendingSince")}
+                      >
+                        <div className="flex items-center">
+                          Pending Since
+                          {getSortIcon("pendingSince")}
+                        </div>
+                      </TableHead>
+                      <TableHead
+                        className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort("pendingPcs")}
+                      >
+                        <div className="flex items-center">
+                          Pending Pcs
+                          {getSortIcon("pendingPcs")}
+                        </div>
+                      </TableHead>
+                      <TableHead
+                        className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort("nextFollowUpDate")}
+                      >
+                        <div className="flex items-center">
+                          Next Followup
+                          {getSortIcon("nextFollowUpDate")}
+                        </div>
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700">
+                        Remark
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700">
+                        Status
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700">
+                        Actions
+                      </TableHead>
+                    </>
+                  )}
+                  {followupType === "pending-material" && (
+                    <>
+                      <TableHead className="font-medium text-gray-700">
+                        Order No
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700 ">
+                        Client Code
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700 ">
+                        Client Name
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700">
+                        Sales Executive
+                      </TableHead>
+                      <TableHead
+                        className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort("orderDate")}
+                      >
+                        <div className="flex items-center">
+                          Order Date
+                          {getSortIcon("orderDate")}
+                        </div>
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700">
+                        Pending Dept
+                      </TableHead>
+                      <TableHead
+                        className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort("pendingSinceDays")}
+                      >
+                        <div className="flex items-center">
+                          Pending Since
+                          {getSortIcon("pendingSinceDays")}
+                        </div>
+                      </TableHead>
+                      <TableHead
+                        className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort("nextFollowupDate")}
+                      >
+                        <div className="flex items-center">
+                          Next Followup
+                          {getSortIcon("nextFollowupDate")}
+                        </div>
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700">
+                        Remark
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700">
+                        Status
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700">
+                        Actions
+                      </TableHead>
+                    </>
+                  )}
+                  {followupType === "cad-order" && (
+                    <TableHead className="font-medium text-gray-700">
+                      Design No
+                    </TableHead>
+                  )}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={
+                        followupType === "new-order"
+                          ? 9
+                          : followupType === "pending-order" ||
+                            followupType === "pending-material"
+                          ? 11
+                          : 4
+                      }
+                      className="text-center py-12"
+                    >
+                      <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedFollowups.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={
+                        followupType === "new-order"
+                          ? 9
+                          : followupType === "pending-order" ||
+                            followupType === "pending-material"
+                          ? 11
+                          : 4
+                      }
+                      className="text-center py-8 text-muted-foreground"
+                    >
+                      No records found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedFollowups.map((fu) => (
+                    <TableRow key={fu.id} className="hover:bg-gray-50">
+                      {followupType !== "pending-order" &&
+                        followupType !== "pending-material" && (
+                          <>
+                            <TableCell className="font-medium text-gray-900 align-center">
+                              {fu.userCode}
                             </TableCell>
-                          )}
-
-                          {fu.type === "new-order" && (
-                            <>
-                              <TableCell className="align-center">
-                                <div className="text-sm text-gray-900">
-                                  {formatDisplayDate(fu.nextFollowupDate)}
-                                </div>
-                              </TableCell>
-                              <TableCell className="align-center">
-                                <div className="text-sm text-gray-900 max-w-[200px] truncate" title={fu.remark}>
-                                  {fu.remark || "-"}
-                                </div>
-                              </TableCell>
-                            </>
-                          )}
-
-                          {fu.type === "new-order" && (
-                             <>
-                               <TableCell className="align-center">
-                                 <Badge variant="outline" className={fu.status === "completed" ? "bg-green-50 text-green-700 border-green-200" : "bg-yellow-50 text-yellow-700 border-yellow-200"}>
-                                   {fu.status}
-                                 </Badge>
-                               </TableCell>
-                               <TableCell className="align-center">
-                                 <div className="flex items-center gap-2">
-                                   <Button
-                                     variant="ghost"
-                                     size="icon"
-                                     className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                                     title="View Details"
-                                   >
-                                     <Eye className="h-4 w-4" />
-                                   </Button>
-                                   <Button
-                                     variant="ghost"
-                                     size="icon"
-                                     className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                                     title="Edit"
-                                     onClick={() => handleEditClick(fu)}
-                                   >
-                                     <Pencil className="h-4 w-4" />
-                                   </Button>
-                                 </div>
-                               </TableCell>
-                             </>
-                          )}
-                          {fu.type === "pending-order" && (
-                            <>
-                              <TableCell className="align-center">
-                                <div className="text-sm font-medium text-gray-900 max-w-[120px] truncate" title={fu.orderNo}>
-                                  {fu.orderNo}
-                                </div>
-                              </TableCell>
-                              <TableCell className="font-medium text-gray-900 align-center">
-                                {fu.userCode}
-                              </TableCell>
-                              <TableCell className="align-center">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
-                                    {fu.name?.charAt(0) || fu.userCode?.charAt(0) || "C"}
-                                  </div>
-                                  <div className="font-medium text-gray-900 max-w-[150px] truncate" title={fu.name || "N/A"}>
-                                    {fu.name || "N/A"}
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell className="align-center">
-                                {fu.salesExecutive ? (
-                                  <div className="text-sm text-gray-900">
-                                    {fu.salesExecutive}
-                                  </div>
-                                ) : (
-                                  <span className="text-gray-400">-</span>
-                                )}
-                              </TableCell>
-                              <TableCell className="align-center">
-                                <div className="text-sm text-gray-900">
-                                  {formatDisplayDate(fu.orderDate)}
-                                </div>
-                              </TableCell>
-                              <TableCell className="align-center">
-                                <div className="text-sm text-gray-900 max-w-[200px] truncate">
-                                  {fu.pendingSince} Days
-                                </div>
-                              </TableCell>
-                              <TableCell className="align-center">
-                                 <div className="text-sm text-gray-900">
-                                  {fu.pendingPcs}
-                                </div>
-                              </TableCell>
-                              <TableCell className="align-center">
-                                <div className="text-sm text-gray-900">
-                                  {formatDisplayDate(fu.nextFollowupDate)}
-                                </div>
-                              </TableCell>
-                              <TableCell className="align-center">
-                                <div className="text-sm text-gray-900 max-w-[200px] truncate" title={fu.remark}>
-                                  {fu.remark || "-"}
-                                </div>
-                              </TableCell>
-                               <TableCell className="align-center">
-                                 <Badge variant="outline" className={fu.status === "completed" ? "bg-green-50 text-green-700 border-green-200" : "bg-yellow-50 text-yellow-700 border-yellow-200"}>
-                                   {fu.status}
-                                 </Badge>
-                               </TableCell>
-                               <TableCell className="align-center">
-                                 <div className="flex items-center gap-2">
-                                   <Button
-                                     variant="ghost"
-                                     size="icon"
-                                     className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                                     title="View Details"
-                                   >
-                                     <Eye className="h-4 w-4" />
-                                   </Button>
-                                   <Button
-                                     variant="ghost"
-                                     size="icon"
-                                     className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                                     title="Edit"
-                                     onClick={() => handleEditClick(fu)}
-                                   >
-                                     <Pencil className="h-4 w-4" />
-                                   </Button>
-                                 </div>
-                               </TableCell>
-                            </>
-                          )}
-                          {fu.type === "pending-material" && (
-                            <>
-                              <TableCell className="align-center">
-                                <div className="text-sm text-gray-900 max-w-[120px] truncate" title={fu.orderNo}>
-                                  {fu.orderNo}
-                                </div>
-                              </TableCell>
-                              <TableCell className="font-medium text-gray-900 align-center">
-                                {fu.userCode}
-                              </TableCell>
-                              <TableCell className="align-center">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
-                                    {fu.name?.charAt(0) || fu.userCode?.charAt(0) || "C"}
-                                  </div>
-                                  <div className="font-medium text-gray-900 max-w-[150px] truncate" title={fu.name || "N/A"}>
-                                    {fu.name || "N/A"}
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell className="align-center">
-                                {fu.salesExecutive ? (
-                                  <div className="text-sm text-gray-900">
-                                    {fu.salesExecutive}
-                                  </div>
-                                ) : (
-                                  <span className="text-gray-400">-</span>
-                                )}
-                              </TableCell>
-                              <TableCell className="align-center">
-                                <div className="text-sm text-gray-900">
-                                  {formatDisplayDate(fu.orderDate)}
-                                </div>
-                              </TableCell>
-
-                              <TableCell className="align-center">
-                                <div className="text-sm text-gray-900 max-w-[150px] truncate" title={fu.departmentName}>
-                                  {fu.departmentName}
-                                </div>
-                              </TableCell>
-
-                              <TableCell className="align-center">
-                                 <div className="text-sm text-gray-900">
-                                  {fu.pendingSinceDays}
-                                </div>
-                              </TableCell>
-
-                              <TableCell className="align-center">
-                                <div className="text-sm text-gray-900">
-                                  {formatDisplayDate(fu.nextFollowupDate)}
-                                </div>
-                              </TableCell>
-                              <TableCell className="align-center">
-                                <div className="text-sm text-gray-900 max-w-[200px] truncate" title={fu.remark}>
-                                  {fu.remark || "-"}
-                                </div>
-                              </TableCell>
-                              <TableCell className="align-center">
-                                <Badge variant="outline" className={fu.status === "completed" ? "bg-green-50 text-green-700 border-green-200" : "bg-yellow-50 text-yellow-700 border-yellow-200"}>
-                                  {fu.status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="align-center">
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                                    title="View Details"
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                                    title="Edit"
-                                    onClick={() => handleEditClick(fu)}
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </>
-                          )}
-                          {fu.type === "cad-order" && (
                             <TableCell className="align-center">
-                              <div className="text-sm font-medium text-gray-900">
-                                {fu.designNo}
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
+                                  {fu.name?.charAt(0) ||
+                                    fu.userCode?.charAt(0) ||
+                                    "C"}
+                                </div>
+                                <div
+                                  className="font-medium text-gray-900 max-w-[150px] truncate"
+                                  title={fu.name || "N/A"}
+                                >
+                                  {fu.name || "N/A"}
+                                </div>
                               </div>
                             </TableCell>
-                          )}
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                          </>
+                        )}
 
-              <div className="p-4 border-t bg-white flex justify-between items-center">
-                <div className="text-sm text-gray-600">
-                  Total:{" "}
-                  <span className="font-semibold text-gray-900">
-                    {loading ? "..." : displayTotalItems}
-                  </span>
-                </div>
-                <TablePagination
-                  currentPage={currentPage}
-                  totalPages={displayTotalPages}
-                  onPageChange={setCurrentPage}
-                  pageSize={pageSize}
-                  setPageSize={setPageSize}
-                />
-              </div>
+                      {fu.type === "new-order" && (
+                        <>
+                          <TableCell className="align-center">
+                            <div className="text-sm text-gray-900">
+                              {formatDisplayDate(fu.lastOrderDate)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div className="text-sm text-gray-900">
+                              {fu.noOrderSince} Days
+                            </div>
+                          </TableCell>
+                        </>
+                      )}
+
+                      {followupType !== "pending-order" &&
+                        followupType !== "pending-material" && (
+                          <TableCell className="align-center">
+                            {fu.salesExecutive ? (
+                              <div className="text-sm text-gray-900">
+                                {fu.salesExecutive}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </TableCell>
+                        )}
+
+                      {fu.type === "new-order" && (
+                        <>
+                          <TableCell className="align-center">
+                            <div className="text-sm text-gray-900">
+                              {formatDisplayDate(fu.nextFollowupDate)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div
+                              className="text-sm text-gray-900 max-w-[200px] truncate"
+                              title={fu.remark}
+                            >
+                              {fu.remark || "-"}
+                            </div>
+                          </TableCell>
+                        </>
+                      )}
+
+                      {fu.type === "new-order" && (
+                        <>
+                          <TableCell className="align-center">
+                            <Badge
+                              variant="outline"
+                              className={
+                                fu.status === "completed"
+                                  ? "bg-green-50 text-green-700 border-green-200"
+                                  : "bg-yellow-50 text-yellow-700 border-yellow-200"
+                              }
+                            >
+                              {fu.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                                title="View Details"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                                title="Edit"
+                                onClick={() => handleEditClick(fu)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </>
+                      )}
+                      {fu.type === "pending-order" && (
+                        <>
+                          <TableCell className="align-center">
+                            <div
+                              className="text-sm font-medium text-gray-900 max-w-[120px] truncate"
+                              title={fu.orderNo}
+                            >
+                              {fu.orderNo}
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-medium text-gray-900 align-center">
+                            {fu.userCode}
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
+                                {fu.name?.charAt(0) ||
+                                  fu.userCode?.charAt(0) ||
+                                  "C"}
+                              </div>
+                              <div
+                                className="font-medium text-gray-900 max-w-[150px] truncate"
+                                title={fu.name || "N/A"}
+                              >
+                                {fu.name || "N/A"}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            {fu.salesExecutive ? (
+                              <div className="text-sm text-gray-900">
+                                {fu.salesExecutive}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div className="text-sm text-gray-900">
+                              {formatDisplayDate(fu.orderDate)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div className="text-sm text-gray-900 max-w-[200px] truncate">
+                              {fu.pendingSince} Days
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div className="text-sm text-gray-900">
+                              {fu.pendingPcs}
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div className="text-sm text-gray-900">
+                              {formatDisplayDate(fu.nextFollowupDate)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div
+                              className="text-sm text-gray-900 max-w-[200px] truncate"
+                              title={fu.remark}
+                            >
+                              {fu.remark || "-"}
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <Badge
+                              variant="outline"
+                              className={
+                                fu.status === "completed"
+                                  ? "bg-green-50 text-green-700 border-green-200"
+                                  : "bg-yellow-50 text-yellow-700 border-yellow-200"
+                              }
+                            >
+                              {fu.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                                title="View Details"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                                title="Edit"
+                                onClick={() => handleEditClick(fu)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </>
+                      )}
+                      {fu.type === "pending-material" && (
+                        <>
+                          <TableCell className="align-center">
+                            <div
+                              className="text-sm text-gray-900 max-w-[120px] truncate"
+                              title={fu.orderNo}
+                            >
+                              {fu.orderNo}
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-medium text-gray-900 align-center">
+                            {fu.userCode}
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
+                                {fu.name?.charAt(0) ||
+                                  fu.userCode?.charAt(0) ||
+                                  "C"}
+                              </div>
+                              <div
+                                className="font-medium text-gray-900 max-w-[150px] truncate"
+                                title={fu.name || "N/A"}
+                              >
+                                {fu.name || "N/A"}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            {fu.salesExecutive ? (
+                              <div className="text-sm text-gray-900">
+                                {fu.salesExecutive}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div className="text-sm text-gray-900">
+                              {formatDisplayDate(fu.orderDate)}
+                            </div>
+                          </TableCell>
+
+                          <TableCell className="align-center">
+                            <div
+                              className="text-sm text-gray-900 max-w-[150px] truncate"
+                              title={fu.departmentName}
+                            >
+                              {fu.departmentName}
+                            </div>
+                          </TableCell>
+
+                          <TableCell className="align-center">
+                            <div className="text-sm text-gray-900">
+                              {fu.pendingSinceDays}
+                            </div>
+                          </TableCell>
+
+                          <TableCell className="align-center">
+                            <div className="text-sm text-gray-900">
+                              {formatDisplayDate(fu.nextFollowupDate)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div
+                              className="text-sm text-gray-900 max-w-[200px] truncate"
+                              title={fu.remark}
+                            >
+                              {fu.remark || "-"}
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <Badge
+                              variant="outline"
+                              className={
+                                fu.status === "completed"
+                                  ? "bg-green-50 text-green-700 border-green-200"
+                                  : "bg-yellow-50 text-yellow-700 border-yellow-200"
+                              }
+                            >
+                              {fu.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                                title="View Details"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                                title="Edit"
+                                onClick={() => handleEditClick(fu)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </>
+                      )}
+                      {fu.type === "cad-order" && (
+                        <TableCell className="align-center">
+                          <div className="text-sm font-medium text-gray-900">
+                            {fu.designNo}
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="p-4 border-t bg-white flex justify-between items-center">
+            <div className="text-sm text-gray-600">
+              Total:{" "}
+              <span className="font-semibold text-gray-900">
+                {loading ? "..." : displayTotalItems}
+              </span>
+            </div>
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={displayTotalPages}
+              onPageChange={setCurrentPage}
+              pageSize={pageSize}
+              setPageSize={setPageSize}
+            />
+          </div>
         </Card>
-        
+
         <FollowUpModal
           isOpen={showFollowUpModal}
           onClose={() => {

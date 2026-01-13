@@ -37,8 +37,8 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
     const loadSalesPersons = async () => {
       try {
         const response = await salesPersonAPI.getAll({ page: 1, size: 1000, role: 'sales_executive' })
-        if (response.success && response.data?.data) {
-          setSalesPersons(response.data.data)
+        if (response?.success && response?.data?.data) {
+          setSalesPersons(response?.data?.data)
         }
       } catch (error) {
         console.error('Error loading sales persons:', error)
@@ -53,11 +53,11 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
   useEffect(() => {
     if (client) {
       setFormData({
-        userCode: client.userCode || '',
-        name: client.name || '',
-        email: client.email || '',
-        phone: client.phone || '',
-        salesExecCode: client.salesExecCode || 'unassigned',
+        userCode: client?.userCode || '',
+        name: client?.name || '',
+        email: client?.email || '',
+        phone: client?.phone || '',
+        salesExecCode: client?.salesExecCode || 'unassigned',
       })
     } else {
       setFormData({
@@ -88,20 +88,20 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.userCode || !formData.name) {
+    if (!formData?.userCode || !formData?.name) {
       toast.error('User Code and Name are required')
       return
     }
 
-    if (formData.email && formData.email.trim()) {
+    if (formData?.email && formData?.email.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
+      if (!emailRegex.test(formData?.email)) {
         toast.error("Please enter a valid email address");
         return;
       }
     }
 
-    if (!client && (!formData.salesExecCode || formData.salesExecCode === 'unassigned')) {
+    if (!client && (!formData?.salesExecCode || formData?.salesExecCode === 'unassigned')) {
       toast.error('Please select a Sales Executive for new client')
       return
     }
@@ -110,12 +110,12 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
     try {
       const apiData = {
         ...formData,
-        salesExecCode: formData.salesExecCode === 'unassigned' ? '' : formData.salesExecCode
+        salesExecCode: formData?.salesExecCode === 'unassigned' ? '' : formData?.salesExecCode
       }
 
       let response
       if (client?.uuid) {
-        response = await clientAPI.update(client.uuid, apiData)
+        response = await clientAPI.update(client?.uuid, apiData)
       } else {
         response = await clientAPI.create(apiData)
       }
@@ -147,8 +147,8 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
             <Input
               id="userCode"
               placeholder="e.g. C0909"
-              value={formData.userCode}
-              onChange={(e) => setFormData({ ...formData, userCode: e.target.value })}
+              value={formData?.userCode}
+              onChange={(e) => setFormData({ ...formData, userCode: e?.target?.value })}
               required
               autoComplete="off"
             />
@@ -158,8 +158,8 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
             <Input
               id="name"
               placeholder="e.g. Nakarani jewelers"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={formData?.name}
+              onChange={(e) => setFormData({ ...formData, name: e?.target?.value })}
               required
               autoComplete="off"
             />
@@ -170,8 +170,8 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
               id="email"
               type="email"
               placeholder="nakarani@yopmail.com"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              value={formData?.email}
+              onChange={(e) => setFormData({ ...formData, email: e?.target?.value })}
               autoComplete="off"
             />
           </div>
@@ -180,8 +180,8 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
             <Input
               id="phone"
               placeholder="9898989898"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              value={formData?.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e?.target?.value })}
               autoComplete="off"
             />
           </div>
@@ -190,7 +190,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
             <Label htmlFor="salesExecCode">
               Sales Executive Assignment {!client && <span className="text-red-500">*</span>}
             </Label>
-            <Select value={formData.salesExecCode} onValueChange={(val) => setFormData({ ...formData, salesExecCode: val })}>
+            <Select value={formData?.salesExecCode} onValueChange={(val) => setFormData({ ...formData, salesExecCode: val })}>
               <SelectTrigger>
                 <SelectValue placeholder={"Select sales executive"} />
               </SelectTrigger>

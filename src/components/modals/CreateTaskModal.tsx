@@ -28,7 +28,6 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
     taskDetails: '',
     nextFollowUpDate: '',
     remarks: '',
-    // Task-specific fields
     orderNo: '',
     orderDate: '',
     grossWtTotal: '',
@@ -55,12 +54,12 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
         salesPersonAPI.getAll({ page: 1, size: 1000, role: 'sales_executive' })
       ])
       
-      if (clientRes.success !== false) {
-        setClients(clientRes.data?.data || clientRes.data || [])
+      if (clientRes?.success !== false) {
+        setClients(clientRes?.data?.data || clientRes?.data || [])
       }
       
-      if (salesRes.success && salesRes.data?.data) {
-        setSalesPersons(salesRes.data.data)
+      if (salesRes?.success && salesRes?.data?.data) {
+        setSalesPersons(salesRes?.data?.data)
       }
     } catch (error) {
       console.error('Error loading data:', error)
@@ -92,7 +91,7 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.taskType || !formData.clientCode || !formData.taskDetails || !formData.nextFollowUpDate) {
+    if (!formData?.taskType || !formData?.clientCode || !formData?.taskDetails || !formData?.nextFollowUpDate) {
       toast.error('Please fill in all required fields')
       return
     }
@@ -101,54 +100,56 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
     try {
       let response
       
-      if (formData.taskType === 'pending-material') {
-        if (!formData.styleNo || !formData.orderNo) {
+      if (formData?.taskType === 'pending-material') {
+        if (!formData?.styleNo || !formData?.orderNo) {
           toast.error('Style No and Order No are required for Pending Material tasks')
           return
         }
         
         response = await pendingMaterialAPI.create({
-          salesExecCode: formData.salesExecCode,
-          clientCode: formData.clientCode,
-          styleNo: formData.styleNo,
-          orderNo: formData.orderNo,
-          expectedDeliveryDate: formData.expectedDeliveryDate,
-          departmentName: formData.departmentName,
-          totalNetWt: formData.totalNetWt,
-          nextFollowUpDate: formData.nextFollowUpDate,
-          lastFollowUpMsg: formData.taskDetails,
+          salesExecCode: formData?.salesExecCode,
+          clientCode: formData?.clientCode,
+          styleNo: formData?.styleNo,
+          orderNo: formData?.orderNo,
+          expectedDeliveryDate: formData?.expectedDeliveryDate,
+          departmentName: formData?.departmentName,
+          totalNetWt: formData?.totalNetWt,
+          nextFollowUpDate: formData?.nextFollowUpDate,
+          lastFollowUpMsg: formData?.taskDetails,
           status: 'pending'
         })
-      } else if (formData.taskType === 'pending-order') {
-        if (!formData.orderNo || !formData.orderDate || !formData.grossWtTotal) {
+      } else if (formData?.taskType === 'pending-order') {
+        if (!formData?.orderNo || !formData?.orderDate || !formData?.grossWtTotal) {
           toast.error('Order No, Order Date, and Gross Weight are required for Pending Order tasks')
           return
         }
         
         response = await pendingOrderAPI.create({
-          salesExecCode: formData.salesExecCode,
-          clientCode: formData.clientCode,
-          orderNo: formData.orderNo,
-          orderDate: formData.orderDate,
-          grossWtTotal: formData.grossWtTotal,
-          remark: formData.remarks,
-          nextFollowUpDate: formData.nextFollowUpDate,
-          lastFollowUpMsg: formData.taskDetails
+          salesExecCode: formData?.salesExecCode,
+          clientCode: formData?.clientCode,
+          orderNo: formData?.orderNo,
+          orderDate: formData?.orderDate,
+          grossWtTotal: formData?.grossWtTotal,
+          remark: formData?.remarks,
+          nextFollowUpDate: formData?.nextFollowUpDate,
+          lastFollowUpMsg: formData?.taskDetails,
+          totalOrderPcs: 0,
+          pendingPcs: 0
         })
-      } else if (formData.taskType === 'new-order') {
-        if (!formData.subCategory || !formData.clientCategoryName) {
+      } else if (formData?.taskType === 'new-order') {
+        if (!formData?.subCategory || !formData?.clientCategoryName) {
           toast.error('Sub Category and Client Category are required for New Order tasks')
           return
         }
         
         response = await newOrderAPI.create({
-          salesExecCode: formData.salesExecCode,
-          clientCode: formData.clientCode,
-          subCategory: formData.subCategory,
-          lastSaleDate: formData.lastSaleDate,
-          lastOrderDate: formData.lastOrderDate,
-          clientCategoryName: formData.clientCategoryName,
-          nextFollowUpDate: formData.nextFollowUpDate
+          salesExecCode: formData?.salesExecCode,
+          clientCode: formData?.clientCode,
+          subCategory: formData?.subCategory,
+          lastSaleDate: formData?.lastSaleDate,
+          lastOrderDate: formData?.lastOrderDate,
+          clientCategoryName: formData?.clientCategoryName,
+          nextFollowUpDate: formData?.nextFollowUpDate
         })
       }
 
@@ -173,7 +174,7 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
   }
 
   const renderTaskSpecificFields = () => {
-    switch (formData.taskType) {
+    switch (formData?.taskType) {
       case 'pending-material':
         return (
           <>
@@ -182,8 +183,8 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
                 <Label htmlFor="styleNo">Style No *</Label>
                 <Input
                   id="styleNo"
-                  value={formData.styleNo}
-                  onChange={(e) => setFormData({ ...formData, styleNo: e.target.value })}
+                  value={formData?.styleNo}
+                  onChange={(e) => setFormData({ ...formData, styleNo: e?.target?.value })}
                   placeholder="e.g. 67GBB"
                 />
               </div>
@@ -191,8 +192,8 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
                 <Label htmlFor="orderNo">Order No *</Label>
                 <Input
                   id="orderNo"
-                  value={formData.orderNo}
-                  onChange={(e) => setFormData({ ...formData, orderNo: e.target.value })}
+                  value={formData?.orderNo}
+                  onChange={(e) => setFormData({ ...formData, orderNo: e?.target?.value })}
                   placeholder="e.g. ORD-1001"
                 />
               </div>
@@ -202,8 +203,8 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
                 <Label htmlFor="departmentName">Department</Label>
                 <Input
                   id="departmentName"
-                  value={formData.departmentName}
-                  onChange={(e) => setFormData({ ...formData, departmentName: e.target.value })}
+                  value={formData?.departmentName}
+                  onChange={(e) => setFormData({ ...formData, departmentName: e?.target?.value })}
                   placeholder="e.g. diamond"
                 />
               </div>
@@ -211,8 +212,8 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
                 <Label htmlFor="totalNetWt">Total Net Weight</Label>
                 <Input
                   id="totalNetWt"
-                  value={formData.totalNetWt}
-                  onChange={(e) => setFormData({ ...formData, totalNetWt: e.target.value })}
+                  value={formData?.totalNetWt}
+                  onChange={(e) => setFormData({ ...formData, totalNetWt: e?.target?.value })}
                   placeholder="e.g. 10.57"
                 />
               </div>
@@ -222,8 +223,8 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
               <Input
                 id="expectedDeliveryDate"
                 type="date"
-                value={formData.expectedDeliveryDate}
-                onChange={(e) => setFormData({ ...formData, expectedDeliveryDate: e.target.value })}
+                value={formData?.expectedDeliveryDate}
+                onChange={(e) => setFormData({ ...formData, expectedDeliveryDate: e?.target?.value })}
               />
             </div>
           </>
@@ -237,8 +238,8 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
                 <Label htmlFor="orderNo">Order No *</Label>
                 <Input
                   id="orderNo"
-                  value={formData.orderNo}
-                  onChange={(e) => setFormData({ ...formData, orderNo: e.target.value })}
+                  value={formData?.orderNo}
+                  onChange={(e) => setFormData({ ...formData, orderNo: e?.target?.value })}
                   placeholder="e.g. ORD-1001"
                 />
               </div>
@@ -247,8 +248,8 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
                 <Input
                   id="orderDate"
                   type="date"
-                  value={formData.orderDate}
-                  onChange={(e) => setFormData({ ...formData, orderDate: e.target.value })}
+                  value={formData?.orderDate}
+                  onChange={(e) => setFormData({ ...formData, orderDate: e?.target?.value })}
                 />
               </div>
             </div>
@@ -258,8 +259,8 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
                 id="grossWtTotal"
                 type="number"
                 step="0.01"
-                value={formData.grossWtTotal}
-                onChange={(e) => setFormData({ ...formData, grossWtTotal: e.target.value })}
+                value={formData?.grossWtTotal}
+                onChange={(e) => setFormData({ ...formData, grossWtTotal: e?.target?.value })}
                 placeholder="e.g. 125.75"
               />
             </div>
@@ -274,8 +275,8 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
                 <Label htmlFor="clientCategoryName">Client Category *</Label>
                 <Input
                   id="clientCategoryName"
-                  value={formData.clientCategoryName}
-                  onChange={(e) => setFormData({ ...formData, clientCategoryName: e.target.value })}
+                  value={formData?.clientCategoryName}
+                  onChange={(e) => setFormData({ ...formData, clientCategoryName: e?.target?.value })}
                   placeholder="e.g. diamond"
                 />
               </div>
@@ -283,8 +284,8 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
                 <Label htmlFor="subCategory">Sub Category *</Label>
                 <Input
                   id="subCategory"
-                  value={formData.subCategory}
-                  onChange={(e) => setFormData({ ...formData, subCategory: e.target.value })}
+                  value={formData?.subCategory}
+                  onChange={(e) => setFormData({ ...formData, subCategory: e?.target?.value })}
                   placeholder="e.g. 67GBB"
                 />
               </div>
@@ -295,8 +296,8 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
                 <Input
                   id="lastSaleDate"
                   type="date"
-                  value={formData.lastSaleDate}
-                  onChange={(e) => setFormData({ ...formData, lastSaleDate: e.target.value })}
+                  value={formData?.lastSaleDate}
+                  onChange={(e) => setFormData({ ...formData, lastSaleDate: e?.target?.value })}
                 />
               </div>
               <div className="space-y-2">
@@ -304,8 +305,8 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
                 <Input
                   id="lastOrderDate"
                   type="date"
-                  value={formData.lastOrderDate}
-                  onChange={(e) => setFormData({ ...formData, lastOrderDate: e.target.value })}
+                  value={formData?.lastOrderDate}
+                  onChange={(e) => setFormData({ ...formData, lastOrderDate: e?.target?.value })}
                 />
               </div>
             </div>
@@ -330,7 +331,7 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="taskType">Task Type *</Label>
-              <Select value={formData.taskType} onValueChange={(val) => setFormData({ ...formData, taskType: val })}>
+              <Select value={formData?.taskType} onValueChange={(val) => setFormData({ ...formData, taskType: val })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select task type" />
                 </SelectTrigger>
@@ -343,14 +344,14 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
             </div>
             <div className="space-y-2">
               <Label htmlFor="clientCode">Client *</Label>
-              <Select value={formData.clientCode} onValueChange={(val) => setFormData({ ...formData, clientCode: val })}>
+              <Select value={formData?.clientCode} onValueChange={(val) => setFormData({ ...formData, clientCode: val })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select client" />
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map((client) => (
-                    <SelectItem key={client.uuid} value={client.userCode}>
-                      {client.name} ({client.userCode})
+                    <SelectItem key={client?.uuid} value={client?.userCode}>
+                      {client?.name} ({client?.userCode})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -361,14 +362,14 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
           {user?.role === 'admin' && (
             <div className="space-y-2">
               <Label htmlFor="salesExecCode">Sales Executive</Label>
-              <Select value={formData.salesExecCode} onValueChange={(val) => setFormData({ ...formData, salesExecCode: val })}>
+              <Select value={formData?.salesExecCode} onValueChange={(val) => setFormData({ ...formData, salesExecCode: val })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select sales executive" />
                 </SelectTrigger>
                 <SelectContent>
                   {salesPersons.map((sp) => (
-                    <SelectItem key={sp.uuid} value={sp.userCode}>
-                      {sp.name} ({sp.userCode})
+                    <SelectItem key={sp?.uuid} value={sp?.userCode}>
+                      {sp?.name} ({sp?.userCode})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -382,8 +383,8 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
             <Label htmlFor="taskDetails">Task Details *</Label>
             <Textarea
               id="taskDetails"
-              value={formData.taskDetails}
-              onChange={(e) => setFormData({ ...formData, taskDetails: e.target.value })}
+              value={formData?.taskDetails}
+              onChange={(e) => setFormData({ ...formData, taskDetails: e?.target?.value })}
               placeholder="Enter task details and follow-up notes..."
               rows={3}
             />
@@ -395,16 +396,16 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
               <Input
                 id="nextFollowUpDate"
                 type="date"
-                value={formData.nextFollowUpDate}
-                onChange={(e) => setFormData({ ...formData, nextFollowUpDate: e.target.value })}
+                value={formData?.nextFollowUpDate}
+                onChange={(e) => setFormData({ ...formData, nextFollowUpDate: e?.target?.value })}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="remarks">Remarks</Label>
               <Input
                 id="remarks"
-                value={formData.remarks}
-                onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+                value={formData?.remarks}
+                onChange={(e) => setFormData({ ...formData, remarks: e?.target?.value })}
                 placeholder="Additional remarks"
               />
             </div>

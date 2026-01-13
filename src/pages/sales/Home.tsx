@@ -48,14 +48,15 @@ export default function SalesHome() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
-  const [overdueFollowups, setOverdueFollowups] = useState<OverdueFollowUpItem[]>([]);
+  const [overdueFollowups, setOverdueFollowups] = useState<
+    OverdueFollowUpItem[]
+  >([]);
   const [todayCount, setTodayCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [overdueCount, setOverdueCount] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
 
-  // Set header
   useEffect(() => {
     setHeader({
       title: "Dashboard",
@@ -71,7 +72,6 @@ export default function SalesHome() {
     });
   }, []);
 
-  // Load all follow-ups
   const loadFollowUps = async () => {
     setLoading(true);
     try {
@@ -97,7 +97,6 @@ export default function SalesHome() {
         if (res.data) {
           res.data.forEach((item: any) => {
             if (item.followUps && item.followUps.length > 0) {
-              // Filter by sales executive code if user is sales person
               const shouldInclude =
                 user?.role === "admin" ||
                 (user?.role === "sales_executive" &&
@@ -108,12 +107,15 @@ export default function SalesHome() {
                   const followUp: FollowUp = {
                     ...fu,
                     clientCode: item.clientCode,
-                    clientName: item.designName || item.orderId || item.materialName || item.clientCode,
+                    clientName:
+                      item.designName ||
+                      item.orderId ||
+                      item.materialName ||
+                      item.clientCode,
                     type: type,
                   };
                   allFollowUps.push(followUp);
 
-                  // Check for overdue
                   const fuDate = new Date(fu.nextFollowUpDate);
                   fuDate.setHours(0, 0, 0, 0);
 
@@ -121,12 +123,20 @@ export default function SalesHome() {
                     fuDate < today &&
                     fu.followUpStatus?.toLowerCase() !== "completed"
                   ) {
-                    const diffTime = Math.abs(today.getTime() - fuDate.getTime());
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    const diffTime = Math.abs(
+                      today.getTime() - fuDate.getTime()
+                    );
+                    const diffDays = Math.ceil(
+                      diffTime / (1000 * 60 * 60 * 24)
+                    );
 
                     allOverdueFollowUps.push({
                       id: fu._id || fu.id || Math.random().toString(),
-                      clientName: item.designName || item.orderId || item.materialName || item.clientCode,
+                      clientName:
+                        item.designName ||
+                        item.orderId ||
+                        item.materialName ||
+                        item.clientCode,
                       clientCode: item.clientCode,
                       type: type,
                       daysOverdue: diffDays,
@@ -143,16 +153,13 @@ export default function SalesHome() {
       processApiResponse(newOrderRes, "New Order");
       processApiResponse(pendingOrderRes, "Pending Order");
       processApiResponse(pendingMaterialRes, "Pending Material");
-
       setFollowUps(allFollowUps);
-      
-      // Sort overdue by most overdue and limit to top 6
       setOverdueFollowups(
         allOverdueFollowUps
           .sort((a, b) => (b.daysOverdue || 0) - (a.daysOverdue || 0))
           .slice(0, 6)
       );
-      
+
       calculateCounts(allFollowUps);
     } catch (error: any) {
       console.error("Error loading follow-ups:", error);
@@ -207,7 +214,6 @@ export default function SalesHome() {
   return (
     <div className="pb-6">
       <div className="p-6 space-y-6">
-        {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <StatCard
             label="Today's Follow-ups"
@@ -239,29 +245,27 @@ export default function SalesHome() {
           />
         </div>
 
-        {/* Task Type Breakdown */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <TaskTypeSection
             title="New Orders"
             icon={Package}
             color="emerald"
-            followUps={followUps.filter(fu => fu.type === "New Order")}
+            followUps={followUps.filter((fu) => fu.type === "New Order")}
           />
           <TaskTypeSection
             title="Pending Orders"
             icon={ShoppingCart}
             color="orange"
-            followUps={followUps.filter(fu => fu.type === "Pending Order")}
+            followUps={followUps.filter((fu) => fu.type === "Pending Order")}
           />
           <TaskTypeSection
             title="Pending Materials"
             icon={Box}
             color="purple"
-            followUps={followUps.filter(fu => fu.type === "Pending Material")}
+            followUps={followUps.filter((fu) => fu.type === "Pending Material")}
           />
         </div>
 
-        {/* Overdue Follow-ups List */}
         <div className="grid grid-cols-1 gap-6">
           <Card className="border shadow-sm">
             <CardHeader className="bg-gray-50/50 border-b py-3 px-4">
@@ -361,8 +365,8 @@ function TaskTypeSection({ title, icon: Icon, color, followUps }: any) {
     return fu.followUpStatus?.toLowerCase() !== "completed" && fuDate >= today;
   }).length;
 
-  const completed = followUps.filter((fu: FollowUp) => 
-    fu.followUpStatus?.toLowerCase() === "completed"
+  const completed = followUps.filter(
+    (fu: FollowUp) => fu.followUpStatus?.toLowerCase() === "completed"
   ).length;
 
   const overdue = followUps.filter((fu: FollowUp) => {

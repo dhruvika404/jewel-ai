@@ -31,9 +31,9 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
 
   const isActive = (href: string) => {
     if (href === "/sales") {
-      return location.pathname === "/sales";
+      return location?.pathname === "/sales";
     }
-    return location.pathname.startsWith(href);
+    return location?.pathname.startsWith(href);
   };
 
   return (
@@ -66,21 +66,21 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
           <nav className="flex-1 p-2">
             <ul className="space-y-1">
               {menuItems.map((item) => {
-                const Icon = item.icon;
+                const Icon = item?.icon;
                 return (
-                  <li key={item.href}>
+                  <li key={item?.href}>
                     <Link
-                      to={item.href}
+                      to={item?.href}
                       onClick={() => setIsSidebar(false)}
                       className={cn(
                         "w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md transition-colors",
-                        isActive(item.href)
+                        isActive(item?.href)
                           ? "bg-primary/10 text-primary"
                           : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       )}
                     >
                       <Icon className="w-4 h-4" />
-                      {item.label}
+                      {item?.label}
                     </Link>
                   </li>
                 );
@@ -148,8 +148,8 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full">
                 {header?.search && (
                   <Input
-                    onChange={(e) => header.search?.onChange?.(e.target.value)}
-                    placeholder={header.search.placeholder ?? "Search"}
+                    onChange={(e) => header?.search?.onChange?.(e?.target?.value)}
+                    placeholder={header?.search?.placeholder ?? "Search"}
                     className="h-9 w-full sm:w-60"
                     rightIcon={
                       <Search className="w-4 h-4 text-muted-foreground" />
@@ -160,13 +160,13 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
                 {header?.action && (
                   <Button
                     size="sm"
-                    variant={header.action.variant ?? "default"}
-                    onClick={header.action.onClick}
+                    variant={header?.action?.variant ?? "default"}
+                    onClick={header?.action?.onClick}
                     className="h-9 w-full sm:w-auto px-4"
                   >
-                    {header.action.icon}
-                    <span className={header.action.icon ? "ml-2" : ""}>
-                      {header.action.label}
+                    {header?.action?.icon}
+                    <span className={header?.action?.icon ? "ml-2" : ""}>
+                      {header?.action?.label}
                     </span>
                   </Button>
                 )}

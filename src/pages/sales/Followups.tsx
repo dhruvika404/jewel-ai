@@ -1,14 +1,22 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { CheckCircle, Clock, AlertCircle, Plus, Package, ShoppingCart, Box } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Plus,
+  Package,
+  ShoppingCart,
+  Box,
+} from "lucide-react";
+import { useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -16,148 +24,159 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { usePageHeader } from '@/contexts/PageHeaderProvider'
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { usePageHeader } from "@/contexts/PageHeaderProvider";
 
 const followups = [
-  { 
-    id: 1, 
-    client: 'Acme Corp (CJ001)', 
-    type: 'New Order', 
-    followupType: 'Call',
-    dueDate: '2025-12-18', 
-    dueTime: '10:00 AM',
-    status: 'Pending',
-    salesExecutive: 'SE001',
-    contactNo: '+1-555-0123',
-    notes: 'Discuss new product catalog and pricing'
+  {
+    id: 1,
+    client: "Acme Corp (CJ001)",
+    type: "New Order",
+    followupType: "Call",
+    dueDate: "2025-12-18",
+    dueTime: "10:00 AM",
+    status: "Pending",
+    salesExecutive: "SE001",
+    contactNo: "+1-555-0123",
+    notes: "Discuss new product catalog and pricing",
   },
-  { 
-    id: 2, 
-    client: 'Tech Solutions (CD002)', 
-    type: 'Pending Order', 
-    followupType: 'Email',
-    dueDate: '2025-12-17', 
-    dueTime: '2:00 PM',
-    status: 'Overdue',
-    salesExecutive: 'SE002',
-    contactNo: '+1-555-0124',
-    notes: 'Follow up on order confirmation and delivery timeline'
+  {
+    id: 2,
+    client: "Tech Solutions (CD002)",
+    type: "Pending Order",
+    followupType: "Email",
+    dueDate: "2025-12-17",
+    dueTime: "2:00 PM",
+    status: "Overdue",
+    salesExecutive: "SE002",
+    contactNo: "+1-555-0124",
+    notes: "Follow up on order confirmation and delivery timeline",
   },
-  { 
-    id: 3, 
-    client: 'Global Inc (CR003)', 
-    type: 'Pending Material', 
-    followupType: 'Meeting',
-    dueDate: '2025-12-20', 
-    dueTime: '11:00 AM',
-    status: 'Pending',
-    salesExecutive: 'SE001',
-    contactNo: '+1-555-0125',
-    notes: 'Check material availability and alternative options'
+  {
+    id: 3,
+    client: "Global Inc (CR003)",
+    type: "Pending Material",
+    followupType: "Meeting",
+    dueDate: "2025-12-20",
+    dueTime: "11:00 AM",
+    status: "Pending",
+    salesExecutive: "SE001",
+    contactNo: "+1-555-0125",
+    notes: "Check material availability and alternative options",
   },
-  { 
-    id: 4, 
-    client: 'Innovation Labs (CS004)', 
-    type: 'New Order', 
-    followupType: 'Call',
-    dueDate: '2025-12-16', 
-    dueTime: '3:00 PM',
-    status: 'Completed',
-    salesExecutive: 'SE003',
-    contactNo: '+1-555-0126',
-    notes: 'Proposal discussion completed, awaiting client response'
+  {
+    id: 4,
+    client: "Innovation Labs (CS004)",
+    type: "New Order",
+    followupType: "Call",
+    dueDate: "2025-12-16",
+    dueTime: "3:00 PM",
+    status: "Completed",
+    salesExecutive: "SE003",
+    contactNo: "+1-555-0126",
+    notes: "Proposal discussion completed, awaiting client response",
   },
-  { 
-    id: 5, 
-    client: 'Future Systems (CF005)', 
-    type: 'Pending Order', 
-    followupType: 'Visit',
-    dueDate: '2025-12-19', 
-    dueTime: '9:00 AM',
-    status: 'Pending',
-    salesExecutive: 'SE002',
-    contactNo: '+1-555-0127',
-    notes: 'Site visit to discuss installation requirements'
+  {
+    id: 5,
+    client: "Future Systems (CF005)",
+    type: "Pending Order",
+    followupType: "Visit",
+    dueDate: "2025-12-19",
+    dueTime: "9:00 AM",
+    status: "Pending",
+    salesExecutive: "SE002",
+    contactNo: "+1-555-0127",
+    notes: "Site visit to discuss installation requirements",
   },
-]
+];
 
 export default function SalesFollowups() {
-  const { setHeader } = usePageHeader()
-  const [statusFilter, setStatusFilter] = useState<'all' | 'Pending' | 'Overdue' | 'Completed'>('all')
-  const [typeFilter, setTypeFilter] = useState<'all' | 'New Order' | 'Pending Order' | 'Pending Material'>('all')
-  const [isCreateFollowupOpen, setIsCreateFollowupOpen] = useState(false)
+  const { setHeader } = usePageHeader();
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "Pending" | "Overdue" | "Completed"
+  >("all");
+  const [typeFilter, setTypeFilter] = useState<
+    "all" | "New Order" | "Pending Order" | "Pending Material"
+  >("all");
+  const [isCreateFollowupOpen, setIsCreateFollowupOpen] = useState(false);
   const [newFollowup, setNewFollowup] = useState({
-    customerCode: '',
-    customerName: '',
-    taskType: '',
-    salesExecutiveCode: '',
-    contactNo: '',
-    followupType: '',
-    notes: '',
-    dueDate: '',
-    dueTime: ''
-  })
+    customerCode: "",
+    customerName: "",
+    taskType: "",
+    salesExecutiveCode: "",
+    contactNo: "",
+    followupType: "",
+    notes: "",
+    dueDate: "",
+    dueTime: "",
+  });
 
-  // Set header
   useEffect(() => {
     setHeader({
-      title: 'Follow-ups Management',
+      title: "Follow-ups Management",
       action: {
-        label: 'Create Follow-up',
+        label: "Create Follow-up",
         icon: <Plus className="w-4 h-4" />,
-        onClick: () => setIsCreateFollowupOpen(true)
-      }
-    })
-  }, [])
+        onClick: () => setIsCreateFollowupOpen(true),
+      },
+    });
+  }, []);
 
   const filteredFollowups = followups.filter((followup) => {
-    const statusMatch = statusFilter === 'all' || followup.status === statusFilter
-    const typeMatch = typeFilter === 'all' || followup.type === typeFilter
-    return statusMatch && typeMatch
-  })
+    const statusMatch =
+      statusFilter === "all" || followup.status === statusFilter;
+    const typeMatch = typeFilter === "all" || followup.type === typeFilter;
+    return statusMatch && typeMatch;
+  });
 
   const handleCreateFollowup = () => {
-    setIsCreateFollowupOpen(false)
+    setIsCreateFollowupOpen(false);
     setNewFollowup({
-      customerCode: '',
-      customerName: '',
-      taskType: '',
-      salesExecutiveCode: '',
-      contactNo: '',
-      followupType: '',
-      notes: '',
-      dueDate: '',
-      dueTime: ''
-    })
-  }
+      customerCode: "",
+      customerName: "",
+      taskType: "",
+      salesExecutiveCode: "",
+      contactNo: "",
+      followupType: "",
+      notes: "",
+      dueDate: "",
+      dueTime: "",
+    });
+  };
 
   const getTypeIcon = (type: string) => {
-    if (type === 'New Order') return Package
-    if (type === 'Pending Order') return ShoppingCart
-    if (type === 'Pending Material') return Box
-    return Clock
-  }
+    if (type === "New Order") return Package;
+    if (type === "Pending Order") return ShoppingCart;
+    if (type === "Pending Material") return Box;
+    return Clock;
+  };
 
   const getTypeColor = (type: string) => {
-    if (type === 'New Order') return 'text-blue-500 dark:text-blue-400 bg-blue-500/10 dark:bg-blue-400/10'
-    if (type === 'Pending Order') return 'text-orange-500 dark:text-orange-400 bg-orange-500/10 dark:bg-orange-400/10'
-    if (type === 'Pending Material') return 'text-purple-500 dark:text-purple-400 bg-purple-500/10 dark:bg-purple-400/10'
-    return 'text-gray-500 dark:text-gray-400 bg-gray-500/10 dark:bg-gray-400/10'
-  }
+    if (type === "New Order")
+      return "text-blue-500 dark:text-blue-400 bg-blue-500/10 dark:bg-blue-400/10";
+    if (type === "Pending Order")
+      return "text-orange-500 dark:text-orange-400 bg-orange-500/10 dark:bg-orange-400/10";
+    if (type === "Pending Material")
+      return "text-purple-500 dark:text-purple-400 bg-purple-500/10 dark:bg-purple-400/10";
+    return "text-gray-500 dark:text-gray-400 bg-gray-500/10 dark:bg-gray-400/10";
+  };
 
   return (
     <div className="bg-gray-50 pb-6">
-      <Dialog open={isCreateFollowupOpen} onOpenChange={setIsCreateFollowupOpen}>
+      <Dialog
+        open={isCreateFollowupOpen}
+        onOpenChange={setIsCreateFollowupOpen}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Create Token & Pending Follow-up</DialogTitle>
             <DialogDescription>
-              Create a new follow-up task with customer details and requirements.
-            </DialogDescription>  
+              Create a new follow-up task with customer details and
+              requirements.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
@@ -166,7 +185,12 @@ export default function SalesFollowups() {
                 <Input
                   id="customerCode"
                   value={newFollowup.customerCode}
-                  onChange={(e) => setNewFollowup({...newFollowup, customerCode: e.target.value})}
+                  onChange={(e) =>
+                    setNewFollowup({
+                      ...newFollowup,
+                      customerCode: e.target.value,
+                    })
+                  }
                   placeholder="e.g., CJ001"
                 />
               </div>
@@ -175,7 +199,12 @@ export default function SalesFollowups() {
                 <Input
                   id="customerName"
                   value={newFollowup.customerName}
-                  onChange={(e) => setNewFollowup({...newFollowup, customerName: e.target.value})}
+                  onChange={(e) =>
+                    setNewFollowup({
+                      ...newFollowup,
+                      customerName: e.target.value,
+                    })
+                  }
                   placeholder="e.g., Acme Corp"
                 />
               </div>
@@ -183,14 +212,21 @@ export default function SalesFollowups() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="taskType">Task Type</Label>
-                <Select value={newFollowup.taskType} onValueChange={(value) => setNewFollowup({...newFollowup, taskType: value})}>
+                <Select
+                  value={newFollowup.taskType}
+                  onValueChange={(value) =>
+                    setNewFollowup({ ...newFollowup, taskType: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="New Order">New Order</SelectItem>
                     <SelectItem value="Pending Order">Pending Order</SelectItem>
-                    <SelectItem value="Pending Material">Pending Material</SelectItem>
+                    <SelectItem value="Pending Material">
+                      Pending Material
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -199,7 +235,12 @@ export default function SalesFollowups() {
                 <Input
                   id="salesExecutiveCode"
                   value={newFollowup.salesExecutiveCode}
-                  onChange={(e) => setNewFollowup({...newFollowup, salesExecutiveCode: e.target.value})}
+                  onChange={(e) =>
+                    setNewFollowup({
+                      ...newFollowup,
+                      salesExecutiveCode: e.target.value,
+                    })
+                  }
                   placeholder="e.g., SE001"
                 />
               </div>
@@ -210,13 +251,23 @@ export default function SalesFollowups() {
                 <Input
                   id="contactNo"
                   value={newFollowup.contactNo}
-                  onChange={(e) => setNewFollowup({...newFollowup, contactNo: e.target.value})}
+                  onChange={(e) =>
+                    setNewFollowup({
+                      ...newFollowup,
+                      contactNo: e.target.value,
+                    })
+                  }
                   placeholder="Phone number"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="followupType">Follow-up Type</Label>
-                <Select value={newFollowup.followupType} onValueChange={(value) => setNewFollowup({...newFollowup, followupType: value})}>
+                <Select
+                  value={newFollowup.followupType}
+                  onValueChange={(value) =>
+                    setNewFollowup({ ...newFollowup, followupType: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
@@ -234,7 +285,9 @@ export default function SalesFollowups() {
               <Textarea
                 id="notes"
                 value={newFollowup.notes}
-                onChange={(e) => setNewFollowup({...newFollowup, notes: e.target.value})}
+                onChange={(e) =>
+                  setNewFollowup({ ...newFollowup, notes: e.target.value })
+                }
                 placeholder="Task details and requirements..."
                 rows={3}
               />
@@ -246,7 +299,9 @@ export default function SalesFollowups() {
                   id="dueDate"
                   type="date"
                   value={newFollowup.dueDate}
-                  onChange={(e) => setNewFollowup({...newFollowup, dueDate: e.target.value})}
+                  onChange={(e) =>
+                    setNewFollowup({ ...newFollowup, dueDate: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -255,18 +310,21 @@ export default function SalesFollowups() {
                   id="dueTime"
                   type="time"
                   value={newFollowup.dueTime}
-                  onChange={(e) => setNewFollowup({...newFollowup, dueTime: e.target.value})}
+                  onChange={(e) =>
+                    setNewFollowup({ ...newFollowup, dueTime: e.target.value })
+                  }
                 />
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateFollowupOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateFollowupOpen(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={handleCreateFollowup}>
-              Create Follow-up
-            </Button>
+            <Button onClick={handleCreateFollowup}>Create Follow-up</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -313,7 +371,12 @@ export default function SalesFollowups() {
             <div className="flex items-center justify-between gap-3">
               <CardTitle className="text-lg">All Followups</CardTitle>
               <div className="flex items-center gap-2">
-                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as typeof statusFilter)}>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value) =>
+                    setStatusFilter(value as typeof statusFilter)
+                  }
+                >
                   <SelectTrigger className="w-[130px] text-sm">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
@@ -324,7 +387,12 @@ export default function SalesFollowups() {
                     <SelectItem value="Completed">Completed</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as typeof typeFilter)}>
+                <Select
+                  value={typeFilter}
+                  onValueChange={(value) =>
+                    setTypeFilter(value as typeof typeFilter)
+                  }
+                >
                   <SelectTrigger className="w-[150px] text-sm">
                     <SelectValue placeholder="Type" />
                   </SelectTrigger>
@@ -332,7 +400,9 @@ export default function SalesFollowups() {
                     <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="New Order">New Order</SelectItem>
                     <SelectItem value="Pending Order">Pending Order</SelectItem>
-                    <SelectItem value="Pending Material">Pending Material</SelectItem>
+                    <SelectItem value="Pending Material">
+                      Pending Material
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -342,7 +412,7 @@ export default function SalesFollowups() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredFollowups.length > 0 ? (
                 filteredFollowups.map((followup) => {
-                  const TypeIcon = getTypeIcon(followup.type)
+                  const TypeIcon = getTypeIcon(followup.type);
                   return (
                     <div
                       key={followup.id}
@@ -350,55 +420,84 @@ export default function SalesFollowups() {
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-start gap-3 flex-1">
-                          <div className={`p-2.5 rounded-lg ${getTypeColor(followup.type)}`}>
+                          <div
+                            className={`p-2.5 rounded-lg ${getTypeColor(
+                              followup.type
+                            )}`}
+                          >
                             <TypeIcon className="w-5 h-5" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-base mb-2">{followup.client}</h3>
+                            <h3 className="font-semibold text-base mb-2">
+                              {followup.client}
+                            </h3>
                             <div className="flex items-center gap-1.5 flex-wrap mb-2">
-                              <span className={`px-2.5 py-1 rounded text-sm font-medium ${getTypeColor(followup.type)}`}>
+                              <span
+                                className={`px-2.5 py-1 rounded text-sm font-medium ${getTypeColor(
+                                  followup.type
+                                )}`}
+                              >
                                 {followup.type}
                               </span>
-                              <span className={`px-2.5 py-1 rounded text-sm font-medium ${
-                                followup.status === 'Completed'
-                                  ? 'text-green-600 dark:text-green-400 bg-green-500/10 dark:bg-green-400/10'
-                                  : followup.status === 'Overdue'
-                                  ? 'text-red-600 dark:text-red-400 bg-red-500/10 dark:bg-red-400/10'
-                                  : 'text-blue-600 dark:text-blue-400 bg-blue-500/10 dark:bg-blue-400/10'
-                              }`}>
+                              <span
+                                className={`px-2.5 py-1 rounded text-sm font-medium ${
+                                  followup.status === "Completed"
+                                    ? "text-green-600 dark:text-green-400 bg-green-500/10 dark:bg-green-400/10"
+                                    : followup.status === "Overdue"
+                                    ? "text-red-600 dark:text-red-400 bg-red-500/10 dark:bg-red-400/10"
+                                    : "text-blue-600 dark:text-blue-400 bg-blue-500/10 dark:bg-blue-400/10"
+                                }`}
+                              >
                                 {followup.status}
                               </span>
                             </div>
                             <div className="text-sm text-muted-foreground space-y-1">
-                              <p><span className="font-medium">Follow-up:</span> {followup.followupType}</p>
-                              <p><span className="font-medium">Executive:</span> {followup.salesExecutive}</p>
-                              <p><span className="font-medium">Contact:</span> {followup.contactNo}</p>
+                              <p>
+                                <span className="font-medium">Follow-up:</span>{" "}
+                                {followup.followupType}
+                              </p>
+                              <p>
+                                <span className="font-medium">Executive:</span>{" "}
+                                {followup.salesExecutive}
+                              </p>
+                              <p>
+                                <span className="font-medium">Contact:</span>{" "}
+                                {followup.contactNo}
+                              </p>
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-1">
                             <Clock className="w-4 h-4" />
-                            <span className="font-medium">{followup.dueTime}</span>
+                            <span className="font-medium">
+                              {followup.dueTime}
+                            </span>
                           </div>
-                          <p className="text-sm text-muted-foreground">{followup.dueDate}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {followup.dueDate}
+                          </p>
                         </div>
                       </div>
 
                       {followup.notes && (
                         <div className="pt-3 border-t border-border/50">
                           <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-foreground">Notes: </span>
+                            <span className="font-medium text-foreground">
+                              Notes:{" "}
+                            </span>
                             {followup.notes}
                           </p>
                         </div>
                       )}
                     </div>
-                  )
+                  );
                 })
               ) : (
                 <div className="col-span-full">
-                  <p className="text-center text-muted-foreground py-8">No follow-ups found</p>
+                  <p className="text-center text-muted-foreground py-8">
+                    No follow-ups found
+                  </p>
                 </div>
               )}
             </div>
@@ -406,5 +505,5 @@ export default function SalesFollowups() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

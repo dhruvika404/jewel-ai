@@ -22,21 +22,17 @@ import TablePagination from "@/components/ui/table-pagination";
 import {
   Upload,
   Loader2,
-  KeyRound,
   Plus,
-  Edit2,
   Users,
   Phone,
   Mail,
   FileText,
-  Eye,
-  EyeOff,
   Pencil,
   KeyRoundIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { salesPersonAPI, authAPI, dashboardAPI } from "@/services/api";
+import { salesPersonAPI, authAPI } from "@/services/api";
 import { Label } from "@/components/ui/label";
 
 interface SalesPerson {
@@ -62,24 +58,13 @@ export default function SalesPersons() {
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
-  const [stats, setStats] = useState({
-    total: 0,
-    active: 0,
-    inactive: 0,
-  });
-
-  // Dialog states
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [selectedSalesPerson, setSelectedSalesPerson] =
     useState<SalesPerson | null>(null);
-
-  // Password Visibility states
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  // Form states
   const [formData, setFormData] = useState({
     userCode: "",
     name: "",
@@ -92,7 +77,6 @@ export default function SalesPersons() {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Set header
   useEffect(() => {
     setHeader({
       title: "Sales Persons",
@@ -120,12 +104,10 @@ export default function SalesPersons() {
     });
   }, [searchQuery]);
 
-  // Load sales persons data and stats
   const loadData = async () => {
     setLoading(true);
     let currentTotalItems = 0;
     try {
-      // Load List
       const response = await salesPersonAPI.getAll({
         page: currentPage,
         size: pageSize,
@@ -138,7 +120,6 @@ export default function SalesPersons() {
         currentTotalItems = response.data.totalItems || 0;
         setTotalItems(currentTotalItems);
       }
-
     } catch (error: any) {
       toast.error("Error loading data: " + error.message);
       setSalesPersons([]);
@@ -154,7 +135,6 @@ export default function SalesPersons() {
     return () => clearTimeout(timer);
   }, [currentPage, pageSize, searchQuery]);
 
-  // Reset to first page when search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
@@ -192,7 +172,6 @@ export default function SalesPersons() {
       return;
     }
 
-    // Email validation
     if (formData.email && formData.email.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
@@ -204,7 +183,6 @@ export default function SalesPersons() {
     setIsSubmitting(true);
     try {
       if (selectedSalesPerson) {
-        // Update
         const response = await salesPersonAPI.update(
           selectedSalesPerson.uuid,
           formData
@@ -217,7 +195,6 @@ export default function SalesPersons() {
           toast.error(response.message || "Failed to update sales person");
         }
       } else {
-        // Create
         const response = await salesPersonAPI.create(formData);
         if (response.success) {
           toast.success("Sales person created successfully");
@@ -295,43 +272,46 @@ export default function SalesPersons() {
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-medium text-gray-700 w-[100px]">
-                      Name
-                    </TableHead>
-                    <TableHead className="font-medium text-gray-700 w-[100px]">
-                      Code
-                    </TableHead>
-                    <TableHead className="font-medium text-gray-700 w-[200px]">
-                      Contact
-                    </TableHead>
-                    <TableHead className="font-medium text-gray-700 w-[120px]">
-                      Status
-                    </TableHead>
-                    <TableHead className="font-medium text-gray-700 text-center w-[120px]">
-                      Actions
-                    </TableHead>
+              <TableHeader>
+                <TableRow className="bg-gray-50">
+                  <TableHead className="font-medium text-gray-700 w-[100px]">
+                    Name
+                  </TableHead>
+                  <TableHead className="font-medium text-gray-700 w-[100px]">
+                    Code
+                  </TableHead>
+                  <TableHead className="font-medium text-gray-700 w-[200px]">
+                    Contact
+                  </TableHead>
+                  <TableHead className="font-medium text-gray-700 w-[120px]">
+                    Status
+                  </TableHead>
+                  <TableHead className="font-medium text-gray-700 text-center w-[120px]">
+                    Actions
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-12">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-12">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-                      </TableCell>
-                    </TableRow>
-                  ) : salesPersons.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-24 text-gray-500">
-                        <Users className="h-12 w-12 text-gray-200 mb-4 mx-auto" />
-                        <h3 className="text-lg font-medium text-gray-900">
-                          No sales persons found
-                        </h3>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    salesPersons.map((sp) => (
+                ) : salesPersons.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="text-center py-24 text-gray-500"
+                    >
+                      <Users className="h-12 w-12 text-gray-200 mb-4 mx-auto" />
+                      <h3 className="text-lg font-medium text-gray-900">
+                        No sales persons found
+                      </h3>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  salesPersons.map((sp) => (
                     <TableRow key={sp.uuid} className="hover:bg-gray-50">
                       <TableCell className="align-center">
                         <div className="flex items-center gap-3">
@@ -408,16 +388,19 @@ export default function SalesPersons() {
                         </div>
                       </TableCell>
                     </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
           {totalItems > 0 && (
             <div className="p-4 border-t bg-white flex justify-between items-center">
               <div className="text-sm text-gray-600">
-                Total : <span className="font-semibold text-gray-900">{loading ? "..." : totalItems}</span>
+                Total :{" "}
+                <span className="font-semibold text-gray-900">
+                  {loading ? "..." : totalItems}
+                </span>
               </div>
               <TablePagination
                 currentPage={currentPage}
@@ -431,7 +414,6 @@ export default function SalesPersons() {
         </Card>
       </div>
 
-      {/* Add/Edit Dialog */}
       <Dialog open={showFormDialog} onOpenChange={setShowFormDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -457,7 +439,7 @@ export default function SalesPersons() {
                   onChange={(e) =>
                     setFormData({ ...formData, userCode: e.target.value })
                   }
-                  disabled={!!selectedSalesPerson} // Disable userCode editing during update if desired
+                  disabled={!!selectedSalesPerson}
                   autoComplete="off"
                 />
               </div>
@@ -521,7 +503,6 @@ export default function SalesPersons() {
         </DialogContent>
       </Dialog>
 
-      {/* Set Password Dialog */}
       <Dialog
         open={showPasswordDialog}
         onOpenChange={(open) => !open && handleClosePasswordDialog()}
@@ -573,7 +554,6 @@ export default function SalesPersons() {
         </DialogContent>
       </Dialog>
 
-      {/* Upload Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>

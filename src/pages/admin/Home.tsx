@@ -107,20 +107,24 @@ export default function AdminHome() {
     }
   };
 
-  const handleSectionClick = (type: string, filterType: 'due' | 'completed' | 'pending7') => {
+  const handleSectionClick = (
+    type: string,
+    filterType: "due" | "completed" | "pending7"
+  ) => {
     let endpoint = "";
     if (type === "Pending Orders Follow-ups") endpoint = "pending-order";
-    else if (type === "Pending Material Follow-ups") endpoint = "pending-material";
+    else if (type === "Pending Material Follow-ups")
+      endpoint = "pending-material";
     else if (type === "New Order Follow-ups") endpoint = "new-order";
 
     const today = format(new Date(), "yyyy-MM-dd");
     let params = `?startDate=${today}&endDate=${today}`;
 
-    if (filterType === 'due') {
+    if (filterType === "due") {
       params += `&todayDueFollowUp=true`;
-    } else if (filterType === 'completed') {
+    } else if (filterType === "completed") {
       params += `&todayCompletedFollowUp=true`;
-    } else if (filterType === 'pending7') {
+    } else if (filterType === "pending7") {
       const sevenDaysAgo = format(subDays(new Date(), 7), "yyyy-MM-dd");
       params = `?startDate=${sevenDaysAgo}&endDate=${today}&sevenDayPendingFollowUp=true`;
     }
@@ -165,7 +169,9 @@ export default function AdminHome() {
           pending={systemStats.todaysTotalPendingFollowUpsOfNewOrder}
           taken={systemStats.todaysTotalTakenFollowUpsOfNewOrder}
           last7={systemStats.last7DayPendingFollowUpsOfNewOrder}
-          onStatClick={(filterType: any) => handleSectionClick("New Order Follow-ups", filterType)}
+          onStatClick={(filterType: any) =>
+            handleSectionClick("New Order Follow-ups", filterType)
+          }
         />
         <BreakdownSection
           title="Pending Orders Follow-ups"
@@ -174,7 +180,9 @@ export default function AdminHome() {
           pending={systemStats.todaysTotalPendingFollowUpsOfPendingOrder}
           taken={systemStats.todaysTotalTakenFollowUpsOfPendingOrder}
           last7={systemStats.last7DayPendingFollowUpsOfPendingOrder}
-          onStatClick={(filterType: any) => handleSectionClick("Pending Orders Follow-ups", filterType)}
+          onStatClick={(filterType: any) =>
+            handleSectionClick("Pending Orders Follow-ups", filterType)
+          }
         />
 
         <BreakdownSection
@@ -184,7 +192,9 @@ export default function AdminHome() {
           pending={systemStats.todaysTotalPendingFollowUpsOfPendingMaterial}
           taken={systemStats.todaysTotalTakenFollowUpsOfPendingMaterial}
           last7={systemStats.last7DayPendingFollowUpsOfPendingMaterial}
-          onStatClick={(filterType: any) => handleSectionClick("Pending Material Follow-ups", filterType)}
+          onStatClick={(filterType: any) =>
+            handleSectionClick("Pending Material Follow-ups", filterType)
+          }
         />
       </div>
 
@@ -205,9 +215,7 @@ function StatCard({ label, value, icon: Icon, color, loading }: any) {
   };
 
   return (
-    <Card 
-      className="p-4 shadow-sm"
-    >
+    <Card className="p-4 shadow-sm">
       <div className="flex items-center gap-3">
         <div
           className={`w-10 h-10 rounded-full flex items-center justify-center ${colors[color]}`}
@@ -249,35 +257,35 @@ function BreakdownSection({
 
       <CardContent className="p-4 space-y-4">
         <div className="grid grid-cols-3 gap-4 text-center">
-          <div 
+          <div
             className={`p-2 rounded transition-colors ${
-              pending > 0 
-                ? 'cursor-pointer hover:bg-gray-50' 
-                : 'cursor-not-allowed'
+              pending > 0
+                ? "cursor-pointer hover:bg-gray-50"
+                : "cursor-not-allowed"
             }`}
-            onClick={pending > 0 ? () => onStatClick('due') : undefined}
+            onClick={pending > 0 ? () => onStatClick("due") : undefined}
           >
             <p className="text-[12px] text-gray-500">Due Today</p>
             <p className="text-xl font-bold">{pending}</p>
           </div>
-          <div 
+          <div
             className={`p-2 rounded transition-colors ${
-              taken > 0 
-                ? 'cursor-pointer hover:bg-gray-50' 
-                : 'cursor-not-allowed'
+              taken > 0
+                ? "cursor-pointer hover:bg-gray-50"
+                : "cursor-not-allowed"
             }`}
-            onClick={taken > 0 ? () => onStatClick('completed') : undefined}
+            onClick={taken > 0 ? () => onStatClick("completed") : undefined}
           >
             <p className="text-[12px] text-gray-500">Today's Taken</p>
             <p className="text-xl font-bold">{taken}</p>
           </div>
-          <div 
+          <div
             className={`p-2 rounded transition-colors ${
-              last7 > 0 
-                ? 'cursor-pointer hover:bg-gray-50' 
-                : 'cursor-not-allowed'
+              last7 > 0
+                ? "cursor-pointer hover:bg-gray-50"
+                : "cursor-not-allowed"
             }`}
-            onClick={last7 > 0 ? () => onStatClick('pending7') : undefined}
+            onClick={last7 > 0 ? () => onStatClick("pending7") : undefined}
           >
             <p className="text-[12px] text-gray-500">Pending (7 Days)</p>
             <p className="text-xl font-bold">{last7}</p>

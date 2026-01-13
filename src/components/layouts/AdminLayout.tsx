@@ -70,7 +70,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const isSubmenuActive = (submenu?: { label: string; href: string }[]) => {
     if (!submenu) return false;
-    return submenu.some((item) => location.pathname === item.href);
+    return submenu.some((item) => location?.pathname === item.href);
   };
 
   return (
@@ -103,18 +103,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <nav className="flex-1 p-2">
             <ul className="space-y-1">
               {menuItems.map((item) => {
-                const Icon = item.icon;
-                const hasSubmenu = item.submenu && item.submenu.length > 0;
-                const isExpanded = expandedMenu === item.label;
-                const isItemActive = item.href ? isActive(item.href) : isSubmenuActive(item.submenu);
+                const Icon = item?.icon;
+                const hasSubmenu = item?.submenu && item?.submenu?.length > 0;
+                const isExpanded = expandedMenu === item?.label;
+                const isItemActive = item.href ? isActive(item.href) : isSubmenuActive(item?.submenu);
 
                 return (
-                  <li key={item.label}>
+                  <li key={item?.label}>
                     {hasSubmenu ? (
                       <>
                         <button
                           onClick={() =>
-                            setExpandedMenu(isExpanded ? null : item.label)
+                            setExpandedMenu(isExpanded ? null : item?.label)
                           }
                           className={cn(
                             "w-full flex items-center justify-between gap-2 px-2 py-2 text-sm rounded-md transition-colors",
@@ -125,7 +125,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                         >
                           <div className="flex items-center gap-2">
                             <Icon className="w-4 h-4" />
-                            {item.label}
+                            {item?.label}
                           </div>
                           <ChevronDown
                             className={cn(
@@ -136,19 +136,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                         </button>
                         {isExpanded && (
                           <ul className="mt-1 ml-4 space-y-1 border-l border-border pl-2">
-                            {item.submenu?.map((subitem) => (
-                              <li key={subitem.href}>
+                            {item?.submenu?.map((subitem) => (
+                              <li key={subitem?.href}>
                                 <Link
-                                  to={subitem.href}
+                                  to={subitem?.href}
                                   onClick={() => setIsSidebar(false)}
                                   className={cn(
                                     "w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md transition-colors",
-                                    location.pathname === subitem.href
+                                    location?.pathname === subitem?.href
                                       ? "bg-primary/10 text-primary font-medium"
                                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                   )}
                                 >
-                                  {subitem.label}
+                                  {subitem?.label}
                                 </Link>
                               </li>
                             ))}
@@ -170,7 +170,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                         )}
                       >
                         <Icon className="w-4 h-4" />
-                        {item.label}
+                        {item?.label}
                       </Link>
                     )}
                   </li>
@@ -239,8 +239,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full">
                 {header?.search && (
                   <Input
-                    onChange={(e) => header.search?.onChange?.(e.target.value)}
-                    placeholder={header.search.placeholder ?? "Search"}
+                    onChange={(e) => header?.search?.onChange?.(e?.target?.value)}
+                    placeholder={header?.search?.placeholder ?? "Search"}
                     className="h-9 w-full sm:w-60"
                     rightIcon={
                       <Search className="w-4 h-4 text-muted-foreground" />
@@ -251,13 +251,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 {header?.action && (
                   <Button
                     size="sm"
-                    variant={header.action.variant ?? "default"}
-                    onClick={header.action.onClick}
+                    variant={header?.action?.variant ?? "default"}
+                    onClick={header?.action?.onClick}
                     className="h-9 w-full sm:w-auto px-4"
                   >
-                    {header.action.icon}
-                    <span className={header.action.icon ? "ml-2" : ""}>
-                      {header.action.label}
+                    {header?.action?.icon}
+                    <span className={header?.action?.icon ? "ml-2" : ""}>
+                      {header?.action?.label}
                     </span>
                   </Button>
                 )}
