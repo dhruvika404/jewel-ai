@@ -56,7 +56,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         { label: "New Order", href: "/admin/followups/new-order" },
         { label: "Pending Order", href: "/admin/followups/pending-order" },
         { label: "Pending Material", href: "/admin/followups/pending-material" },
-        { label: "CAD Order", href: "/admin/followups/cad-order" },
+        // { label: "CAD Order", href: "/admin/followups/cad-order" },
       ],
     },
   ];

@@ -252,11 +252,17 @@ export default function SalesPersons() {
 
     setIsUploading(true);
     try {
-      await salesPersonAPI.import(uploadFile);
-      toast.success("Sales persons imported successfully");
-      setShowUploadDialog(false);
-      setUploadFile(null);
-      loadData();
+      const response = await salesPersonAPI.import(uploadFile);
+      if (response.success) {
+        toast.success("Sales persons imported successfully");
+        setShowUploadDialog(false);
+        setUploadFile(null);
+        loadData();
+      } else {
+        const errorMsg =
+          response.message?.message || response.message || "Import failed";
+        toast.error(errorMsg);
+      }
     } catch (error: any) {
       toast.error("Upload failed: " + error.message);
     } finally {
