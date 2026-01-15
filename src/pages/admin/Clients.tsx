@@ -84,7 +84,6 @@ export default function Clients() {
   const [totalItems, setTotalItems] = useState(0);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -222,19 +221,12 @@ export default function Clients() {
 
   const handleImport = async (file: File) => {
     setIsUploading(true);
-    setImportResult(null);
     try {
       const result = await clientAPI.import(file);
-      setImportResult(result);
       toast.success(result.message || "Import successful");
       loadData();
     } catch (error: any) {
       toast.error(error.message || "Failed to import data");
-      setImportResult({
-        success: false,
-        message: error.message || "Failed to import data",
-        data: undefined,
-      });
     } finally {
       setIsUploading(false);
     }
@@ -242,7 +234,6 @@ export default function Clients() {
 
   const resetUpload = () => {
     setShowUploadDialog(false);
-    setImportResult(null);
   };
 
   const totalPages = Math.ceil(totalItems / pageSize);
@@ -300,7 +291,7 @@ export default function Clients() {
   };
 
   return (
-    <div className="bg-gray-50 pb-6">
+    <div className="bg-gray-50">
       <div className="p-6 space-y-6">
         <Card className="overflow-hidden">
           <div className="p-4 border-b bg-white flex flex-wrap items-center gap-6 text-sm">
@@ -468,7 +459,6 @@ export default function Clients() {
         description="Upload a file to import clients"
         onImport={handleImport}
         isUploading={isUploading}
-        importResult={importResult}
         onClose={resetUpload}
       />
 

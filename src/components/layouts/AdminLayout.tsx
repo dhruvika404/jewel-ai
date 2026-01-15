@@ -229,7 +229,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </div>
 
-      <div className="flex-1 pt-16 lg:pt-0">
+      <div className="flex-1 pt-16 lg:pt-0 no-scrollbar">
         {header?.visible !== false && header?.title && (
           <header className="bg-card border-b border-border px-6 py-3 sticky top-0 z-10 min-h-16 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h1 className="text-base lg:text-lg font-semibold text-foreground">

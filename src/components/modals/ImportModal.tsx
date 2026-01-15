@@ -39,7 +39,6 @@ interface ImportModalProps {
   description?: string;
   onImport: (file: File) => Promise<any>;
   isUploading: boolean;
-  importResult: any;
   onClose: () => void;
 }
 
@@ -50,7 +49,6 @@ export function ImportModal({
   description = "Upload a file to import data",
   onImport,
   isUploading,
-  importResult,
   onClose,
 }: ImportModalProps) {
   const [fileFormat, setFileFormat] = useState("excel");
