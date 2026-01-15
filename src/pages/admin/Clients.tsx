@@ -10,6 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import TablePagination from "@/components/ui/table-pagination";
 import { Upload, Loader2, Eye, Plus, Pencil } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -315,7 +321,7 @@ export default function Clients() {
               <span className="text-gray-600">5+ Days Overdue</span>
             </div>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto no-scrollbar">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
@@ -369,23 +375,26 @@ export default function Clients() {
                               "C"}
                           </div>
                           <div>
-                            <div className="font-medium text-gray-900">
-                              {client.name || "N/A"}
-                            </div>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="font-medium text-gray-900 max-w-[150px] truncate cursor-default">
+                                    {client.name || "N/A"}
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{client.name || "N/A"}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell className="font-medium text-gray-900 align-center">
-                        {client.userCode}
+                        {client?.userCode}
                       </TableCell>
-                      <TableCell className="align-center">
-                        {client.salesExecCode ? (
-                          <div className="text-xs text-gray-500">
-                            {client.salesExecCode}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
+                       <TableCell className="font-medium text-gray-900 align-center">
+                        {client?.salesExecCode}
                       </TableCell>
 
                       <TableCell className="align-center">
