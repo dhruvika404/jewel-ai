@@ -11,6 +11,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -76,6 +83,17 @@ export default function SalesPersons() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [fileFormat, setFileFormat] = useState("excel");
+
+  const getAcceptType = () => {
+    switch (fileFormat) {
+      case "csv":
+        return ".csv";
+      case "excel":
+      default:
+        return ".xlsx,.xls";
+    }
+  };
 
   useEffect(() => {
     setHeader({
@@ -570,22 +588,39 @@ export default function SalesPersons() {
             </DialogDescription>
           </DialogHeader>
 
-          <div
-            className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:bg-gray-50/50 transition-colors cursor-pointer"
-            onClick={() => document.getElementById("file-upload")?.click()}
-          >
-            <input
-              id="file-upload"
-              type="file"
-              className="hidden"
-              accept=".xlsx,.xls"
-              onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-            />
-            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
-              <FileText className="w-6 h-6" />
+            <div className="space-y-4 mb-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Select File Format
+                </Label>
+                <Select value={fileFormat} onValueChange={setFileFormat}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select file format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="excel">Excel (.xlsx, .xls)</SelectItem>
+                    <SelectItem value="csv">CSV (.csv)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <h3 className="text-sm font-medium text-gray-900">
-              {uploadFile ? uploadFile.name : "Click to select file"}
+
+            <div
+              className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:bg-gray-50/50 transition-colors cursor-pointer"
+              onClick={() => document.getElementById("file-upload")?.click()}
+            >
+              <input
+                id="file-upload"
+                type="file"
+                className="hidden"
+                accept={getAcceptType()}
+                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+              />
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
+                <FileText className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-medium text-gray-900">
+                {uploadFile ? uploadFile.name : "Click to select file"}
             </h3>
             <p className="text-xs text-gray-500 mt-1">
               {uploadFile

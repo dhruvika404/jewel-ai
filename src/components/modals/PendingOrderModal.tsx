@@ -13,13 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { pendingOrderAPI, salesPersonAPI } from "@/services/api";
 import { toast } from "sonner";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateForInput } from "@/lib/utils";
 
@@ -200,23 +194,18 @@ export function PendingOrderModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="salesExecCode">Sales Executive *</Label>
-              <Select
+              <Combobox
+                options={salesPersons.map((sp) => ({
+                    value: sp.userCode,
+                    label: `${sp.name} (${sp.userCode})`,
+                }))}
                 value={formData.salesExecCode}
-                onValueChange={(val) =>
+                onSelect={(val) =>
                   setFormData({ ...formData, salesExecCode: val })
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select sales executive" />
-                </SelectTrigger>
-                <SelectContent>
-                  {salesPersons.map((sp) => (
-                    <SelectItem key={sp.uuid} value={sp.userCode}>
-                      {sp.name} ({sp.userCode})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Select sales executive"
+                searchPlaceholder="Search sales executive..."
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="clientCode">Client Code</Label>

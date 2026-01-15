@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { clientAPI, salesPersonAPI } from '@/services/api'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Combobox } from '@/components/ui/combobox'
 
 interface ClientModalProps {
   isOpen: boolean
@@ -190,27 +190,20 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
             <Label htmlFor="salesExecCode">
               Sales Executive Assignment {!client && <span className="text-red-500">*</span>}
             </Label>
-            <Select value={formData?.salesExecCode} onValueChange={(val) => setFormData({ ...formData, salesExecCode: val })}>
-              <SelectTrigger>
-                <SelectValue placeholder={"Select sales executive"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="unassigned">
-                  {client ? "Select sales executive" : "No Assignment"}
-                </SelectItem>
-                {salesPersons.length > 0 ? (
-                  salesPersons.map((sp) => (
-                    <SelectItem key={sp.uuid} value={sp.userCode}>
-                      {sp.name} ({sp.userCode})
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no-sales-persons" disabled>
-                    No sales executives available
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+            <Combobox
+              options={[
+                { value: "unassigned", label: client ? "Select sales executive" : "No Assignment" },
+                ...salesPersons.map(sp => ({
+                  value: sp.userCode,
+                  label: `${sp.name} (${sp.userCode})`
+                }))
+              ]}
+              value={formData?.salesExecCode || "unassigned"}
+              onSelect={(val) => setFormData({ ...formData, salesExecCode: val })}
+              placeholder="Select sales executive"
+              searchPlaceholder="Search sales executive..."
+              width="w-full"
+            />
           </div>
           
           <DialogFooter className="pt-4">

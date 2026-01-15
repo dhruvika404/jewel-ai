@@ -58,6 +58,7 @@ import * as XLSX from "xlsx";
 import { DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { formatDisplayDate } from "@/lib/utils";
+import { Combobox } from "@/components/ui/combobox";
 
 type FollowupType =
   | "new-order"
@@ -188,6 +189,19 @@ export default function Followups() {
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [editingType, setEditingType] = useState<FollowupType>("new-order");
+  const [importType, setImportType] = useState<FollowupType>("new-order"); // Added importType state
+  const [fileFormat, setFileFormat] = useState("excel");
+
+  const getAcceptType = () => {
+    switch (fileFormat) {
+      case "csv":
+        return ".csv";
+      case "excel":
+      default:
+        return ".xlsx,.xls";
+    }
+  };
+
   const MANUAL_SORT_COLUMNS = [
     "noOrderSince",
     "pendingSince",
@@ -748,13 +762,13 @@ export default function Followups() {
     setIsUploading(true);
     try {
       let response;
-      if (followupType === "new-order") {
+      if (importType === "new-order") {
         response = await newOrderAPI.import(uploadFile);
-      } else if (followupType === "pending-order") {
+      } else if (importType === "pending-order") {
         response = await pendingOrderAPI.import(uploadFile);
-      } else if (followupType === "pending-material") {
+      } else if (importType === "pending-material") {
         response = await pendingMaterialAPI.import(uploadFile);
-      } else if (followupType === "cad-order") {
+      } else if (importType === "cad-order") {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         response = {
           success: true,
@@ -762,7 +776,7 @@ export default function Followups() {
         };
       }
       if (response && (response.success || response.status === 200)) {
-        toast.success(`${getFollowupTypeTitle()} imported successfully`);
+        toast.success(`${importType} imported successfully`);
         setShowUploadDialog(false);
         setUploadFile(null);
         loadFollowupData();
@@ -799,35 +813,34 @@ export default function Followups() {
     <div className="bg-gray-50">
       <div className="p-6 space-y-6">
         <div className="flex items-center gap-3 overflow-x-auto p-1">
-          <Select
+          <Combobox
+            options={[
+              { value: "all", label: "Select Sales Person" },
+              ...salesPersons.map((sp) => ({
+                value: sp.userCode,
+                label: `${sp.name} (${sp.userCode})`,
+              })),
+            ]}
             value={salesPersonFilter}
-            onValueChange={setSalesPersonFilter}
-          >
-            <SelectTrigger className="h-9 bg-white w-[180px] flex-shrink-0">
-              <SelectValue placeholder="Sales Person" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Select Sales Person</SelectItem>
-              {salesPersons.map((sp) => (
-                <SelectItem key={sp.uuid} value={sp.userCode}>
-                  {sp.name} ({sp.userCode})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={clientFilter} onValueChange={setClientFilter}>
-            <SelectTrigger className="h-9 bg-white w-[180px] flex-shrink-0">
-              <SelectValue placeholder="Client" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Select Client</SelectItem>
-              {clients.map((client) => (
-                <SelectItem key={client.uuid} value={client.userCode}>
-                  {client.name} ({client.userCode})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onSelect={setSalesPersonFilter}
+            placeholder="Select Sales Person"
+            searchPlaceholder="Search salesperson..."
+            width="w-[180px]"
+          />
+          <Combobox
+            options={[
+              { value: "all", label: "Select Client" },
+              ...clients.map((client) => ({
+                value: client.userCode,
+                label: `${client.name} (${client.userCode})`,
+              })),
+            ]}
+            value={clientFilter}
+            onSelect={setClientFilter}
+            placeholder="Select Client"
+            searchPlaceholder="Search client..."
+            width="w-[180px]"
+          />
 
           {(followupType === "new-order" ||
             followupType === "pending-order" ||
@@ -865,15 +878,37 @@ export default function Followups() {
           )}
         </div>
 
-        <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+        <Dialog 
+          open={showUploadDialog} 
+          onOpenChange={(open) => {
+            setShowUploadDialog(open);
+            if(open) setImportType(followupType);
+          }}
+        >
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Import {getFollowupTypeTitle()}</DialogTitle>
+              <DialogTitle>Import Data</DialogTitle>
               <DialogDescription>
-                Upload an Excel file to bulk import data. Supported formats:
-                .xlsx, .xls
+                Upload a file to import data for the current tab.
               </DialogDescription>
             </DialogHeader>
+
+            <div className="space-y-4 mb-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Select File Format
+                </label>
+                <Select value={fileFormat} onValueChange={setFileFormat}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select file format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="excel">Excel (.xlsx, .xls)</SelectItem>
+                    <SelectItem value="csv">CSV (.csv)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
             <div
               className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:bg-gray-50/50 transition-colors cursor-pointer"
@@ -883,7 +918,7 @@ export default function Followups() {
                 id="file-upload"
                 type="file"
                 className="hidden"
-                accept=".xlsx,.xls"
+                accept={getAcceptType()}
                 onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
               />
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">

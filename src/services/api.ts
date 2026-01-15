@@ -153,6 +153,10 @@ export const salesPersonAPI = {
 
   // Import sales person data
   import: async (file: File) => {
+    if (!file.name.match(/\\.(xlsx|xls|csv)$/i)) {
+      throw new Error("File must be an Excel (.xlsx, .xls) or CSV (.csv) file");
+    }
+
     const formData = new FormData();
     formData.append("file", file);
 
@@ -259,8 +263,8 @@ export const clientAPI = {
         throw new Error("File is empty");
       }
 
-      if (!file.name.match(/\.(xlsx|xls)$/i)) {
-        throw new Error("File must be an Excel file (.xlsx or .xls)");
+      if (!file.name.match(/\.(xlsx|xls|csv)$/i)) {
+        throw new Error("File must be an Excel (.xlsx, .xls) or CSV (.csv) file");
       }
 
       // Test file readability before upload
@@ -459,6 +463,11 @@ export const pendingOrderAPI = {
 
   // Import pending order data
   import: async (file: File) => {
+    // Validate file
+    if (!file.name.match(/\\.(xlsx|xls|csv)$/i)) {
+      throw new Error("File must be an Excel (.xlsx, .xls) or CSV (.csv) file");
+    }
+
     const formData = new FormData();
     formData.append("file", file);
 
@@ -611,6 +620,10 @@ export const pendingMaterialAPI = {
 
   // Import pending material data
   import: async (file: File) => {
+    if (!file.name.match(/\\.(xlsx|xls|csv)$/i)) {
+      throw new Error("File must be an Excel (.xlsx, .xls) or CSV (.csv) file");
+    }
+
     const formData = new FormData();
     formData.append("file", file);
 
@@ -768,6 +781,10 @@ export const newOrderAPI = {
 
   // Import new order data
   import: async (file: File) => {
+    if (!file.name.match(/\\.(xlsx|xls|csv)$/i)) {
+      throw new Error("File must be an Excel (.xlsx, .xls) or CSV (.csv) file");
+    }
+
     const formData = new FormData();
     formData.append("file", file);
 
