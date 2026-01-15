@@ -86,17 +86,16 @@ export function ImportModal({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
-      <DialogContent className={`${importResult ? "max-w-4xl" : "max-w-md"}`}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {importResult ? "Import Processing Result" : title}
+            {title}
           </DialogTitle>
           <DialogDescription>
-            {importResult ? "Import Processing Result" : description}
+            {description}
           </DialogDescription>
         </DialogHeader>
 
-        {!importResult ? (
           <>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -161,82 +160,7 @@ export function ImportModal({
               </Button>
             </DialogFooter>
           </>
-        ) : (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-4">
-                <div className="p-3 bg-green-100 rounded-full text-green-600">
-                  <CheckCircle className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-green-900">
-                    Success Count
-                  </p>
-                  <p className="text-2xl font-bold text-green-700">
-                    {importResult.data?.successCount || 0}
-                  </p>
-                </div>
-              </div>
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-4">
-                <div className="p-3 bg-red-100 rounded-full text-red-600">
-                  <XCircle className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-red-900">
-                    Failure Count
-                  </p>
-                  <p className="text-2xl font-bold text-red-700">
-                    {importResult.data?.failureCount || 0}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {importResult.data?.failedRecords &&
-              importResult.data?.failedRecords.length > 0 && (
-                <div className="border rounded-lg overflow-hidden">
-                  <div className="bg-gray-50 px-4 py-2 border-b flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-orange-500" />
-                    <h3 className="font-medium text-sm text-gray-700">
-                      Failed Records Details
-                    </h3>
-                  </div>
-                  <div className="max-h-[300px] overflow-y-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[100px]">Row No</TableHead>
-                          <TableHead>Reason</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {importResult.data?.failedRecords.map(
-                          (record: any, index: number) => (
-                            <TableRow key={index}>
-                              <TableCell className="font-medium">
-                                {record.rowNo || index + 1}
-                              </TableCell>
-                              <TableCell className="text-sm text-red-600">
-                                {record.reason ||
-                                  record.error ||
-                                  "Unknown error"}
-                              </TableCell>
-                            </TableRow>
-                          )
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              )}
-
-            <DialogFooter>
-              <Button onClick={handleClose} className="w-full">
-                Close
-              </Button>
-            </DialogFooter>
-          </div>
-        )}
+     
       </DialogContent>
     </Dialog>
   );
