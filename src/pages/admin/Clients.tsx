@@ -224,9 +224,12 @@ export default function Clients() {
     try {
       const result = await clientAPI.import(file);
       toast.success(result.message || "Import successful");
+      setShowUploadDialog(false);
       loadData();
+      return result;
     } catch (error: any) {
       toast.error(error.message || "Failed to import data");
+      throw error;
     } finally {
       setIsUploading(false);
     }
@@ -234,6 +237,7 @@ export default function Clients() {
 
   const resetUpload = () => {
     setShowUploadDialog(false);
+    setIsUploading(false);
   };
 
   const totalPages = Math.ceil(totalItems / pageSize);

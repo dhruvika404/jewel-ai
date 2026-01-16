@@ -16,14 +16,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import {
   Table,
   TableBody,
   TableCell,
@@ -38,7 +30,6 @@ import {
   Download,
   Loader2,
   Upload,
-  FileText,
   Eye,
   Pencil,
   ArrowUpDown,
@@ -58,6 +49,7 @@ import * as XLSX from "xlsx";
 import { DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { formatDisplayDate } from "@/lib/utils";
+import { ImportModal } from "@/components/modals/ImportModal";
 
 type FollowupType =
   | "new-order"
@@ -183,7 +175,6 @@ export default function Followups() {
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC" | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [showUploadDialog, setShowUploadDialog] = useState(false);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -742,18 +733,16 @@ export default function Followups() {
     return count;
   };
 
-  const handleImport = async () => {
-    if (!uploadFile) return;
-
+  const handleImport = async (file: File) => {
     setIsUploading(true);
     try {
       let response;
       if (followupType === "new-order") {
-        response = await newOrderAPI.import(uploadFile);
+        response = await newOrderAPI.import(file);
       } else if (followupType === "pending-order") {
-        response = await pendingOrderAPI.import(uploadFile);
+        response = await pendingOrderAPI.import(file);
       } else if (followupType === "pending-material") {
-        response = await pendingMaterialAPI.import(uploadFile);
+        response = await pendingMaterialAPI.import(file);
       } else if (followupType === "cad-order") {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         response = {
@@ -761,18 +750,13 @@ export default function Followups() {
           message: "CAD orders imported successfully",
         };
       }
-      if (response && (response.success || response.status === 200)) {
-        toast.success(`${getFollowupTypeTitle()} imported successfully`);
-        setShowUploadDialog(false);
-        setUploadFile(null);
-        loadFollowupData();
-      } else {
-        toast.error(
-          "Import failed: " + (response?.message || "Unknown error occurred")
-        );
-      }
+      toast.success(response.message || "Import successful");
+      setShowUploadDialog(false);
+      loadFollowupData();
+      return response;
     } catch (error: any) {
-      toast.error("Upload failed: " + error.message);
+      toast.error(error.message || "Failed to import data");
+      throw error;
     } finally {
       setIsUploading(false);
     }
@@ -865,63 +849,18 @@ export default function Followups() {
           )}
         </div>
 
-        <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Import {getFollowupTypeTitle()}</DialogTitle>
-              <DialogDescription>
-                Upload an Excel file to bulk import data. Supported formats:
-                .xlsx, .xls
-              </DialogDescription>
-            </DialogHeader>
-
-            <div
-              className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:bg-gray-50/50 transition-colors cursor-pointer"
-              onClick={() => document.getElementById("file-upload")?.click()}
-            >
-              <input
-                id="file-upload"
-                type="file"
-                className="hidden"
-                accept=".xlsx,.xls"
-                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-              />
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
-                <FileText className="w-6 h-6" />
-              </div>
-              <h3 className="text-sm font-medium text-gray-900">
-                {uploadFile ? uploadFile.name : "Click to select file"}
-              </h3>
-              <p className="text-xs text-gray-500 mt-1">
-                {uploadFile
-                  ? `${(uploadFile.size / 1024).toFixed(1)} KB`
-                  : "or drag and drop here"}
-              </p>
-            </div>
-
-            <DialogFooter className="mt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowUploadDialog(false);
-                  setUploadFile(null);
-                }}
-                disabled={isUploading}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleImport}
-                disabled={!uploadFile || isUploading}
-              >
-                {isUploading && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                {isUploading ? "Importing..." : "Start Import"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <ImportModal
+          open={showUploadDialog}
+          onOpenChange={setShowUploadDialog}
+          title={`Import ${getFollowupTypeTitle()}`}
+          description={`Upload an Excel or CSV file to bulk import ${getFollowupTypeTitle()}.`}
+          onImport={handleImport}
+          isUploading={isUploading}
+          onClose={() => {
+            setShowUploadDialog(false);
+            setIsUploading(false);
+          }}
+        />
 
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">

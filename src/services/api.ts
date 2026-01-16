@@ -165,7 +165,14 @@ export const salesPersonAPI = {
         body: formData,
       }
     );
-    return response.json();
+    const result = await response.json();
+    if (!response.ok || result.success === false) {
+      let msg = result.message || "Import failed";
+      if (result.data?.rowNo) msg = `Row ${result.data.rowNo}: ${msg}`;
+      else if (result.rowNo) msg = `Row ${result.rowNo}: ${msg}`;
+      throw new Error(msg);
+    }
+    return result;
   },
 };
 
@@ -286,26 +293,17 @@ export const clientAPI = {
         body: formData,
       });
 
-      let result;
-      try {
-        result = await response.json();
-      } catch (parseError) {
-        console.error(
-          "Client import - Failed to parse JSON response:",
-          parseError
-        );
-        throw new Error(
-          `Server returned invalid JSON. Status: ${response.status}`
-        );
-      }
+      const result = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || result.success === false) {
         let errorMessage = result.message || result.error || `HTTP error! status: ${response.status}`;
         
         if (typeof errorMessage === 'object') {
-          const msg = errorMessage.message || JSON.stringify(errorMessage);
-          errorMessage = errorMessage.rowNo ? `Row ${errorMessage.rowNo}: ${msg}` : msg;
+          errorMessage = errorMessage.message || JSON.stringify(errorMessage);
         }
+
+        if (result.data?.rowNo) errorMessage = `Row ${result.data.rowNo}: ${errorMessage}`;
+        else if (result.rowNo) errorMessage = `Row ${result.rowNo}: ${errorMessage}`;
 
         throw new Error(errorMessage);
       }
@@ -468,7 +466,14 @@ export const pendingOrderAPI = {
         body: formData,
       }
     );
-    return response.json();
+    const result = await response.json();
+    if (!response.ok || result.success === false) {
+      let msg = result.message || "Import failed";
+      if (result.data?.rowNo) msg = `Row ${result.data.rowNo}: ${msg}`;
+      else if (result.rowNo) msg = `Row ${result.rowNo}: ${msg}`;
+      throw new Error(msg);
+    }
+    return result;
   },
 };
 
@@ -621,7 +626,14 @@ export const pendingMaterialAPI = {
         body: formData,
       }
     );
-    return response.json();
+    const result = await response.json();
+    if (!response.ok || result.success === false) {
+      let msg = result.message || "Import failed";
+      if (result.data?.rowNo) msg = `Row ${result.data.rowNo}: ${msg}`;
+      else if (result.rowNo) msg = `Row ${result.rowNo}: ${msg}`;
+      throw new Error(msg);
+    }
+    return result;
   },
 };
 
@@ -779,7 +791,14 @@ export const newOrderAPI = {
         body: formData,
       }
     );
-    return response.json();
+    const result = await response.json();
+    if (!response.ok || result.success === false) {
+      let msg = result.message || "Import failed";
+      if (result.data?.rowNo) msg = `Row ${result.data.rowNo}: ${msg}`;
+      else if (result.rowNo) msg = `Row ${result.rowNo}: ${msg}`;
+      throw new Error(msg);
+    }
+    return result;
   },
 };
 

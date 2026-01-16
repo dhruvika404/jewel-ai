@@ -11,13 +11,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -33,7 +26,6 @@ import {
   Users,
   Phone,
   Mail,
-  FileText,
   Pencil,
   KeyRoundIcon,
 } from "lucide-react";
@@ -41,6 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { salesPersonAPI, authAPI } from "@/services/api";
 import { Label } from "@/components/ui/label";
+import { ImportModal } from "@/components/modals/ImportModal";
 
 interface SalesPerson {
   uuid: string;
@@ -78,22 +71,10 @@ export default function SalesPersons() {
     email: "",
     phone: "",
   });
+  const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [fileFormat, setFileFormat] = useState("excel");
-
-  const getAcceptType = () => {
-    switch (fileFormat) {
-      case "csv":
-        return ".csv";
-      case "excel":
-      default:
-        return ".xlsx,.xls";
-    }
-  };
 
   useEffect(() => {
     setHeader({
@@ -265,24 +246,17 @@ export default function SalesPersons() {
     setSelectedSalesPerson(null);
   };
 
-  const handleUpload = async () => {
-    if (!uploadFile) return;
-
+  const handleImport = async (file: File) => {
     setIsUploading(true);
     try {
-      const response = await salesPersonAPI.import(uploadFile);
-      if (response.success) {
-        toast.success("Sales persons imported successfully");
-        setShowUploadDialog(false);
-        setUploadFile(null);
-        loadData();
-      } else {
-        const errorMsg =
-          response.message?.message || response.message || "Import failed";
-        toast.error(errorMsg);
-      }
+      const response = await salesPersonAPI.import(file);
+      toast.success(response.message || "Import successful");
+      setShowUploadDialog(false);
+      loadData();
+      return response;
     } catch (error: any) {
-      toast.error("Upload failed: " + error.message);
+      toast.error(error.message || "Failed to import data");
+      throw error;
     } finally {
       setIsUploading(false);
     }
@@ -578,78 +552,18 @@ export default function SalesPersons() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Import Data</DialogTitle>
-            <DialogDescription>
-              Upload an Excel file to bulk import sales persons. Supported
-              formats: .xlsx, .xls
-            </DialogDescription>
-          </DialogHeader>
-
-            <div className="space-y-4 mb-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">
-                  Select File Format
-                </Label>
-                <Select value={fileFormat} onValueChange={setFileFormat}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select file format" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="excel">Excel (.xlsx, .xls)</SelectItem>
-                    <SelectItem value="csv">CSV (.csv)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div
-              className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:bg-gray-50/50 transition-colors cursor-pointer"
-              onClick={() => document.getElementById("file-upload")?.click()}
-            >
-              <input
-                id="file-upload"
-                type="file"
-                className="hidden"
-                accept={getAcceptType()}
-                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-              />
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
-                <FileText className="w-6 h-6" />
-              </div>
-              <h3 className="text-sm font-medium text-gray-900">
-                {uploadFile ? uploadFile.name : "Click to select file"}
-            </h3>
-            <p className="text-xs text-gray-500 mt-1">
-              {uploadFile
-                ? `${(uploadFile.size / 1024).toFixed(1)} KB`
-                : "or drag and drop here"}
-            </p>
-          </div>
-
-          <DialogFooter className="mt-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowUploadDialog(false);
-                setUploadFile(null);
-              }}
-              disabled={isUploading}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleUpload}
-              disabled={!uploadFile || isUploading}
-            >
-              {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isUploading ? "Importing..." : "Start Import"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ImportModal
+        open={showUploadDialog}
+        onOpenChange={setShowUploadDialog}
+        title="Import Sales Persons"
+        description="Upload an Excel or CSV file to bulk import sales persons."
+        onImport={handleImport}
+        isUploading={isUploading}
+        onClose={() => {
+          setShowUploadDialog(false);
+          setIsUploading(false);
+        }}
+      />
     </div>
   );
 }
