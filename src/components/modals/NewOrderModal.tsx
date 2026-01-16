@@ -122,9 +122,7 @@ export function NewOrderModal({
     e.preventDefault();
 
     if (
-      !formData.salesExecCode ||
-      !formData.subCategory ||
-      !formData.clientCategoryName
+      !formData.salesExecCode
     ) {
       toast.error("Please fill in all required fields");
       return;
@@ -195,7 +193,7 @@ export function NewOrderModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="clientCategoryName">Client Category Name *</Label>
+              <Label htmlFor="clientCategoryName">Client Category Name</Label>
               <Input
                 id="clientCategoryName"
                 value={formData.clientCategoryName}
@@ -209,7 +207,7 @@ export function NewOrderModal({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="subCategory">Sub Category *</Label>
+              <Label htmlFor="subCategory">Sub Category</Label>
               <Input
                 id="subCategory"
                 value={formData.subCategory}

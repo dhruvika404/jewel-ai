@@ -367,11 +367,15 @@ export default function Followups() {
         } else {
           params.endDate = format(activeDateRange.from, "yyyy-MM-dd");
         }
-      } else if (!activeDateRange && !skipAllFilters) {
+      }
+      if (!activeDateRange && !skipAllFilters) {
         const urlStartDate = searchParams.get("startDate");
         const urlEndDate = searchParams.get("endDate");
         if (urlStartDate) params.startDate = urlStartDate;
         if (urlEndDate) params.endDate = urlEndDate;
+      }
+      if (searchTerm) {
+        params.search = searchTerm;
       }
 
       if (!skipAllFilters) {
@@ -580,21 +584,7 @@ export default function Followups() {
       return false;
     }
 
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      const matchesSearch =
-        (fu.userCode?.toLowerCase() || "").includes(searchLower) ||
-        (fu.name?.toLowerCase() || "").includes(searchLower) ||
-        (fu.salesExecutive?.toLowerCase() || "").includes(searchLower);
 
-      if (fu.type === "pending-order") {
-        return (
-          matchesSearch ||
-          (fu.orderNo?.toLowerCase() || "").includes(searchLower)
-        );
-      }
-      if (!matchesSearch) return false;
-    }
 
     if (followupType === "new-order" && dateRangeFilter !== "all") {
       const daysSince = (fu as NewOrderFollowup).noOrderSince;

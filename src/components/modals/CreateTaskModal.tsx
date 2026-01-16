@@ -137,10 +137,6 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
           pendingPcs: 0
         })
       } else if (formData?.taskType === 'new-order') {
-        if (!formData?.subCategory || !formData?.clientCategoryName) {
-          toast.error('Sub Category and Client Category are required for New Order tasks')
-          return
-        }
         
         response = await newOrderAPI.create({
           salesExecCode: formData?.salesExecCode,
@@ -272,7 +268,7 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
           <>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="clientCategoryName">Client Category *</Label>
+                <Label htmlFor="clientCategoryName">Client Category</Label>
                 <Input
                   id="clientCategoryName"
                   value={formData?.clientCategoryName}
@@ -281,7 +277,7 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="subCategory">Sub Category *</Label>
+                <Label htmlFor="subCategory">Sub Category</Label>
                 <Input
                   id="subCategory"
                   value={formData?.subCategory}
