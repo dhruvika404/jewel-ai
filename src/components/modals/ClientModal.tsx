@@ -41,7 +41,6 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
           setSalesPersons(response?.data?.data)
         }
       } catch (error) {
-        console.error('Error loading sales persons:', error)
       }
     }
     

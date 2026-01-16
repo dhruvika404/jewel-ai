@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
-      } catch (error) {
+      } catch {
         localStorage.removeItem("jewelai_user");
       }
     }
@@ -100,7 +100,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userSession.role === "sales_executive" ? "sales" : userSession.role;
       navigate(`/${navigateRole}`);
     } catch (error: any) {
-      console.error("Login error:", error);
       throw new Error(
         error.message || "Login failed. Please check your credentials."
       );

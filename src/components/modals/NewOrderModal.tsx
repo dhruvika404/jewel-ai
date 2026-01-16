@@ -69,7 +69,6 @@ export function NewOrderModal({
           }
         }
       } catch (error) {
-        console.error("Error loading sales persons:", error);
       }
     };
     loadSalesPersons();

@@ -9,64 +9,30 @@ import {
   FileSpreadsheet,
   Plus,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, subDays } from "date-fns";
-import {
-  dashboardAPI,
-  newOrderAPI,
-  pendingOrderAPI,
-  pendingMaterialAPI,
-} from "@/services/api";
 import { toast } from "sonner";
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import { CreateTaskModal } from "@/components/modals/CreateTaskModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { LoadingState } from "@/components/shared/LoadingState";
+import { useState } from "react";
 
-interface SystemStats {
-  todaysTotalPendingFollowUps: number;
-  todaysTotalTakenFollowUps: number;
-  last7daysTotalPendingFollowUps: number;
-
-  todaysTotalPendingFollowUpsOfPendingOrder: number;
-  todaysTotalTakenFollowUpsOfPendingOrder: number;
-  last7DayPendingFollowUpsOfPendingOrder: number;
-
-  todaysTotalPendingFollowUpsOfPendingMaterial: number;
-  todaysTotalTakenFollowUpsOfPendingMaterial: number;
-  last7DayPendingFollowUpsOfPendingMaterial: number;
-
-  todaysTotalPendingFollowUpsOfNewOrder: number;
-  todaysTotalTakenFollowUpsOfNewOrder: number;
-  last7DayPendingFollowUpsOfNewOrder: number;
-}
-
-export default function AdminHome() {
+export default function Dashboard() {
   const { setHeader } = usePageHeader();
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  const [loading, setLoading] = useState(false);
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
 
-  const [systemStats, setSystemStats] = useState<SystemStats>({
-    todaysTotalPendingFollowUps: 0,
-    todaysTotalTakenFollowUps: 0,
-    last7daysTotalPendingFollowUps: 0,
-
-    todaysTotalPendingFollowUpsOfPendingOrder: 0,
-    todaysTotalTakenFollowUpsOfPendingOrder: 0,
-    last7DayPendingFollowUpsOfPendingOrder: 0,
-
-    todaysTotalPendingFollowUpsOfPendingMaterial: 0,
-    todaysTotalTakenFollowUpsOfPendingMaterial: 0,
-    last7DayPendingFollowUpsOfPendingMaterial: 0,
-
-    todaysTotalPendingFollowUpsOfNewOrder: 0,
-    todaysTotalTakenFollowUpsOfNewOrder: 0,
-    last7DayPendingFollowUpsOfNewOrder: 0,
+  // Use the new hook - single API call instead of 4
+  const { stats, loading, error, refetch } = useDashboardStats({
+    salesExecCode: user?.role === "sales_executive" ? user.userCode : undefined,
+    enabled: true,
   });
 
+  // Set header
   useEffect(() => {
     setHeader({
       title: "Dashboard",
@@ -82,43 +48,13 @@ export default function AdminHome() {
     });
   }, [user]);
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const statsParams: any = {};
-      if (user?.role === "sales_executive") {
-        statsParams.salesExecCode = user.userCode;
-      }
-
-      const [statsRes] = await Promise.all([
-        dashboardAPI.getOverview(statsParams),
-        newOrderAPI.getFollowUpsByClientCode({
-          page: 1,
-          size: 500,
-          ...(user?.userCode && { salesExecCode: user.userCode }),
-        }),
-        pendingOrderAPI.getFollowUpsByClientCode({
-          page: 1,
-          size: 500,
-          ...(user?.userCode && { salesExecCode: user.userCode }),
-        }),
-        pendingMaterialAPI.getFollowUpsByClientCode({
-          page: 1,
-          size: 500,
-          ...(user?.userCode && { salesExecCode: user.userCode }),
-        }),
-      ]);
-
-      if (statsRes?.data) {
-        setSystemStats(statsRes.data);
-      }
-    } catch (error) {
-      console.error(error);
+  // Show error toast if API fails
+  useEffect(() => {
+    if (error) {
       toast.error("Failed to load dashboard data");
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [error]);
+
 
   const handleSectionClick = (
     type: string,
@@ -144,33 +80,33 @@ export default function AdminHome() {
     navigate(`${user?.role === "admin" ? "/admin" : "/sales"}/followups/${endpoint}${params}`);
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  if (loading) {
+    return <LoadingState message="Loading dashboard..." fullScreen />;
+  }
 
   return (
     <div className="p-6 space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
           label="Due Today Follow-ups"
-          value={systemStats.todaysTotalPendingFollowUps}
+          value={stats.todaysTotalPendingFollowUps}
           icon={Clock}
           color="blue"
-          loading={loading}
+          loading={false}
         />
         <StatCard
           label="Today's Taken Follow-ups"
-          value={systemStats.todaysTotalTakenFollowUps}
+          value={stats.todaysTotalTakenFollowUps}
           icon={CheckCircle}
           color="emerald"
-          loading={loading}
+          loading={false}
         />
         <StatCard
           label="Pending Follow-ups (Last 7 Days)"
-          value={systemStats.last7daysTotalPendingFollowUps}
+          value={stats.last7daysTotalPendingFollowUps}
           icon={AlertCircle}
           color="orange"
-          loading={loading}
+          loading={false}
         />
       </div>
 
@@ -179,9 +115,9 @@ export default function AdminHome() {
           title="New Order Follow-ups"
           icon={FileSpreadsheet}
           color="purple"
-          pending={systemStats.todaysTotalPendingFollowUpsOfNewOrder}
-          taken={systemStats.todaysTotalTakenFollowUpsOfNewOrder}
-          last7={systemStats.last7DayPendingFollowUpsOfNewOrder}
+          pending={stats.todaysTotalPendingFollowUpsOfNewOrder}
+          taken={stats.todaysTotalTakenFollowUpsOfNewOrder}
+          last7={stats.last7DayPendingFollowUpsOfNewOrder}
           onStatClick={(filterType: any) =>
             handleSectionClick("New Order Follow-ups", filterType)
           }
@@ -190,9 +126,9 @@ export default function AdminHome() {
           title="Pending Orders Follow-ups"
           icon={ShoppingCart}
           color="emerald"
-          pending={systemStats.todaysTotalPendingFollowUpsOfPendingOrder}
-          taken={systemStats.todaysTotalTakenFollowUpsOfPendingOrder}
-          last7={systemStats.last7DayPendingFollowUpsOfPendingOrder}
+          pending={stats.todaysTotalPendingFollowUpsOfPendingOrder}
+          taken={stats.todaysTotalTakenFollowUpsOfPendingOrder}
+          last7={stats.last7DayPendingFollowUpsOfPendingOrder}
           onStatClick={(filterType: any) =>
             handleSectionClick("Pending Orders Follow-ups", filterType)
           }
@@ -202,9 +138,9 @@ export default function AdminHome() {
           title="Pending Material Follow-ups"
           icon={Database}
           color="orange"
-          pending={systemStats.todaysTotalPendingFollowUpsOfPendingMaterial}
-          taken={systemStats.todaysTotalTakenFollowUpsOfPendingMaterial}
-          last7={systemStats.last7DayPendingFollowUpsOfPendingMaterial}
+          pending={stats.todaysTotalPendingFollowUpsOfPendingMaterial}
+          taken={stats.todaysTotalTakenFollowUpsOfPendingMaterial}
+          last7={stats.last7DayPendingFollowUpsOfPendingMaterial}
           onStatClick={(filterType: any) =>
             handleSectionClick("Pending Material Follow-ups", filterType)
           }
@@ -214,7 +150,7 @@ export default function AdminHome() {
       <CreateTaskModal
         isOpen={showCreateTaskModal}
         onClose={() => setShowCreateTaskModal(false)}
-        onSuccess={loadData}
+        onSuccess={refetch}
       />
     </div>
   );

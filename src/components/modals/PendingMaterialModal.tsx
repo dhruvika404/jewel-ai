@@ -71,7 +71,6 @@ export function PendingMaterialModal({
           }
         }
       } catch (error) {
-        console.error("Error loading sales persons:", error);
       }
     };
     loadSalesPersons();

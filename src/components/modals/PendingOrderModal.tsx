@@ -63,7 +63,6 @@ export function PendingOrderModal({
           }
         }
       } catch (error) {
-        console.error("Error loading sales persons:", error);
       }
     };
     loadSalesPersons();

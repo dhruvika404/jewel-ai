@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import Login from "./pages/Login";
-import AdminDashboard from "./pages/AdminDashboard";
-import SalesDashboard from "./pages/SalesDashboard";
+import AdminRoutes from "./routes/AdminRoutes";
+import SalesRoutes from "./routes/SalesRoutes";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PageHeaderProvider } from "./contexts/PageHeaderProvider";
@@ -18,7 +18,7 @@ function App() {
               path="/admin/*"
               element={
                 <ProtectedRoute role="admin">
-                  <AdminDashboard />
+                  <AdminRoutes />
                 </ProtectedRoute>
               }
             />
@@ -26,7 +26,7 @@ function App() {
               path="/sales/*"
               element={
                 <ProtectedRoute role="sales_executive">
-                  <SalesDashboard />
+                  <SalesRoutes />
                 </ProtectedRoute>
               }
             />

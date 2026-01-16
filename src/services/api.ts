@@ -35,29 +35,24 @@ export const authAPI = {
 
   // Set login password for sales person
   setPassword: async (userCode: string, password: string) => {
-    try {
-      const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.SET_PASSWORD}`,
-        {
-          method: "PUT",
-          headers: getHeaders(),
-          body: JSON.stringify({ userCode, password }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || `HTTP error! status: ${response.status}`
-        );
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.SET_PASSWORD}`,
+      {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify({ userCode, password }),
       }
+    );
 
-      return data;
-    } catch (error: any) {
-      console.error("Set Password API Error:", error);
-      throw error;
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || `HTTP error! status: ${response.status}`
+      );
     }
+
+    return data;
   },
 };
 
@@ -65,34 +60,29 @@ export const authAPI = {
 export const dashboardAPI = {
   // Get dashboard overview counts
   getOverview: async (params?: { salesExecCode?: string }) => {
-    try {
-      const queryParams = new URLSearchParams();
-      if (params?.salesExecCode)
-        queryParams.append("salesExecCode", params.salesExecCode);
+    const queryParams = new URLSearchParams();
+    if (params?.salesExecCode)
+      queryParams.append("salesExecCode", params.salesExecCode);
 
-      const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DASHBOARD.OVERVIEW}${
-          params?.salesExecCode ? `?${queryParams}` : ""
-        }`,
-        {
-          method: "GET",
-          headers: getHeaders(),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || `HTTP error! status: ${response.status}`
-        );
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DASHBOARD.OVERVIEW}${
+        params?.salesExecCode ? `?${queryParams}` : ""
+      }`,
+      {
+        method: "GET",
+        headers: getHeaders(),
       }
+    );
 
-      return data;
-    } catch (error: any) {
-      console.error("Dashboard API Error:", error);
-      throw error;
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || `HTTP error! status: ${response.status}`
+      );
     }
+
+    return data;
   },
 };
 
@@ -263,62 +253,57 @@ export const clientAPI = {
 
   // Import client data
   import: async (file: File) => {
-    try {
-      // Validate file
-      if (!file) {
-        throw new Error("No file provided");
-      }
-
-      if (file.size === 0) {
-        throw new Error("File is empty");
-      }
-
-      // Test file readability before upload
-      await new Promise<ArrayBuffer>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const result = e.target?.result as ArrayBuffer;
-          if (result && result.byteLength > 0) {
-            resolve(result);
-          } else {
-            reject(new Error("File is empty or unreadable"));
-          }
-        };
-        reader.onerror = () => reject(new Error("Failed to read file"));
-        reader.readAsArrayBuffer(file);
-      });
-
-      // Create FormData with the validated file
-      const formData = new FormData();
-      formData.append("file", file, file.name);
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.IMPORT}`;
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: getUploadHeaders(),
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || result.success === false) {
-        let errorMessage = result.message || result.error || `HTTP error! status: ${response.status}`;
-        
-        if (typeof errorMessage === 'object') {
-          errorMessage = errorMessage.message || JSON.stringify(errorMessage);
-        }
-
-        if (result.data?.rowNo) errorMessage = `Row ${result.data.rowNo}: ${errorMessage}`;
-        else if (result.rowNo) errorMessage = `Row ${result.rowNo}: ${errorMessage}`;
-
-        throw new Error(errorMessage);
-      }
-
-      return result;
-    } catch (error: any) {
-      console.error("Client import - Error:", error);
-      throw error;
+    // Validate file
+    if (!file) {
+      throw new Error("No file provided");
     }
+
+    if (file.size === 0) {
+      throw new Error("File is empty");
+    }
+
+    // Test file readability before upload
+    await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as ArrayBuffer;
+        if (result && result.byteLength > 0) {
+          resolve(result);
+        } else {
+          reject(new Error("File is empty or unreadable"));
+        }
+      };
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsArrayBuffer(file);
+    });
+
+    // Create FormData with the validated file
+    const formData = new FormData();
+    formData.append("file", file, file.name);
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.IMPORT}`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: getUploadHeaders(),
+      body: formData,
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.success === false) {
+      let errorMessage = result.message || result.error || `HTTP error! status: ${response.status}`;
+      
+      if (typeof errorMessage === 'object') {
+        errorMessage = errorMessage.message || JSON.stringify(errorMessage);
+      }
+
+      if (result.data?.rowNo) errorMessage = `Row ${result.data.rowNo}: ${errorMessage}`;
+      else if (result.rowNo) errorMessage = `Row ${result.rowNo}: ${errorMessage}`;
+
+      throw new Error(errorMessage);
+    }
+
+    return result;
   },
 };
 

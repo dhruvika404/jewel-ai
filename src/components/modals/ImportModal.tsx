@@ -27,6 +27,7 @@ interface ImportModalProps {
   onImport: (file: File) => Promise<any>;
   isUploading: boolean;
   onClose: () => void;
+  templateUrl?: string;
 }
 
 export function ImportModal({
@@ -37,6 +38,7 @@ export function ImportModal({
   onImport,
   isUploading,
   onClose,
+  templateUrl,
 }: ImportModalProps) {
   const [fileFormat, setFileFormat] = useState("excel");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -115,6 +117,19 @@ export function ImportModal({
                   : "or drag and drop here"}
               </p>
             </div>
+
+            {templateUrl && (
+              <div className="flex justify-center">
+                <a
+                  href={templateUrl}
+                  download
+                  className="text-sm text-primary hover:underline flex items-center gap-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  Download Template
+                </a>
+              </div>
+            )}
           </div>
           <DialogFooter className="mt-6">
             <Button

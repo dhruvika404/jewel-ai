@@ -1,17 +1,8 @@
 import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import TablePagination from "@/components/ui/table-pagination";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { toast } from "sonner";
 import {
   newOrderAPI,
@@ -27,6 +18,7 @@ import { formatDisplayDate } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Combobox } from "@/components/ui/combobox";
 import { format } from "date-fns";
+import { StandardTable, Column } from "@/components/shared/StandardTable";
 
 type ReportType = "todays-taken" | "pending" | "overdue";
 
@@ -94,9 +86,9 @@ export default function Reports() {
         if (clientRes.success !== false) {
           setClients(clientRes.data?.data || clientRes.data || []);
         }
-      } catch (error) {
-        console.error("Error loading filters:", error);
-      }
+    } catch {
+      // Silent catch
+    }
     };
     loadFilters();
   }, []);
@@ -262,8 +254,8 @@ export default function Reports() {
       processApiResponse(pendingMaterialRes, "Pending Material");
 
       setFollowUps(allFollowUps);
-    } catch (error: any) {
-      console.error("Error loading report data:", error);
+    } catch {
+      // Silent catch
     } finally {
       setLoading(false);
     }
@@ -412,11 +404,117 @@ export default function Reports() {
     }
   };
 
+  const columns: Column<FollowUpRecord>[] = [
+    {
+      header: "Client Details",
+      className: "w-[200px]",
+      render: (fu) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
+            {fu.clientName?.charAt(0) || fu.clientCode?.charAt(0) || "C"}
+          </div>
+          <div>
+            <div className="font-medium text-gray-900">{fu.clientName}</div>
+            <div className="text-xs text-gray-500">{fu.clientCode}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Sales Person",
+      className: "w-[150px]",
+      render: (fu) => (
+        fu.salesExecCode ? (
+          <div>
+            <div className="font-medium text-gray-900">{fu.salesExecName || "Unknown"}</div>
+            <div className="text-xs text-gray-500">{fu.salesExecCode}</div>
+          </div>
+        ) : (
+          <span className="text-gray-400">-</span>
+        )
+      ),
+    },
+    {
+      header: "Type",
+      className: "w-[120px]",
+      render: (fu) => (
+        <Badge
+          variant="outline"
+          className={`text-xs font-medium ${
+            fu.type === "New Order"
+              ? "bg-blue-50 text-blue-700 border-blue-200"
+              : fu.type === "Pending Order"
+              ? "bg-orange-50 text-orange-700 border-orange-200"
+              : "bg-purple-50 text-purple-700 border-purple-200"
+          }`}
+        >
+          {fu.type}
+        </Badge>
+      ),
+    },
+    {
+      header: "Follow-up Message",
+      className: "w-[250px]",
+      render: (fu) => (
+        <div
+          className="text-sm text-gray-700 line-clamp-2 leading-relaxed"
+          title={fu.followUpMsg}
+        >
+          {fu.followUpMsg || <span className="text-gray-400 italic">No message</span>}
+        </div>
+      ),
+    },
+    {
+      header: "Next Follow-up",
+      className: "w-[130px]",
+      render: (fu) => <div className="text-sm font-medium text-gray-900">{formatDisplayDate(fu.nextFollowUpDate)}</div>,
+    },
+    {
+      header: "Last Follow-up",
+      className: "w-[130px]",
+      render: (fu) => (
+        fu.lastFollowUpDate ? (
+          <div className="text-sm text-gray-900">{formatDisplayDate(fu.lastFollowUpDate)}</div>
+        ) : (
+          <span className="text-gray-400 text-sm">-</span>
+        )
+      ),
+    },
+    {
+      header: "Status",
+      className: "w-[100px]",
+      render: (fu) => (
+        <Badge
+          variant="outline"
+          className={`text-xs font-medium ${
+            fu.followUpStatus?.toLowerCase() === "completed"
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+              : fu.followUpStatus?.toLowerCase() === "pending"
+              ? "bg-amber-50 text-amber-700 border-amber-200"
+              : "bg-gray-50 text-gray-700 border-gray-200"
+          }`}
+        >
+          {fu.followUpStatus || "Unknown"}
+        </Badge>
+      ),
+    },
+  ];
+
   return (
     <div className="bg-gray-50 pb-6">
       <div className="p-6 space-y-6">
-        <Card className="overflow-hidden">
-          <CardHeader className="bg-gray-50 border-b py-4 px-6">
+        <StandardTable
+          columns={columns}
+          data={paginatedFollowUps}
+          loading={loading}
+          totalItems={filteredFollowUps.length}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
+          rowKey={(fu) => fu.id}
+          headerChildren={
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <CardTitle className="text-lg font-semibold text-gray-900">
@@ -424,163 +522,10 @@ export default function Reports() {
                 </CardTitle>
               </div>
             </div>
-          </CardHeader>
-
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-medium text-gray-700 w-[200px]">
-                    Client Details
-                  </TableHead>
-                  <TableHead className="font-medium text-gray-700 w-[150px]">
-                    Sales Person
-                  </TableHead>
-                  <TableHead className="font-medium text-gray-700 w-[120px]">
-                    Type
-                  </TableHead>
-                  <TableHead className="font-medium text-gray-700 w-[250px]">
-                    Follow-up Message
-                  </TableHead>
-                  <TableHead className="font-medium text-gray-700 w-[130px]">
-                    Next Follow-up
-                  </TableHead>
-                  <TableHead className="font-medium text-gray-700 w-[130px]">
-                    Last Follow-up
-                  </TableHead>
-                  <TableHead className="font-medium text-gray-700 w-[100px]">
-                    Status
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-                    </TableCell>
-                  </TableRow>
-                ) : paginatedFollowUps.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      className="text-center py-8 text-muted-foreground"
-                    >
-                      No records found for the selected criteria
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  paginatedFollowUps.map((fu) => (
-                    <TableRow key={fu.id} className="hover:bg-gray-50">
-                      <TableCell className="align-center">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
-                            {fu.clientName?.charAt(0) ||
-                              fu.clientCode?.charAt(0) ||
-                              "C"}
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-900">
-                              {fu.clientName}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {fu.clientCode}
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="align-center">
-                        {fu.salesExecCode ? (
-                          <div>
-                            <div className="font-medium text-gray-900">
-                              {fu.salesExecName || "Unknown"}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {fu.salesExecCode}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="align-center">
-                        <Badge
-                          variant="outline"
-                          className={`text-xs font-medium ${
-                            fu.type === "New Order"
-                              ? "bg-blue-50 text-blue-700 border-blue-200"
-                              : fu.type === "Pending Order"
-                              ? "bg-orange-50 text-orange-700 border-orange-200"
-                              : "bg-purple-50 text-purple-700 border-purple-200"
-                          }`}
-                        >
-                          {fu.type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="align-center">
-                        <div
-                          className="text-sm text-gray-700 line-clamp-2 leading-relaxed"
-                          title={fu.followUpMsg}
-                        >
-                          {fu.followUpMsg || (
-                            <span className="text-gray-400 italic">
-                              No message
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="align-center">
-                        <div className="text-sm font-medium text-gray-900">
-                          {formatDisplayDate(fu.nextFollowUpDate)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="align-center">
-                        {fu.lastFollowUpDate ? (
-                          <div className="text-sm text-gray-900">
-                            {formatDisplayDate(fu.lastFollowUpDate)}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-sm">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="align-center">
-                        <Badge
-                          variant="outline"
-                          className={`text-xs font-medium ${
-                            fu.followUpStatus?.toLowerCase() === "completed"
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : fu.followUpStatus?.toLowerCase() === "pending"
-                              ? "bg-amber-50 text-amber-700 border-amber-200"
-                              : "bg-gray-50 text-gray-700 border-gray-200"
-                          }`}
-                        >
-                          {fu.followUpStatus || "Unknown"}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div className="p-4 border-t bg-white flex justify-between items-center">
-            <div className="text-sm text-gray-600">
-              Total Records:{" "}
-              <span className="font-semibold text-gray-900">
-                {filteredFollowUps.length}
-              </span>
-            </div>
-            <TablePagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              pageSize={pageSize}
-              setPageSize={setPageSize}
-            />
-          </div>
-        </Card>
+          }
+        />
       </div>
     </div>
   );
 }
+

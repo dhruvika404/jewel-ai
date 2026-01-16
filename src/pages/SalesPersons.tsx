@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,29 +10,22 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import TablePagination from "@/components/ui/table-pagination";
-import {
-  Upload,
-  Loader2,
-  Plus,
   Users,
   Phone,
   Mail,
   Pencil,
   KeyRoundIcon,
+  Upload,
+  Plus,
+  Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { salesPersonAPI, authAPI } from "@/services/api";
 import { Label } from "@/components/ui/label";
 import { ImportModal } from "@/components/modals/ImportModal";
+import { usePageHeader } from "@/contexts/PageHeaderProvider";
+import { StandardTable, Column } from "@/components/shared/StandardTable";
 
 interface SalesPerson {
   uuid: string;
@@ -47,8 +39,6 @@ interface SalesPerson {
   createdAt?: string;
   updatedAt?: string;
 }
-
-import { usePageHeader } from "@/contexts/PageHeaderProvider";
 
 export default function SalesPersons() {
   const { setHeader } = usePageHeader();
@@ -105,7 +95,6 @@ export default function SalesPersons() {
 
   const loadData = async () => {
     setLoading(true);
-    let currentTotalItems = 0;
     try {
       const response = await salesPersonAPI.getAll({
         page: currentPage,
@@ -116,8 +105,7 @@ export default function SalesPersons() {
 
       if (response.success) {
         setSalesPersons(response.data.data || []);
-        currentTotalItems = response.data.totalItems || 0;
-        setTotalItems(currentTotalItems);
+        setTotalItems(response.data.totalItems || 0);
       }
     } catch (error: any) {
       toast.error("Error loading data: " + error.message);
@@ -264,161 +252,118 @@ export default function SalesPersons() {
 
   const totalPages = Math.ceil(totalItems / pageSize);
 
+  const columns: Column<SalesPerson>[] = [
+    {
+      header: "Name",
+      className: "w-[100px]",
+      render: (sp) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs shrink-0">
+            {sp.name?.charAt(0).toUpperCase() || "U"}
+          </div>
+          <div className="font-medium text-gray-900">{sp.name}</div>
+        </div>
+      ),
+    },
+    {
+      header: "Code",
+      className: "w-[100px]",
+      render: (sp) => <span className="font-medium text-gray-900">{sp.userCode}</span>,
+    },
+    {
+      header: "Contact",
+      className: "w-[200px]",
+      render: (sp) => (
+        <div className="flex flex-col gap-1">
+          {sp.email && (
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Mail className="w-3 h-3 text-gray-400" />
+              <span className="truncate max-w-[180px]" title={sp.email}>
+                {sp.email}
+              </span>
+            </div>
+          )}
+          {sp.phone && (
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Phone className="w-3 h-3 text-gray-400" />
+              {sp.phone}
+            </div>
+          )}
+          {!sp.email && !sp.phone && <span className="text-gray-400 text-sm">-</span>}
+        </div>
+      ),
+    },
+    {
+      header: "Status",
+      className: "w-[120px]",
+      render: (sp) => (
+        <Badge
+          variant={sp.isActive ? "default" : "secondary"}
+          className={
+            sp.isActive
+              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200"
+              : "bg-gray-100 text-gray-700"
+          }
+        >
+          {sp.isActive ? "Active" : "Inactive"}
+        </Badge>
+      ),
+    },
+    {
+      header: "Actions",
+      className: "w-[120px]",
+      render: (sp) => (
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+            title="Edit Details"
+            onClick={() => handleOpenEdit(sp)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+            title="Set Password"
+            onClick={() => {
+              setSelectedSalesPerson(sp);
+              setShowPasswordDialog(true);
+            }}
+          >
+            <KeyRoundIcon className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="bg-gray-50 pb-6">
       <div className="p-6 space-y-6">
-        <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-medium text-gray-700 w-[100px]">
-                    Name
-                  </TableHead>
-                  <TableHead className="font-medium text-gray-700 w-[100px]">
-                    Code
-                  </TableHead>
-                  <TableHead className="font-medium text-gray-700 w-[200px]">
-                    Contact
-                  </TableHead>
-                  <TableHead className="font-medium text-gray-700 w-[120px]">
-                    Status
-                  </TableHead>
-                  <TableHead className="font-medium text-gray-700 text-center w-[120px]">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-12">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-                    </TableCell>
-                  </TableRow>
-                ) : salesPersons.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="text-center py-24 text-gray-500"
-                    >
-                      <Users className="h-12 w-12 text-gray-200 mb-4 mx-auto" />
-                      <h3 className="text-lg font-medium text-gray-900">
-                        No sales persons found
-                      </h3>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  salesPersons.map((sp) => (
-                    <TableRow key={sp.uuid} className="hover:bg-gray-50">
-                      <TableCell className="align-center">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs shrink-0">
-                            {sp.name?.charAt(0).toUpperCase() || "U"}
-                          </div>
-                          <div className="font-medium text-gray-900">
-                            {sp.name}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium text-gray-900 align-center">
-                        {sp.userCode}
-                      </TableCell>
-                      <TableCell className="align-center">
-                        <div className="flex flex-col gap-1">
-                          {sp.email && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <Mail className="w-3 h-3 text-gray-400" />
-                              <span
-                                className="truncate max-w-[180px]"
-                                title={sp.email}
-                              >
-                                {sp.email}
-                              </span>
-                            </div>
-                          )}
-                          {sp.phone && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <Phone className="w-3 h-3 text-gray-400" />
-                              {sp.phone}
-                            </div>
-                          )}
-                          {!sp.email && !sp.phone && (
-                            <span className="text-gray-400 text-sm">-</span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="align-center">
-                        <Badge
-                          variant={sp.isActive ? "default" : "secondary"}
-                          className={
-                            sp.isActive
-                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200"
-                              : "bg-gray-100 text-gray-700"
-                          }
-                        >
-                          {sp.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="align-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                            title="Edit Details"
-                            onClick={() => handleOpenEdit(sp)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                            title="Set Password"
-                            onClick={() => {
-                              setSelectedSalesPerson(sp);
-                              setShowPasswordDialog(true);
-                            }}
-                          >
-                            <KeyRoundIcon className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {totalItems > 0 && (
-            <div className="p-4 border-t bg-white flex justify-between items-center">
-              <div className="text-sm text-gray-600">
-                Total :{" "}
-                <span className="font-semibold text-gray-900">
-                  {loading ? "..." : totalItems}
-                </span>
-              </div>
-              <TablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-                pageSize={pageSize}
-                setPageSize={setPageSize}
-              />
-            </div>
-          )}
-        </Card>
+        <StandardTable
+          columns={columns}
+          data={salesPersons}
+          loading={loading}
+          totalItems={totalItems}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
+          rowKey={(sp) => sp.uuid}
+          emptyIcon={<Users className="h-12 w-12 text-gray-200 mb-4 mx-auto" />}
+          emptyMessage="No sales persons found"
+        />
       </div>
 
       <Dialog open={showFormDialog} onOpenChange={setShowFormDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {selectedSalesPerson
-                ? "Edit Sales Person"
-                : "Add New Sales Person"}
+              {selectedSalesPerson ? "Edit Sales Person" : "Add New Sales Person"}
             </DialogTitle>
             <DialogDescription>
               {selectedSalesPerson
@@ -434,9 +379,7 @@ export default function SalesPersons() {
                   id="userCode"
                   placeholder="e.g. SE001"
                   value={formData.userCode}
-                  onChange={(e) =>
-                    setFormData({ ...formData, userCode: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, userCode: e.target.value })}
                   disabled={!!selectedSalesPerson}
                   autoComplete="off"
                 />
@@ -447,9 +390,7 @@ export default function SalesPersons() {
                   id="phone"
                   placeholder="Contact number"
                   value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   autoComplete="off"
                 />
               </div>
@@ -461,9 +402,7 @@ export default function SalesPersons() {
                 id="name"
                 placeholder="Staff name"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 autoComplete="off"
               />
             </div>
@@ -475,9 +414,7 @@ export default function SalesPersons() {
                 type="email"
                 placeholder="email@example.com"
                 value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 autoComplete="off"
               />
             </div>
@@ -491,9 +428,7 @@ export default function SalesPersons() {
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {selectedSalesPerson ? "Save Changes" : "Create Account"}
               </Button>
             </DialogFooter>
@@ -567,3 +502,4 @@ export default function SalesPersons() {
     </div>
   );
 }
+

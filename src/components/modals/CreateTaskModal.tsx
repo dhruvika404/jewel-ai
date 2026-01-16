@@ -62,7 +62,6 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
         setSalesPersons(salesRes?.data?.data)
       }
     } catch (error) {
-      console.error('Error loading data:', error)
     }
   }
 
