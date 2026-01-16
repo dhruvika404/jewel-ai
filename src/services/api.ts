@@ -64,10 +64,16 @@ export const authAPI = {
 // Dashboard APIs
 export const dashboardAPI = {
   // Get dashboard overview counts
-  getOverview: async () => {
+  getOverview: async (params?: { salesExecCode?: string }) => {
     try {
+      const queryParams = new URLSearchParams();
+      if (params?.salesExecCode)
+        queryParams.append("salesExecCode", params.salesExecCode);
+
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DASHBOARD.OVERVIEW}`,
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DASHBOARD.OVERVIEW}${
+          params?.salesExecCode ? `?${queryParams}` : ""
+        }`,
         {
           method: "GET",
           headers: getHeaders(),
@@ -418,6 +424,7 @@ export const pendingOrderAPI = {
     clientCode?: string;
     status?: string;
     sortBy?: string;
+    salesExecCode?: string;
   }) => {
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append("page", params.page.toString());
@@ -425,6 +432,8 @@ export const pendingOrderAPI = {
     if (params.clientCode) queryParams.append("clientCode", params.clientCode);
     if (params.status) queryParams.append("status", params.status);
     if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+    if (params.salesExecCode)
+      queryParams.append("salesExecCode", params.salesExecCode);
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.FOLLOW_UP}?${queryParams}`,
@@ -526,6 +535,7 @@ export const pendingMaterialAPI = {
     styleNo: string;
     orderNo: string;
     expectedDeliveryDate: string;
+    orderDate?: string;
     departmentName: string;
     totalNetWt: string;
     nextFollowUpDate?: string;
@@ -552,6 +562,7 @@ export const pendingMaterialAPI = {
       styleNo?: string;
       orderNo?: string;
       expectedDeliveryDate?: string;
+      orderDate?: string;
       departmentName?: string;
       totalNetWt?: string;
       nextFollowUpDate?: string;
@@ -577,6 +588,7 @@ export const pendingMaterialAPI = {
     clientCode?: string;
     status?: string;
     sortBy?: string;
+    salesExecCode?: string;
   }) => {
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append("page", params.page.toString());
@@ -584,6 +596,8 @@ export const pendingMaterialAPI = {
     if (params.clientCode) queryParams.append("clientCode", params.clientCode);
     if (params.status) queryParams.append("status", params.status);
     if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+    if (params.salesExecCode)
+      queryParams.append("salesExecCode", params.salesExecCode);
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.FOLLOW_UP}?${queryParams}`,
@@ -742,6 +756,7 @@ export const newOrderAPI = {
     clientCode?: string;
     status?: string;
     sortBy?: string;
+    salesExecCode?: string;
   }) => {
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append("page", params.page.toString());
@@ -749,6 +764,8 @@ export const newOrderAPI = {
     if (params.clientCode) queryParams.append("clientCode", params.clientCode);
     if (params.status) queryParams.append("status", params.status);
     if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+    if (params.salesExecCode)
+      queryParams.append("salesExecCode", params.salesExecCode);
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.FOLLOW_UP}?${queryParams}`,

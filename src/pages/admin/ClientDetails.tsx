@@ -121,18 +121,17 @@ export default function ClientDetails() {
           clientData?.salesExecCode !== user.userCode
         ) {
           toast.error("You do not have access to this client");
-          navigate("/sales");
+          setClient(null);
           return;
         }
 
         setClient(clientData);
       } else if (!client) {
-        toast.error("Failed to load client details");
-        navigate(user?.role === "admin" ? "/admin/clients" : "/sales");
+        setClient(null);
       }
     } catch (error: any) {
       if (!client) {
-        toast.error("Error loading client: " + error.message);
+        setClient(null);
       }
     } finally {
       setLoading(false);
@@ -345,7 +344,7 @@ export default function ClientDetails() {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            {items.length === 0 && (
+            {items.length === 0 && user?.role !== "sales_executive" && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -403,26 +402,28 @@ export default function ClientDetails() {
                     key={idx}
                     className="bg-gray-50 rounded border border-gray-200 p-3 relative group"
                   >
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-3 right-3 h-5 w-5 transition-opacity text-primary"
-                      onClick={() => {
-                        if (type === "pending-material") {
-                          setEditingPM(item);
-                          setShowPMModal(true);
-                        } else if (type === "pending-order") {
-                          setEditingPO(item);
-                          setShowPOModal(true);
-                        } else {
-                          setEditingNO(item);
-                          setShowNOModal(true);
-                        }
-                      }}
-                      title="Edit"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
+                    {user?.role !== "sales_executive" && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-3 right-3 h-5 w-5 transition-opacity text-primary"
+                        onClick={() => {
+                          if (type === "pending-material") {
+                            setEditingPM(item);
+                            setShowPMModal(true);
+                          } else if (type === "pending-order") {
+                            setEditingPO(item);
+                            setShowPOModal(true);
+                          } else {
+                            setEditingNO(item);
+                            setShowNOModal(true);
+                          }
+                        }}
+                        title="Edit"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                     <div className="flex justify-between items-start mb-3 pr-8">
                       <div className="flex min-w-0 items-center gap-2 ">
                         <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">

@@ -124,25 +124,29 @@ export default function Clients() {
               width="w-[180px]"
             />
           )}
-          <Button
-            variant="outline"
-            onClick={() => setShowUploadDialog(true)}
-            className="flex items-center gap-2"
-          >
-            <Upload className="w-4 h-4" />
-            Import
-          </Button>
-          <Button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Client
-          </Button>
+          {user?.role !== "sales_executive" && (
+            <Button
+              variant="outline"
+              onClick={() => setShowUploadDialog(true)}
+              className="flex items-center gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              Import
+            </Button>
+          )}
+          {user?.role !== "sales_executive" && (
+            <Button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Client
+            </Button>
+          )}
         </>
       ),
     });
-  }, [searchQuery, dateRange, selectedSalesPerson, salesPersons]);
+  }, [searchQuery, dateRange, selectedSalesPerson, salesPersons, user]);
 
   useEffect(() => {
     const fetchSalesPersons = async () => {
@@ -405,7 +409,7 @@ export default function Clients() {
                       <TableCell className="align-center text-center">
                         <div className="flex items-center justify-center gap-2">
                           <Link
-                            to={`/admin/clients/${client.uuid}`}
+                            to={`${user?.role === "admin" ? "/admin" : "/sales"}/clients/${client.uuid}`}
                             state={{ client }}
                           >
                             <Button
@@ -417,18 +421,20 @@ export default function Clients() {
                               <Eye className="h-4 w-4" />
                             </Button>
                           </Link>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                            title="Edit Client"
-                            onClick={() => {
-                              setEditingClient(client);
-                              setShowEditModal(true);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
+                          {user?.role !== "sales_executive" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                              title="Edit Client"
+                              onClick={() => {
+                                setEditingClient(client);
+                                setShowEditModal(true);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

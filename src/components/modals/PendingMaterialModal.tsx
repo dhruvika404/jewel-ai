@@ -23,6 +23,7 @@ import {
 import { Combobox } from "@/components/ui/combobox";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateForInput } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PendingMaterialModalProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export function PendingMaterialModal({
   clientCode,
   material,
 }: PendingMaterialModalProps) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [salesPersons, setSalesPersons] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -47,6 +49,7 @@ export function PendingMaterialModal({
     styleNo: "",
     orderNo: "",
     expectedDeliveryDate: "",
+    orderDate: "",
     departmentName: "",
     totalNetWt: "",
     nextFollowUpDate: "",
@@ -57,20 +60,22 @@ export function PendingMaterialModal({
   useEffect(() => {
     const loadSalesPersons = async () => {
       try {
-        const response = await salesPersonAPI.getAll({
-          page: 1,
-          size: 1000,
-          role: "sales_executive",
-        });
-        if (response.success && response.data?.data) {
-          setSalesPersons(response.data.data);
+        if (user?.role !== "sales_executive") {
+          const response = await salesPersonAPI.getAll({
+            page: 1,
+            size: 1000,
+            role: "sales_executive",
+          });
+          if (response.success && response.data?.data) {
+            setSalesPersons(response.data.data);
+          }
         }
       } catch (error) {
         console.error("Error loading sales persons:", error);
       }
     };
     loadSalesPersons();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (material) {
@@ -80,6 +85,7 @@ export function PendingMaterialModal({
         styleNo: material.styleNo || "",
         orderNo: material.orderNo || "",
         expectedDeliveryDate: formatDateForInput(material.expectedDeliveryDate),
+        orderDate: formatDateForInput(material.orderDate),
         departmentName: material.departmentName || "",
         totalNetWt: material.totalNetWt || "",
         nextFollowUpDate: formatDateForInput(material.nextFollowUpDate),
@@ -93,6 +99,7 @@ export function PendingMaterialModal({
         styleNo: "",
         orderNo: "",
         expectedDeliveryDate: "",
+        orderDate: "",
         departmentName: "",
         totalNetWt: "",
         nextFollowUpDate: "",
@@ -109,6 +116,7 @@ export function PendingMaterialModal({
       styleNo: "",
       orderNo: "",
       expectedDeliveryDate: "",
+      orderDate: "",
       departmentName: "",
       totalNetWt: "",
       nextFollowUpDate: "",
@@ -125,7 +133,7 @@ export function PendingMaterialModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.salesExecCode || !formData.styleNo || !formData.orderNo) {
+    if (!formData.salesExecCode || !formData.styleNo || !formData.orderNo || !formData.orderDate) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -190,6 +198,7 @@ export function PendingMaterialModal({
                 }
                 placeholder="Select sales executive"
                 searchPlaceholder="Search sales executive..."
+                width="w-full"
               />
             </div>
             <div className="space-y-2">
@@ -219,6 +228,17 @@ export function PendingMaterialModal({
                   setFormData({ ...formData, orderNo: e.target.value })
                 }
                 placeholder="e.g. ORD-1001"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="orderDate">Order Date *</Label>
+              <Input
+                id="orderDate"
+                type="date"
+                value={formData.orderDate}
+                onChange={(e) =>
+                  setFormData({ ...formData, orderDate: e.target.value })
+                }
               />
             </div>
           </div>

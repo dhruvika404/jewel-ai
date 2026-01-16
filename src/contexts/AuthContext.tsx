@@ -8,7 +8,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { authAPI } from "@/services/api";
 
-export type UserRole = "admin" | "sales" | "sales_executive" | "client";
+export type UserRole = "admin" | "sales_executive";
 
 interface User {
   id: string;

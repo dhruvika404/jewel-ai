@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import { CreateTaskModal } from "@/components/modals/CreateTaskModal";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SystemStats {
   todaysTotalPendingFollowUps: number;
@@ -42,6 +43,7 @@ interface SystemStats {
 
 export default function AdminHome() {
   const { setHeader } = usePageHeader();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
@@ -68,7 +70,7 @@ export default function AdminHome() {
   useEffect(() => {
     setHeader({
       title: "Dashboard",
-      children: (
+      children: user?.role !== "sales_executive" && (
         <Button
           onClick={() => setShowCreateTaskModal(true)}
           className="flex items-center gap-2"
@@ -78,21 +80,32 @@ export default function AdminHome() {
         </Button>
       ),
     });
-  }, []);
+  }, [user]);
 
   const loadData = async () => {
     setLoading(true);
     try {
+      const statsParams: any = {};
+      if (user?.role === "sales_executive") {
+        statsParams.salesExecCode = user.userCode;
+      }
+
       const [statsRes] = await Promise.all([
-        dashboardAPI.getOverview(),
-        newOrderAPI.getFollowUpsByClientCode({ page: 1, size: 500 }),
+        dashboardAPI.getOverview(statsParams),
+        newOrderAPI.getFollowUpsByClientCode({
+          page: 1,
+          size: 500,
+          ...(user?.userCode && { salesExecCode: user.userCode }),
+        }),
         pendingOrderAPI.getFollowUpsByClientCode({
           page: 1,
           size: 500,
+          ...(user?.userCode && { salesExecCode: user.userCode }),
         }),
         pendingMaterialAPI.getFollowUpsByClientCode({
           page: 1,
           size: 500,
+          ...(user?.userCode && { salesExecCode: user.userCode }),
         }),
       ]);
 
@@ -128,7 +141,7 @@ export default function AdminHome() {
       const sevenDaysAgo = format(subDays(new Date(), 7), "yyyy-MM-dd");
       params = `?startDate=${sevenDaysAgo}&endDate=${today}&sevenDayPendingFollowUp=true`;
     }
-    navigate(`/admin/followups/${endpoint}${params}`);
+    navigate(`${user?.role === "admin" ? "/admin" : "/sales"}/followups/${endpoint}${params}`);
   };
 
   useEffect(() => {

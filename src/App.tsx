@@ -25,7 +25,7 @@ function App() {
             <Route
               path="/sales/*"
               element={
-                <ProtectedRoute role="sales">
+                <ProtectedRoute role="sales_executive">
                   <SalesDashboard />
                 </ProtectedRoute>
               }

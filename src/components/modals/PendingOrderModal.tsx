@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Combobox } from "@/components/ui/combobox";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateForInput } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PendingOrderModalProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export function PendingOrderModal({
   clientCode,
   order,
 }: PendingOrderModalProps) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [salesPersons, setSalesPersons] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -50,20 +52,22 @@ export function PendingOrderModal({
   useEffect(() => {
     const loadSalesPersons = async () => {
       try {
-        const response = await salesPersonAPI.getAll({
-          page: 1,
-          size: 1000,
-          role: "sales_executive",
-        });
-        if (response.success && response.data?.data) {
-          setSalesPersons(response.data.data);
+        if (user?.role !== "sales_executive") {
+          const response = await salesPersonAPI.getAll({
+            page: 1,
+            size: 1000,
+            role: "sales_executive",
+          });
+          if (response.success && response.data?.data) {
+            setSalesPersons(response.data.data);
+          }
         }
       } catch (error) {
         console.error("Error loading sales persons:", error);
       }
     };
     loadSalesPersons();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (order) {
@@ -205,6 +209,7 @@ export function PendingOrderModal({
                 }
                 placeholder="Select sales executive"
                 searchPlaceholder="Search sales executive..."
+                width="w-full"
               />
             </div>
             <div className="space-y-2">

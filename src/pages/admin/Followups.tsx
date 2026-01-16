@@ -4,6 +4,7 @@ import {
   Navigate,
   useSearchParams,
   useNavigate,
+  Link,
 } from "react-router-dom";
 import { format } from "date-fns";
 import { Card } from "@/components/ui/card";
@@ -26,6 +27,7 @@ import {
 import TablePagination from "@/components/ui/table-pagination";
 import { Badge } from "@/components/ui/badge";
 import { FollowUpModal } from "@/components/modals/FollowUpModal";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Download,
   Loader2,
@@ -139,11 +141,12 @@ interface Client {
 }
 
 export default function Followups() {
-  const { type } = useParams<{ type: FollowupType }>();
+  const { followupType: paramFollowupType } = useParams<{ followupType: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { setHeader } = usePageHeader();
-  const followupType = (type as FollowupType) || "new-order";
+  const { user } = useAuth();
+  const followupType = (paramFollowupType as FollowupType) || "new-order";
   const [salesPersonFilter, setSalesPersonFilter] = useState("all");
   const [clientFilter, setClientFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState(
@@ -192,24 +195,27 @@ export default function Followups() {
     "cad-order",
   ];
   if (!validTypes.includes(followupType)) {
-    return <Navigate to="/admin/followups/new-order" replace />;
+    return <Navigate to={`${user?.role === "admin" ? "/admin" : "/sales"}/followups/new-order`} replace />;
   }
 
   useEffect(() => {
     const loadFilters = async () => {
       try {
-        const [spRes, clientRes] = await Promise.all([
-          salesPersonAPI.getAll({
+        let spData = [];
+        if (user?.role !== "sales_executive") {
+          const spRes = await salesPersonAPI.getAll({
             page: 1,
             size: 1000,
             role: "sales_executive",
-          }),
-          clientAPI.getAll({ page: 1, size: 1000, role: "client" }),
-        ]);
-
-        if (spRes.success && spRes.data?.data) {
-          setSalesPersons(spRes.data.data);
+          });
+          if (spRes.success && spRes.data?.data) {
+            spData = spRes.data.data;
+          }
         }
+
+        const clientRes = await clientAPI.getAll({ page: 1, size: 1000, role: "client" });
+
+        setSalesPersons(spData);
 
         if (clientRes.success !== false) {
           setClients(clientRes.data?.data || clientRes.data || []);
@@ -351,6 +357,14 @@ export default function Followups() {
         size: pageSize,
       };
 
+      // Assuming `user` is available from a context (e.g., useAuth)
+      // and `salesPersonFilter` is the state for selected sales person.
+      if (user?.role === "sales_executive") {
+        params.salesExecCode = user.userCode;
+      } else if (salesPersonFilter !== "all") {
+        params.salesExecCode = salesPersonFilter;
+      }
+
       if (activeDateRange?.from && !skipAllFilters) {
         params.startDate = format(activeDateRange.from, "yyyy-MM-dd");
         if (activeDateRange.to) {
@@ -463,7 +477,7 @@ export default function Followups() {
     setStatusFilter("all");
     setSortBy(null);
     setSortOrder(null);
-    navigate(`/admin/followups/${followupType}`, { replace: true });
+    navigate(`${user?.role === "admin" ? "/admin" : "/sales"}/followups/${followupType}`, { replace: true });
     loadFollowupData({ overrideDateRange: null, skipAllFilters: true });
   };
 
@@ -677,14 +691,16 @@ export default function Followups() {
       },
       children: (
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowUploadDialog(true)}
-            className="flex items-center gap-2"
-          >
-            <Upload className="w-4 h-4" />
-            Import
-          </Button>
+                {user?.role !== "sales_executive" && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowUploadDialog(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Import
+                  </Button>
+                )}
           <Button
             variant="outline"
             onClick={handleExport}
@@ -783,22 +799,22 @@ export default function Followups() {
     <div className="bg-gray-50">
       <div className="p-6 space-y-6">
         <div className="flex items-center gap-3 overflow-x-auto p-1">
-          <Select
-            value={salesPersonFilter}
-            onValueChange={setSalesPersonFilter}
-          >
-            <SelectTrigger className="h-9 bg-white w-[180px] flex-shrink-0">
-              <SelectValue placeholder="Sales Person" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Select Sales Person</SelectItem>
-              {salesPersons.map((sp) => (
-                <SelectItem key={sp.uuid} value={sp.userCode}>
-                  {sp.name} ({sp.userCode})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {user?.role !== "sales_executive" && (
+            <Select value={salesPersonFilter} onValueChange={setSalesPersonFilter}>
+              <SelectTrigger className="h-9 bg-white w-[180px] flex-shrink-0">
+                <SelectValue placeholder="Sales Person" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Select Sales Person</SelectItem>
+                {salesPersons.map((sp) => (
+                  <SelectItem key={sp.uuid} value={sp.userCode}>
+                    {sp.name} ({sp.userCode})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
           <Select value={clientFilter} onValueChange={setClientFilter}>
             <SelectTrigger className="h-9 bg-white w-[180px] flex-shrink-0">
               <SelectValue placeholder="Client" />
@@ -1178,14 +1194,16 @@ export default function Followups() {
                           </TableCell>
                           <TableCell className="align-center">
                             <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                                title="View Details"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
+                              <Link to={`${user?.role === "admin" ? "/admin" : "/sales"}/clients/${fu.originalData?.clientData?.uuid || fu.originalData?.clientId || fu.id}`}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                                  title="View Details"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </Link>
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -1278,14 +1296,16 @@ export default function Followups() {
                           </TableCell>
                           <TableCell className="align-center">
                             <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                                title="View Details"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
+                              <Link to={`${user?.role === "admin" ? "/admin" : "/sales"}/clients/${fu.originalData?.clientData?.uuid || fu.originalData?.clientId || fu.id}`}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                                  title="View Details"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </Link>
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -1384,14 +1404,16 @@ export default function Followups() {
                           </TableCell>
                           <TableCell className="align-center">
                             <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                                title="View Details"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
+                              <Link to={`${user?.role === "admin" ? "/admin" : "/sales"}/clients/${fu.originalData?.clientData?.uuid || fu.originalData?.clientId || fu.id}`}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                                  title="View Details"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </Link>
                               <Button
                                 variant="ghost"
                                 size="icon"

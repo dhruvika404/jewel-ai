@@ -24,6 +24,9 @@ import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import * as XLSX from "xlsx";
 import { DateRange } from "react-day-picker";
 import { formatDisplayDate } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { Combobox } from "@/components/ui/combobox";
+import { format } from "date-fns";
 
 type ReportType = "todays-taken" | "pending" | "overdue";
 
@@ -56,7 +59,8 @@ interface Client {
 
 export default function Reports() {
   const { setHeader } = usePageHeader();
-  const [reportType, setReportType] = useState<ReportType>("todays-taken");
+  const { user } = useAuth();
+  const [reportType] = useState<ReportType>("todays-taken");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [salesPersonFilter, setSalesPersonFilter] = useState("all");
   const [clientFilter, setClientFilter] = useState("all");
@@ -71,18 +75,21 @@ export default function Reports() {
   useEffect(() => {
     const loadFilters = async () => {
       try {
-        const [spRes, clientRes] = await Promise.all([
-          salesPersonAPI.getAll({
+        let spData = [];
+        if (user?.role !== "sales_executive") {
+          const spRes = await salesPersonAPI.getAll({
             page: 1,
             size: 1000,
             role: "sales_executive",
-          }),
-          clientAPI.getAll({ page: 1, size: 1000, role: "client" }),
-        ]);
-
-        if (spRes.success && spRes.data?.data) {
-          setSalesPersons(spRes.data.data);
+          });
+          if (spRes.success && spRes.data?.data) {
+            spData = spRes.data.data;
+          }
         }
+
+        const clientRes = await clientAPI.getAll({ page: 1, size: 1000, role: "client" });
+
+        setSalesPersons(spData);
 
         if (clientRes.success !== false) {
           setClients(clientRes.data?.data || clientRes.data || []);
@@ -100,27 +107,31 @@ export default function Reports() {
     return sp?.name || "";
   };
 
-  const loadReportData = async (options?: {
-    overrideDateRange?: DateRange | null;
-    skipAllFilters?: boolean;
-  }) => {
-    const activeDateRange =
-      options?.overrideDateRange !== undefined
-        ? options.overrideDateRange
-        : dateRange;
-    const skipAllFilters = options?.skipAllFilters || false;
+  const loadReportData = async () => {
     setLoading(true);
     try {
+      const params: any = {
+        startDate: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined,
+        endDate: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined,
+      };
+
+      if (user?.role === "sales_executive") {
+        params.salesExecCode = user.userCode;
+      } else if (salesPersonFilter && salesPersonFilter !== "all") {
+        params.salesExecCode = salesPersonFilter;
+      }
       const [newOrderRes, pendingOrderRes, pendingMaterialRes] =
         await Promise.all([
-          newOrderAPI.getFollowUpsByClientCode({ page: 1, size: 10 }),
+          newOrderAPI.getFollowUpsByClientCode({ page: 1, size: 10, ...params }),
           pendingOrderAPI.getFollowUpsByClientCode({
             page: 1,
             size: 10,
+            ...params,
           }),
           pendingMaterialAPI.getFollowUpsByClientCode({
             page: 1,
             size: 10,
+            ...params,
           }),
         ]);
 
@@ -159,11 +170,11 @@ export default function Reports() {
                   : null;
                 if (createdDate) {
                   createdDate.setHours(0, 0, 0, 0);
-                  if (activeDateRange?.from && !skipAllFilters) {
-                    const from = new Date(activeDateRange.from);
+                  if (dateRange?.from) {
+                    const from = new Date(dateRange.from);
                     from.setHours(0, 0, 0, 0);
-                    const to = activeDateRange.to
-                      ? new Date(activeDateRange.to)
+                    const to = dateRange.to
+                      ? new Date(dateRange.to)
                       : new Date(from);
                     to.setHours(23, 59, 59, 999);
 
@@ -171,18 +182,18 @@ export default function Reports() {
                       createdDate >= from &&
                       createdDate <= to &&
                       fu.followUpStatus?.toLowerCase() === "completed";
-                  } else if (!activeDateRange || skipAllFilters) {
+                  } else {
                     includeRecord =
                       createdDate.getTime() === today.getTime() &&
                       fu.followUpStatus?.toLowerCase() === "completed";
                   }
                 }
               } else if (reportType === "pending") {
-                if (activeDateRange?.from && !skipAllFilters) {
-                  const from = new Date(activeDateRange.from);
+                if (dateRange?.from) {
+                  const from = new Date(dateRange.from);
                   from.setHours(0, 0, 0, 0);
-                  const to = activeDateRange.to
-                    ? new Date(activeDateRange.to)
+                  const to = dateRange.to
+                    ? new Date(dateRange.to)
                     : new Date(from);
                   to.setHours(23, 59, 59, 999);
 
@@ -190,18 +201,18 @@ export default function Reports() {
                     fu.followUpStatus?.toLowerCase() !== "completed" &&
                     fuDate >= from &&
                     fuDate <= to;
-                } else if (!activeDateRange || skipAllFilters) {
+                } else {
                   // Default behavior: pending from today onwards
                   includeRecord =
                     fu.followUpStatus?.toLowerCase() !== "completed" &&
                     fuDate >= today;
                 }
               } else if (reportType === "overdue") {
-                if (activeDateRange?.from && !skipAllFilters) {
-                  const from = new Date(activeDateRange.from);
+                if (dateRange?.from) {
+                  const from = new Date(dateRange.from);
                   from.setHours(0, 0, 0, 0);
-                  const to = activeDateRange.to
-                    ? new Date(activeDateRange.to)
+                  const to = dateRange.to
+                    ? new Date(dateRange.to)
                     : new Date(from);
                   to.setHours(23, 59, 59, 999);
 
@@ -209,7 +220,7 @@ export default function Reports() {
                     fu.followUpStatus?.toLowerCase() !== "completed" &&
                     fuDate >= from &&
                     fuDate <= to;
-                } else if (!activeDateRange || skipAllFilters) {
+                } else {
                   includeRecord =
                     fu.followUpStatus?.toLowerCase() !== "completed" &&
                     fuDate < today;
@@ -263,14 +274,14 @@ export default function Reports() {
     setClientFilter("all");
     setSearchTerm("");
     setDateRange(undefined);
-    loadReportData({ overrideDateRange: null, skipAllFilters: true });
+    loadReportData();
   }, [reportType]);
 
   useEffect(() => {
-    if (clients.length > 0 && salesPersons.length > 0 && followUps.length > 0) {
+    if (clients.length > 0 && salesPersons.length > 0) {
       loadReportData();
     }
-  }, [clients, salesPersons]);
+  }, [clients, salesPersons, dateRange, salesPersonFilter]);
 
   const filteredFollowUps = followUps.filter((fu) => {
     if (salesPersonFilter !== "all" && fu.salesExecCode !== salesPersonFilter) {
@@ -315,6 +326,22 @@ export default function Reports() {
       },
       children: (
         <div className="flex items-center gap-2">
+          {user?.role !== "sales_executive" && (
+            <Combobox
+              options={[
+                { value: "all", label: "Select Sales Person" },
+                ...salesPersons.map((sp) => ({
+                  value: sp.userCode,
+                  label: `${sp.name} (${sp.userCode})`,
+                })),
+              ]}
+              value={salesPersonFilter}
+              onSelect={setSalesPersonFilter}
+              placeholder="Select Sales Person"
+              searchPlaceholder="Search salesperson..."
+              width="w-[180px]"
+            />
+          )}
           <Button
             variant="outline"
             onClick={handleExport}
@@ -326,7 +353,7 @@ export default function Reports() {
         </div>
       ),
     });
-  }, [filteredFollowUps.length, searchTerm]);
+  }, [filteredFollowUps.length, searchTerm, salesPersons, salesPersonFilter, user]);
 
   const handleExport = () => {
     if (filteredFollowUps.length === 0) {
