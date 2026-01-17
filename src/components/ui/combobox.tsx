@@ -43,6 +43,7 @@ export function Combobox({
   error,
   label,
   required,
+  width,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -51,7 +52,7 @@ export function Combobox({
   }, [options, value]);
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-2", width, className)}>
       {label && <Label required={required}>{label}</Label>}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>

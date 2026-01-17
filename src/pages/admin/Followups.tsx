@@ -833,7 +833,7 @@ export default function Followups() {
             onSelect={setClientFilter}
             placeholder="Client"
             searchPlaceholder="Search client..."
-            width="w-[180px]"
+            width="w-[220px]"
             className="h-9 bg-white"
           />
 
