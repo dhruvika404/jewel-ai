@@ -52,6 +52,7 @@ export function NewOrderModal({
     status: "pending",
     remark: "",
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const loadSalesPersons = async () => {
@@ -97,6 +98,7 @@ export function NewOrderModal({
         remark: "",
       });
     }
+    setErrors({});
   }, [order, clientCode, isOpen]);
 
   const resetForm = () => {
@@ -111,6 +113,7 @@ export function NewOrderModal({
       status: "pending",
       remark: "",
     });
+    setErrors({});
   };
 
   const handleClose = () => {
@@ -118,14 +121,27 @@ export function NewOrderModal({
     onClose();
   };
 
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.salesExecCode) newErrors.salesExecCode = "Sales Executive is required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      !formData.salesExecCode
-    ) {
-      toast.error("Please fill in all required fields");
-      return;
+    if (!validate()) return;
+
+    const filterEmptyFields = (data: Record<string, any>) => {
+      const cleanData: Record<string, any> = {}
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== '' && value !== null && value !== undefined) {
+          cleanData[key] = value
+        }
+      })
+      return cleanData
     }
 
     setLoading(true);
@@ -134,7 +150,9 @@ export function NewOrderModal({
       if (order) {
         response = await newOrderAPI.update(order.uuid || order.id, formData);
       } else {
-        response = await newOrderAPI.create(formData);
+        const { status, ...createPayload } = formData;
+        const payload = filterEmptyFields(createPayload)
+        response = await newOrderAPI.create(payload as any);
       }
 
       if (response && response.success === false) {
@@ -170,25 +188,28 @@ export function NewOrderModal({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="salesExecCode">Sales Executive *</Label>
-              <Combobox
-                options={salesPersons.map((sp) => ({
-                    value: sp.userCode,
-                    label: `${sp.name} (${sp.userCode})`,
-                }))}
-                value={formData.salesExecCode}
-                onSelect={(val) =>
-                  setFormData({ ...formData, salesExecCode: val })
-                }
-                placeholder="Select sales executive"
-                searchPlaceholder="Search sales executive..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="clientCode">Client Code</Label>
-              <Input id="clientCode" value={formData.clientCode} disabled />
-            </div>
+            <Combobox
+              label="Sales Executive"
+              required
+              options={salesPersons.map((sp) => ({
+                  value: sp.userCode,
+                  label: `${sp.name} (${sp.userCode})`,
+              }))}
+              value={formData.salesExecCode}
+              onSelect={(val) => {
+                setFormData({ ...formData, salesExecCode: val })
+                if (errors.salesExecCode) setErrors({ ...errors, salesExecCode: "" })
+              }}
+              placeholder="Select sales executive"
+              searchPlaceholder="Search sales executive..."
+              error={errors.salesExecCode}
+            />
+            <Input 
+              id="clientCode" 
+              label="Client Code"
+              value={formData.clientCode} 
+              disabled 
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

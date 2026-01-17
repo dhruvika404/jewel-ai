@@ -312,7 +312,7 @@ export default function Clients() {
               <span className="text-gray-600">5+ Days Overdue</span>
             </div>
           </div>
-          <div className="overflow-x-auto no-scrollbar">
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">

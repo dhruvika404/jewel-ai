@@ -21,7 +21,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
-import { Textarea } from "@/components/ui/textarea";
 import { formatDateForInput } from "@/lib/utils";
 
 interface PendingMaterialModalProps {
@@ -46,6 +45,8 @@ export function PendingMaterialModal({
     clientCode: clientCode,
     styleNo: "",
     orderNo: "",
+    orderDate: "",
+    lastMovementDate: "",
     expectedDeliveryDate: "",
     departmentName: "",
     totalNetWt: "",
@@ -53,6 +54,7 @@ export function PendingMaterialModal({
     status: "pending",
     remark: "",
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const loadSalesPersons = async () => {
@@ -79,6 +81,8 @@ export function PendingMaterialModal({
         clientCode: material.clientCode || clientCode,
         styleNo: material.styleNo || "",
         orderNo: material.orderNo || "",
+        orderDate: formatDateForInput(material.orderDate),
+        lastMovementDate: formatDateForInput(material.lastMovementDate),
         expectedDeliveryDate: formatDateForInput(material.expectedDeliveryDate),
         departmentName: material.departmentName || "",
         totalNetWt: material.totalNetWt || "",
@@ -92,6 +96,8 @@ export function PendingMaterialModal({
         clientCode: clientCode,
         styleNo: "",
         orderNo: "",
+        orderDate: "",
+        lastMovementDate: "",
         expectedDeliveryDate: "",
         departmentName: "",
         totalNetWt: "",
@@ -100,6 +106,7 @@ export function PendingMaterialModal({
         remark: "",
       });
     }
+    setErrors({});
   }, [material, clientCode, isOpen]);
 
   const resetForm = () => {
@@ -108,6 +115,8 @@ export function PendingMaterialModal({
       clientCode: clientCode,
       styleNo: "",
       orderNo: "",
+      orderDate: "",
+      lastMovementDate: "",
       expectedDeliveryDate: "",
       departmentName: "",
       totalNetWt: "",
@@ -115,6 +124,7 @@ export function PendingMaterialModal({
       status: "pending",
       remark: "",
     });
+    setErrors({});
   };
 
   const handleClose = () => {
@@ -122,12 +132,29 @@ export function PendingMaterialModal({
     onClose();
   };
 
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.salesExecCode) newErrors.salesExecCode = "Sales Executive is required";
+    if (!formData.styleNo) newErrors.styleNo = "Style No is required";
+    if (!formData.orderNo) newErrors.orderNo = "Order No is required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.salesExecCode || !formData.styleNo || !formData.orderNo) {
-      toast.error("Please fill in all required fields");
-      return;
+    if (!validate()) return;
+
+    const filterEmptyFields = (data: Record<string, any>) => {
+      const cleanData: Record<string, any> = {}
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== '' && value !== null && value !== undefined) {
+          cleanData[key] = value
+        }
+      })
+      return cleanData
     }
 
     setLoading(true);
@@ -139,7 +166,9 @@ export function PendingMaterialModal({
           formData
         );
       } else {
-        response = await pendingMaterialAPI.create(formData);
+        const { status, ...createPayload } = formData;
+        const payload = filterEmptyFields(createPayload)
+        response = await pendingMaterialAPI.create(payload as any);
       }
 
       if (response && response.success === false) {
@@ -177,107 +206,97 @@ export function PendingMaterialModal({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="salesExecCode">Sales Executive *</Label>
-              <Combobox
-                options={salesPersons.map((sp) => ({
-                    value: sp.userCode,
-                    label: `${sp.name} (${sp.userCode})`,
-                }))}
-                value={formData.salesExecCode}
-                onSelect={(val) =>
-                  setFormData({ ...formData, salesExecCode: val })
-                }
-                placeholder="Select sales executive"
-                searchPlaceholder="Search sales executive..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="clientCode">Client Code</Label>
-              <Input id="clientCode" value={formData.clientCode} disabled />
-            </div>
+            <Combobox
+              label="Sales Executive"
+              required
+              options={salesPersons.map((sp) => ({
+                  value: sp.userCode,
+                  label: `${sp.name} (${sp.userCode})`,
+              }))}
+              value={formData.salesExecCode}
+              onSelect={(val) => {
+                setFormData({ ...formData, salesExecCode: val })
+                if (errors.salesExecCode) setErrors({ ...errors, salesExecCode: "" })
+              }}
+              placeholder="Select sales executive"
+              searchPlaceholder="Search sales executive..."
+              error={errors.salesExecCode}
+              className="!h-full"
+            />
+            <Input id="clientCode" label="Client Code" value={formData.clientCode} disabled />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="styleNo">Style No *</Label>
-              <Input
-                id="styleNo"
-                value={formData.styleNo}
-                onChange={(e) =>
-                  setFormData({ ...formData, styleNo: e.target.value })
-                }
-                placeholder="e.g. 67GBB"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="orderNo">Order No *</Label>
-              <Input
-                id="orderNo"
-                value={formData.orderNo}
-                onChange={(e) =>
-                  setFormData({ ...formData, orderNo: e.target.value })
-                }
-                placeholder="e.g. ORD-1001"
-              />
-            </div>
+            <Input
+              id="styleNo"
+              label="Style No"
+              required
+              value={formData.styleNo}
+              onChange={(e) => {
+                setFormData({ ...formData, styleNo: e.target.value })
+                if (errors.styleNo) setErrors({ ...errors, styleNo: "" })
+              }}
+              placeholder="e.g. 67GBB"
+              error={errors.styleNo}
+            />
+            <Input
+              id="orderNo"
+              label="Order No"
+              required
+              value={formData.orderNo}
+              onChange={(e) => {
+                setFormData({ ...formData, orderNo: e.target.value })
+                if (errors.orderNo) setErrors({ ...errors, orderNo: "" })
+              }}
+              placeholder="e.g. ORD-1001"
+              error={errors.orderNo}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="departmentName">Department Name</Label>
-              <Input
-                id="departmentName"
-                value={formData.departmentName}
-                onChange={(e) =>
-                  setFormData({ ...formData, departmentName: e.target.value })
-                }
-                placeholder="e.g. diamond"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="totalNetWt">Total Net Weight</Label>
-              <Input
-                id="totalNetWt"
-                value={formData.totalNetWt}
-                onChange={(e) =>
-                  setFormData({ ...formData, totalNetWt: e.target.value })
-                }
-                placeholder="e.g. 10.57"
-              />
-            </div>
+            <Input
+              id="departmentName"
+              label="Department Name"
+              value={formData.departmentName}
+              onChange={(e) =>
+                setFormData({ ...formData, departmentName: e.target.value })
+              }
+              placeholder="e.g. diamond"
+            />
+            <Input
+              id="totalNetWt"
+              label="Total Net Weight"
+              value={formData.totalNetWt}
+              onChange={(e) =>
+                setFormData({ ...formData, totalNetWt: e.target.value })
+              }
+              placeholder="e.g. 10.57"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="expectedDeliveryDate">
-                Expected Delivery Date
-              </Label>
-              <Input
-                id="expectedDeliveryDate"
-                type="date"
-                value={formData.expectedDeliveryDate}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    expectedDeliveryDate: e.target.value,
-                  })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="nextFollowUpDate">Next Follow-up Date</Label>
-              <Input
-                id="nextFollowUpDate"
-                type="date"
-                value={formData.nextFollowUpDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, nextFollowUpDate: e.target.value })
-                }
-              />
-            </div>
+            <Input
+              id="expectedDeliveryDate"
+              label="Expected Delivery Date"
+              type="date"
+              value={formData.expectedDeliveryDate}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  expectedDeliveryDate: e.target.value,
+                })
+              }
+            />
+            <Input
+              id="nextFollowUpDate"
+              label="Next Follow-up Date"
+              type="date"
+              value={formData.nextFollowUpDate}
+              onChange={(e) =>
+                setFormData({ ...formData, nextFollowUpDate: e.target.value })
+              }
+            />
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
@@ -296,18 +315,14 @@ export function PendingMaterialModal({
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="remark">Remark</Label>
-            <Textarea
+            <Input
               id="remark"
+              label="Remark"
               value={formData.remark}
               onChange={(e) =>
                 setFormData({ ...formData, remark: e.target.value })
               }
               placeholder="Enter remark"
-              rows={3}
             />
           </div>
 

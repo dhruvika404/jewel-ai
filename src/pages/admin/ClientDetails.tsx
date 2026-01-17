@@ -107,13 +107,12 @@ export default function ClientDetails() {
 
   const fetchClient = async () => {
     if (!id) return;
-
     if (!client) setLoading(true);
 
     try {
       const response = await clientAPI.getById(id);
-      if (response.success !== false) {
-        const clientData = response.data || response.client;
+      if (response?.success !== false) {
+        const clientData = response?.data || response?.client;
 
         if (
           user?.role === "sales_executive" &&
@@ -154,10 +153,10 @@ export default function ClientDetails() {
     // 1. Pending Material
     setLoadingPM(true);
     pendingMaterialAPI
-      .getAll({ clientCode: client.userCode, page: 1, size: 10 })
+      .getAll({ clientCode: client?.userCode, page: 1, size: 10 })
       .then((res) => {
-        if (res.success && res.data?.data) {
-          setMaterials(res.data.data);
+        if (res.success && res?.data?.data) {
+          setMaterials(res?.data?.data);
         }
       })
       .catch((err) => console.error(err))
@@ -168,8 +167,8 @@ export default function ClientDetails() {
     pendingOrderAPI
       .getAll({ clientCode: client.userCode, page: 1, size: 10 })
       .then((res) => {
-        if (res.success && res.data?.data) {
-          setPendingOrders(res.data.data);
+        if (res.success && res?.data?.data) {
+          setPendingOrders(res?.data?.data);
         }
       })
       .catch((err) => console.error(err))
@@ -478,6 +477,25 @@ export default function ClientDetails() {
                               </p>
                               <p className="text-xs font-semibold text-gray-900">
                                 {item.expectedDeliveryDate || "-"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2.5">
+                            <div className="space-y-0.5">
+                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+                                Order Date
+                              </p>
+                              <p className="text-xs font-semibold text-gray-900">
+                                {formatDisplayDate(item.orderDate)}
+                              </p>
+                            </div>
+                            <div className="space-y-0.5 text-right">
+                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+                                Last Movement
+                              </p>
+                              <p className="text-xs font-semibold text-gray-900">
+                                {formatDisplayDate(item.lastMovementDate)}
                               </p>
                             </div>
                           </div>

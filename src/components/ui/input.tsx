@@ -2,35 +2,41 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
 import { Eye, EyeOff } from "lucide-react";
+import { Label } from "./label";
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  error?: any;
-  label?: any;
-  rightIcon?: any;
-  rightAddon?: any;
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
+  rightIcon?: React.ReactNode;
+  rightAddon?: string;
+  label?: string;
+  required?: boolean;
+  error?: string;
+  containerClassName?: string;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (
     {
       className,
-      rightIcon = null,
       type,
-      error = "",
-      label = "",
-      rightAddon = <></>,
+      label,
+      rightIcon,
+      rightAddon,
+      required,
+      error,
       id,
+      containerClassName,
       ...props
     },
     ref
   ) => {
     const [showPassword, setShowPassword] = React.useState(false);
     return (
-      <>
+      <div className={cn("space-y-2", containerClassName)}>
         {label && (
-          <label htmlFor={id} className="text-sm font-medium">
+          <Label htmlFor={id} required={required}>
             {label}
-          </label>
+          </Label>
         )}
         <div className="w-full">
           <div className="relative w-full">
@@ -43,7 +49,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               id={id}
               type={showPassword ? "text" : type}
               className={cn(
-                "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+                "flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
                 rightIcon && "pl-10",
                 className
               )}
@@ -78,7 +84,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             </p>
           )}
         </div>
-      </>
+      </div>
     );
   }
 );

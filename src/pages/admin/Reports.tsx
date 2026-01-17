@@ -24,6 +24,8 @@ import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import * as XLSX from "xlsx";
 import { DateRange } from "react-day-picker";
 import { formatDisplayDate } from "@/lib/utils";
+import { Combobox } from "@/components/ui/combobox";
+import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 
 type ReportType = "todays-taken" | "pending" | "overdue";
 
@@ -315,6 +317,35 @@ export default function Reports() {
       },
       children: (
         <div className="flex items-center gap-2">
+          <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+          <Combobox
+            options={[
+              { value: "all", label: "Select Sales Person" },
+              ...salesPersons.map((sp) => ({
+                value: sp.userCode,
+                label: `${sp.name} (${sp.userCode})`,
+              })),
+            ]}
+            value={salesPersonFilter}
+            onSelect={setSalesPersonFilter}
+            placeholder="Sales Person"
+            searchPlaceholder="Search salesperson..."
+            width="w-[180px]"
+          />
+          <Combobox
+            options={[
+              { value: "all", label: "Select Client" },
+              ...clients.map((client) => ({
+                value: client.userCode,
+                label: `${client.name} (${client.userCode})`,
+              })),
+            ]}
+            value={clientFilter}
+            onSelect={setClientFilter}
+            placeholder="Client"
+            searchPlaceholder="Search client..."
+            width="w-[180px]"
+          />
           <Button
             variant="outline"
             onClick={handleExport}
@@ -326,7 +357,15 @@ export default function Reports() {
         </div>
       ),
     });
-  }, [filteredFollowUps.length, searchTerm]);
+  }, [
+    filteredFollowUps.length,
+    searchTerm,
+    dateRange,
+    salesPersonFilter,
+    clientFilter,
+    salesPersons,
+    clients,
+  ]);
 
   const handleExport = () => {
     if (filteredFollowUps.length === 0) {
@@ -413,13 +452,16 @@ export default function Reports() {
                     Type
                   </TableHead>
                   <TableHead className="font-medium text-gray-700 w-[250px]">
-                    Follow-up Message
+                    Followup Message
                   </TableHead>
                   <TableHead className="font-medium text-gray-700 w-[130px]">
-                    Next Follow-up
+                    Last Followup
+                  </TableHead>
+                  <TableHead className="font-medium text-gray-700 w-[150px]">
+                    Taken By
                   </TableHead>
                   <TableHead className="font-medium text-gray-700 w-[130px]">
-                    Last Follow-up
+                    Next Followup
                   </TableHead>
                   <TableHead className="font-medium text-gray-700 w-[100px]">
                     Status
@@ -503,11 +545,6 @@ export default function Reports() {
                         </div>
                       </TableCell>
                       <TableCell className="align-center">
-                        <div className="text-sm font-medium text-gray-900">
-                          {formatDisplayDate(fu.nextFollowUpDate)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="align-center">
                         {fu.lastFollowUpDate ? (
                           <div className="text-sm text-gray-900">
                             {formatDisplayDate(fu.lastFollowUpDate)}
@@ -515,6 +552,16 @@ export default function Reports() {
                         ) : (
                           <span className="text-gray-400 text-sm">-</span>
                         )}
+                      </TableCell>
+                      <TableCell className="align-center">
+                        <div className="text-sm text-gray-900">
+                          {fu.salesExecName || fu.salesExecCode || "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="align-center">
+                        <div className="text-sm font-medium text-gray-900">
+                          {formatDisplayDate(fu.nextFollowUpDate)}
+                        </div>
                       </TableCell>
                       <TableCell className="align-center">
                         <Badge

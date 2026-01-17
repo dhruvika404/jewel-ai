@@ -49,6 +49,7 @@ export function FollowUpModal({
     status: "",
     remark: "",
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (data) {
@@ -58,6 +59,7 @@ export function FollowUpModal({
         status: (data.status || "pending").toLowerCase(),
         remark: data.remark || "",
       });
+      setErrors({});
     }
   }, [data, isOpen]);
 
@@ -68,6 +70,7 @@ export function FollowUpModal({
       status: "",
       remark: "",
     });
+    setErrors({});
   };
 
   const handleClose = () => {
@@ -75,15 +78,21 @@ export function FollowUpModal({
     onClose();
   };
 
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (formData.status === "pending") {
+      if (!formData.nextFollowUpDate) {
+        newErrors.nextFollowUpDate = "Next Follow-up Date is required for Pending status";
+      }
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (formData.status === "pending") {
-      if (!formData.nextFollowUpDate) {
-        toast.error("Next Follow-up Date is required for Pending status");
-        return;
-      }
-    }
+    if (!validate()) return;
 
     setLoading(true);
     try {
@@ -141,19 +150,18 @@ export function FollowUpModal({
           <DialogDescription>Update follow-up details</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="nextFollowUpDate">
-              Next Follow-up Date {formData.status === "pending" && "*"}
-            </Label>
-            <Input
-              id="nextFollowUpDate"
-              type="date"
-              value={formData.nextFollowUpDate}
-              onChange={(e) =>
-                setFormData({ ...formData, nextFollowUpDate: e.target.value })
-              }
-            />
-          </div>
+          <Input
+            id="nextFollowUpDate"
+            label="Next Follow-up Date"
+            required={formData.status === "pending"}
+            type="date"
+            value={formData.nextFollowUpDate}
+            onChange={(e) => {
+              setFormData({ ...formData, nextFollowUpDate: e.target.value })
+              if (errors.nextFollowUpDate) setErrors({ ...errors, nextFollowUpDate: "" })
+            }}
+            error={errors.nextFollowUpDate}
+          />
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
             <Select

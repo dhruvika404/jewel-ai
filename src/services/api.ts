@@ -520,6 +520,8 @@ export const pendingMaterialAPI = {
     clientCode: string;
     styleNo: string;
     orderNo: string;
+    orderDate?: string;
+    lastMovementDate?: string;
     expectedDeliveryDate: string;
     departmentName: string;
     totalNetWt: string;

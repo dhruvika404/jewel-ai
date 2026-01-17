@@ -64,13 +64,11 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground no-scrollbar;
+    @apply bg-background text-foreground;
   }
 }
 
-html {
-  @apply no-scrollbar;
-}
+
 
 /* Smooth transitions */
 * {
@@ -78,11 +76,4 @@ html {
 }
 
 @layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none; 
-    scrollbar-width: none;
-  }
 }

@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -74,6 +75,8 @@ interface NewOrderFollowup {
   salesExecutive: string;
   status: string;
   nextFollowupDate?: string;
+  lastFollowUpDate?: string | null;
+  lastFollowUpBy?: string;
   remark?: string;
   type: "new-order";
   originalData?: any;
@@ -91,6 +94,8 @@ interface PendingOrderFollowup {
   orderDate: string;
   pendingSince: number;
   nextFollowupDate?: string;
+  lastFollowUpDate?: string | null;
+  lastFollowUpBy?: string;
   remark?: string;
   status: string;
   originalData?: any;
@@ -111,6 +116,7 @@ interface PendingMaterialFollowup {
   departmentName: string;
   totalNetWt: string;
   lastFollowUpDate: string | null;
+  lastFollowUpBy?: string;
   lastFollowUpMsg: string;
   status: string;
   remark?: string;
@@ -256,6 +262,8 @@ export default function Followups() {
         status: (item.status || "pending").toLowerCase(),
         nextFollowupDate:
           item.nextFollowUpDate || item.nextFollowupDate || null,
+        lastFollowUpDate: item.lastFollowUpDate || null,
+        lastFollowUpBy: item.salesExecData?.name || "",
         remark: item.remark || "",
         type: "new-order" as const,
         originalData: item,
@@ -294,6 +302,8 @@ export default function Followups() {
         pendingSince: daysDiff,
         nextFollowupDate:
           item.nextFollowUpDate || item.nextFollowupDate || null,
+        lastFollowUpDate: item.lastFollowUpDate || null,
+        lastFollowUpBy:  item.salesExecData?.name ||"",
         remark: item.remark || "",
         status: (item.status || "pending").toLowerCase(),
 
@@ -331,12 +341,13 @@ export default function Followups() {
         expectedDeliveryDate: item.expectedDeliveryDate || "",
         departmentName: item.departmentName || "",
         totalNetWt: item.totalNetWt || "",
-        lastFollowUpDate: item.lastFollowUpDate || null,
         lastFollowUpMsg: item.lastFollowUpMsg || "",
         status: item.status || "pending",
         type: "pending-material" as const,
         nextFollowupDate:
           item.nextFollowUpDate || item.nextFollowupDate || null,
+        lastFollowUpDate: item.lastFollowUpDate || null,
+        lastFollowUpBy: item.salesExecData?.name || "",
         originalData: item,
       };
     });
@@ -524,6 +535,13 @@ export default function Followups() {
           ...baseRow,
           "Order No": fu.orderNo,
           "Order Date": formatDisplayDate(fu.orderDate),
+          "Last Movement": formatDisplayDate(
+            fu.pendingSinceDays
+              ? new Date(
+                  Date.now() - fu.pendingSinceDays * 24 * 60 * 60 * 1000
+                ).toISOString()
+              : new Date().toISOString()
+          ),
           "Pending For": fu.pendingFor,
           "Pending Since": `${fu.pendingSinceDays} Days`,
           "Next Follow-up": formatDisplayDate(fu.nextFollowupDate),
@@ -583,8 +601,6 @@ export default function Followups() {
     if (clientFilter !== "all" && fu.userCode !== clientFilter) {
       return false;
     }
-
-
 
     if (followupType === "new-order" && dateRangeFilter !== "all") {
       const daysSince = (fu as NewOrderFollowup).noOrderSince;
@@ -663,6 +679,7 @@ export default function Followups() {
     setSortBy(null);
     setSortOrder(null);
     setCurrentPage(1);
+    setPageSize(10);
     loadFollowupData({ overrideDateRange: null, skipAllFilters: true });
   }, [followupType]);
 
@@ -789,35 +806,36 @@ export default function Followups() {
     <div className="bg-gray-50">
       <div className="p-6 space-y-6">
         <div className="flex items-center gap-3 overflow-x-auto p-1">
-          <Select
+          <Combobox
+            options={[
+              { value: "all", label: "Select Sales Person" },
+              ...salesPersons.map((sp) => ({
+                value: sp.userCode,
+                label: `${sp.name} (${sp.userCode})`,
+              })),
+            ]}
             value={salesPersonFilter}
-            onValueChange={setSalesPersonFilter}
-          >
-            <SelectTrigger className="h-9 bg-white w-[180px] flex-shrink-0">
-              <SelectValue placeholder="Sales Person" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Select Sales Person</SelectItem>
-              {salesPersons.map((sp) => (
-                <SelectItem key={sp.uuid} value={sp.userCode}>
-                  {sp.name} ({sp.userCode})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={clientFilter} onValueChange={setClientFilter}>
-            <SelectTrigger className="h-9 bg-white w-[180px] flex-shrink-0">
-              <SelectValue placeholder="Client" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Select Client</SelectItem>
-              {clients.map((client) => (
-                <SelectItem key={client.uuid} value={client.userCode}>
-                  {client.name} ({client.userCode})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onSelect={setSalesPersonFilter}
+            placeholder="Sales Person"
+            searchPlaceholder="Search salesperson..."
+            width="w-[180px]"
+            className="h-9 bg-white"
+          />
+          <Combobox
+            options={[
+              { value: "all", label: "Select Client" },
+              ...clients.map((client) => ({
+                value: client.userCode,
+                label: `${client.name} (${client.userCode})`,
+              })),
+            ]}
+            value={clientFilter}
+            onSelect={setClientFilter}
+            placeholder="Client"
+            searchPlaceholder="Search client..."
+            width="w-[180px]"
+            className="h-9 bg-white"
+          />
 
           {(followupType === "new-order" ||
             followupType === "pending-order" ||
@@ -962,6 +980,18 @@ export default function Followups() {
                     <>
                       <TableHead
                         className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort("lastFollowUpDate")}
+                      >
+                        <div className="flex items-center">
+                          Last Followup
+                          {getSortIcon("lastFollowUpDate")}
+                        </div>
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700 whitespace-nowrap">
+                        Taken By
+                      </TableHead>
+                      <TableHead
+                        className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
                         onClick={() => handleSort("nextFollowUpDate")}
                       >
                         <div className="flex items-center">
@@ -1026,6 +1056,18 @@ export default function Followups() {
                         </div>
                       </TableHead>
                       <TableHead
+                        className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors whitespace-nowrap"
+                        onClick={() => handleSort("lastFollowUpDate")}
+                      >
+                        <div className="flex items-center">
+                          Last Followup
+                          {getSortIcon("lastFollowUpDate")}
+                        </div>
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700 whitespace-nowrap">
+                        Taken By
+                      </TableHead>
+                      <TableHead
                         className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
                         onClick={() => handleSort("nextFollowUpDate")}
                       >
@@ -1082,6 +1124,18 @@ export default function Followups() {
                       </TableHead>
                       <TableHead
                         className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort("lastFollowUpDate")}
+                      >
+                        <div className="flex items-center">
+                          Last Followup
+                          {getSortIcon("lastFollowUpDate")}
+                        </div>
+                      </TableHead>
+                      <TableHead className="font-medium text-gray-700 whitespace-nowrap">
+                        Taken By
+                      </TableHead>
+                      <TableHead
+                        className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
                         onClick={() => handleSort("nextFollowupDate")}
                       >
                         <div className="flex items-center">
@@ -1113,10 +1167,10 @@ export default function Followups() {
                     <TableCell
                       colSpan={
                         followupType === "new-order"
-                          ? 9
+                          ? 11
                           : followupType === "pending-order" ||
                             followupType === "pending-material"
-                          ? 11
+                          ? 13
                           : 4
                       }
                       className="text-center py-12"
@@ -1129,10 +1183,10 @@ export default function Followups() {
                     <TableCell
                       colSpan={
                         followupType === "new-order"
-                          ? 9
+                          ? 11
                           : followupType === "pending-order" ||
                             followupType === "pending-material"
-                          ? 11
+                          ? 13
                           : 4
                       }
                       className="text-center py-8 text-muted-foreground"
@@ -1197,6 +1251,19 @@ export default function Followups() {
 
                       {fu.type === "new-order" && (
                         <>
+                          <TableCell className="align-center">
+                            <div className="text-sm text-gray-900">
+                              {formatDisplayDate(fu.lastFollowUpDate)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div
+                              className="text-sm text-gray-900 truncate max-w-[100px]"
+                              title={fu.lastFollowUpBy || ""}
+                            >
+                              {fu.lastFollowUpBy || "-"}
+                            </div>
+                          </TableCell>
                           <TableCell className="align-center">
                             <div className="text-sm text-gray-900">
                               {formatDisplayDate(fu.nextFollowupDate)}
@@ -1300,6 +1367,19 @@ export default function Followups() {
                           <TableCell className="align-center">
                             <div className="text-sm text-gray-900">
                               {fu.pendingPcs}
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div className="text-sm text-gray-900">
+                              {formatDisplayDate(fu.lastFollowUpDate)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div
+                              className="text-sm text-gray-900 truncate max-w-[100px]"
+                              title={fu.lastFollowUpBy || ""}
+                            >
+                              {fu.lastFollowUpBy || "-"}
                             </div>
                           </TableCell>
                           <TableCell className="align-center">
@@ -1408,6 +1488,19 @@ export default function Followups() {
                             </div>
                           </TableCell>
 
+                          <TableCell className="align-center">
+                            <div className="text-sm text-gray-900">
+                              {formatDisplayDate(fu.lastFollowUpDate)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-center">
+                            <div
+                              className="text-sm text-gray-900 truncate max-w-[100px]"
+                              title={fu.lastFollowUpBy || ""}
+                            >
+                              {fu.lastFollowUpBy || "-"}
+                            </div>
+                          </TableCell>
                           <TableCell className="align-center">
                             <div className="text-sm text-gray-900">
                               {formatDisplayDate(fu.nextFollowupDate)}

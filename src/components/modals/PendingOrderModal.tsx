@@ -9,12 +9,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { pendingOrderAPI, salesPersonAPI } from "@/services/api";
 import { toast } from "sonner";
 import { Combobox } from "@/components/ui/combobox";
-import { Textarea } from "@/components/ui/textarea";
 import { formatDateForInput } from "@/lib/utils";
 
 interface PendingOrderModalProps {
@@ -46,6 +44,8 @@ export function PendingOrderModal({
     nextFollowUpDate: "",
     status: "pending",
   });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const loadSalesPersons = async () => {
@@ -93,6 +93,7 @@ export function PendingOrderModal({
         status: "pending",
       });
     }
+    setErrors({});
   }, [order, clientCode, isOpen]);
 
   const resetForm = () => {
@@ -108,6 +109,7 @@ export function PendingOrderModal({
       nextFollowUpDate: "",
       status: "pending",
     });
+    setErrors({});
   };
 
   const handleClose = () => {
@@ -115,29 +117,38 @@ export function PendingOrderModal({
     onClose();
   };
 
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.salesExecCode) newErrors.salesExecCode = "Sales Executive is required";
+    if (!formData.orderNo) newErrors.orderNo = "Order No is required";
+    if (!formData.orderDate) newErrors.orderDate = "Order Date is required";
+    if (!formData.grossWtTotal) newErrors.grossWtTotal = "Gross Weight is required";
+    if (!formData.totalOrderPcs) newErrors.totalOrderPcs = "Total Order Pcs is required";
+    if (!formData.pendingPcs) newErrors.pendingPcs = "Pending Pcs is required";
+    if (!formData.nextFollowUpDate) newErrors.nextFollowUpDate = "Next Follow-up Date is required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      !formData.salesExecCode ||
-      !formData.orderNo ||
-      !formData.orderDate ||
-      !formData.grossWtTotal ||
-      !formData.totalOrderPcs ||
-      !formData.pendingPcs
-    ) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
+    if (!validate()) return;
 
-    if (!formData.nextFollowUpDate) {
-      toast.error("Next follow-up date is required");
-      return;
+    const filterEmptyFields = (data: Record<string, any>) => {
+      const cleanData: Record<string, any> = {}
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== '' && value !== null && value !== undefined) {
+          cleanData[key] = value
+        }
+      })
+      return cleanData
     }
 
     setLoading(true);
     try {
-      const payload: any = {
+      const initialPayload: any = {
         salesExecCode: formData.salesExecCode,
         clientCode: formData.clientCode,
         orderNo: formData.orderNo,
@@ -149,6 +160,8 @@ export function PendingOrderModal({
         nextFollowUpDate: formData.nextFollowUpDate,
       };
 
+      const payload = filterEmptyFields(initialPayload)
+
       let response;
       if (order) {
         response = await pendingOrderAPI.update(
@@ -156,7 +169,7 @@ export function PendingOrderModal({
           payload
         );
       } else {
-        response = await pendingOrderAPI.create(payload);
+        response = await pendingOrderAPI.create(payload as any);
       }
 
       if (response && response.success === false) {
@@ -192,117 +205,119 @@ export function PendingOrderModal({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="salesExecCode">Sales Executive *</Label>
-              <Combobox
-                options={salesPersons.map((sp) => ({
-                    value: sp.userCode,
-                    label: `${sp.name} (${sp.userCode})`,
-                }))}
-                value={formData.salesExecCode}
-                onSelect={(val) =>
-                  setFormData({ ...formData, salesExecCode: val })
-                }
-                placeholder="Select sales executive"
-                searchPlaceholder="Search sales executive..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="clientCode">Client Code</Label>
-              <Input id="clientCode" value={formData.clientCode} disabled />
-            </div>
+            <Combobox
+              label="Sales Executive"
+              required
+              options={salesPersons.map((sp) => ({
+                  value: sp.userCode,
+                  label: `${sp.name} (${sp.userCode})`,
+              }))}
+              value={formData.salesExecCode}
+              onSelect={(val) => {
+                setFormData({ ...formData, salesExecCode: val })
+                if (errors.salesExecCode) setErrors({ ...errors, salesExecCode: "" })
+              }}
+              placeholder="Select sales executive"
+              searchPlaceholder="Search sales executive..."
+              error={errors.salesExecCode}
+            />
+            <Input 
+              id="clientCode" 
+              label="Client Code"
+              value={formData.clientCode} 
+              disabled 
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="orderNo">Order No *</Label>
-              <Input
-                id="orderNo"
-                value={formData.orderNo}
-                onChange={(e) =>
-                  setFormData({ ...formData, orderNo: e.target.value })
-                }
-                placeholder="e.g. ORD-1001"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="orderDate">Order Date *</Label>
-              <Input
-                id="orderDate"
-                type="date"
-                value={formData.orderDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, orderDate: e.target.value })
-                }
-              />
-            </div>
+            <Input
+              id="orderNo"
+              label="Order No"
+              required
+              value={formData.orderNo}
+              onChange={(e) => {
+                setFormData({ ...formData, orderNo: e.target.value })
+                if (errors.orderNo) setErrors({ ...errors, orderNo: "" })
+              }}
+              placeholder="e.g. ORD-1001"
+              error={errors.orderNo}
+            />
+            <Input
+              id="orderDate"
+              label="Order Date"
+              required
+              type="date"
+              value={formData.orderDate}
+              onChange={(e) => {
+                setFormData({ ...formData, orderDate: e.target.value })
+                if (errors.orderDate) setErrors({ ...errors, orderDate: "" })
+              }}
+              error={errors.orderDate}
+            />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="remark">Remark</Label>
-            <Textarea
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              id="totalOrderPcs"
+              label="Total Order Pcs"
+              required
+              type="number"
+              value={formData.totalOrderPcs}
+              onChange={(e) => {
+                setFormData({ ...formData, totalOrderPcs: e.target.value })
+                if (errors.totalOrderPcs) setErrors({ ...errors, totalOrderPcs: "" })
+              }}
+              placeholder="e.g. 100"
+              error={errors.totalOrderPcs}
+            />
+            <Input
+              id="pendingPcs"
+              label="Pending Pcs"
+              required
+              type="number"
+              value={formData.pendingPcs}
+              onChange={(e) => {
+                setFormData({ ...formData, pendingPcs: e.target.value })
+                if (errors.pendingPcs) setErrors({ ...errors, pendingPcs: "" })
+              }}
+              placeholder="e.g. 50"
+              error={errors.pendingPcs}
+            />
+            <Input
+              id="nextFollowUpDate"
+              label="Next Follow-up Date"
+              required
+              type="date"
+              value={formData.nextFollowUpDate}
+              onChange={(e) => {
+                setFormData({ ...formData, nextFollowUpDate: e.target.value })
+                if (errors.nextFollowUpDate) setErrors({ ...errors, nextFollowUpDate: "" })
+              }}
+              error={errors.nextFollowUpDate}
+            />
+            <Input
+              id="grossWtTotal"
+              label="Gross Weight Total"
+              required
+              type="number"
+              step="0.01"
+              value={formData.grossWtTotal}
+              onChange={(e) => {
+                setFormData({ ...formData, grossWtTotal: e.target.value })
+                if (errors.grossWtTotal) setErrors({ ...errors, grossWtTotal: "" })
+              }}
+              placeholder="e.g. 125.75"
+              error={errors.grossWtTotal}
+            />
+            <Input
               id="remark"
+              label="Remark"
               value={formData.remark}
               onChange={(e) =>
                 setFormData({ ...formData, remark: e.target.value })
               }
               placeholder="Enter any remarks or notes"
-              rows={3}
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="totalOrderPcs">Total Order Pcs *</Label>
-              <Input
-                id="totalOrderPcs"
-                type="number"
-                value={formData.totalOrderPcs}
-                onChange={(e) =>
-                  setFormData({ ...formData, totalOrderPcs: e.target.value })
-                }
-                placeholder="e.g. 100"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="pendingPcs">Pending Pcs *</Label>
-              <Input
-                id="pendingPcs"
-                type="number"
-                value={formData.pendingPcs}
-                onChange={(e) =>
-                  setFormData({ ...formData, pendingPcs: e.target.value })
-                }
-                placeholder="e.g. 50"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="nextFollowUpDate">Next Follow-up Date *</Label>
-              <Input
-                id="nextFollowUpDate"
-                type="date"
-                value={formData.nextFollowUpDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, nextFollowUpDate: e.target.value })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="grossWtTotal">Gross Weight Total *</Label>
-              <Input
-                id="grossWtTotal"
-                type="number"
-                step="0.01"
-                value={formData.grossWtTotal}
-                onChange={(e) =>
-                  setFormData({ ...formData, grossWtTotal: e.target.value })
-                }
-                placeholder="e.g. 125.75"
-              />
-            </div>
           </div>
 
           <DialogFooter>

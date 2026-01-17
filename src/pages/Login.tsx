@@ -22,19 +22,32 @@ export default function Login() {
     identifier: "",
     password: "",
   });
+  const [errors, setErrors] = useState({
+    identifier: "",
+    password: "",
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name as keyof typeof errors]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const validate = () => {
+    const newErrors = {
+      identifier: formData.identifier ? "" : "Field is required",
+      password: formData.password ? "" : "Password is required",
+    };
+    setErrors(newErrors);
+    return !newErrors.identifier && !newErrors.password;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.identifier || !formData.password) {
-      toast.error("Please fill in all fields");
-      return;
-    }
+    if (!validate()) return;
 
     try {
       await login(formData.identifier, formData.password, selectedRole);
@@ -67,7 +80,10 @@ export default function Login() {
               {/* Role Selection Tabs */}
               <Tabs
                 value={selectedRole}
-                onValueChange={(value) => setSelectedRole(value as RoleType)}
+                onValueChange={(value) => {
+                  setSelectedRole(value as RoleType)
+                  setErrors({ identifier: "", password: "" })
+                }}
                 className="w-full"
               >
                 <TabsList className="grid w-full grid-cols-2">
@@ -95,6 +111,7 @@ export default function Login() {
                   value={formData.identifier}
                   onChange={handleChange}
                   required
+                  error={errors.identifier}
                   autoFocus
                 />
               </div>
@@ -109,6 +126,7 @@ export default function Login() {
                   value={formData.password}
                   onChange={handleChange}
                   required
+                  error={errors.password}
                 />
               </div>
 

@@ -122,6 +122,8 @@ export default function SalesPersons() {
     });
   }, [searchQuery]);
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const loadData = async () => {
     setLoading(true);
     let currentTotalItems = 0;
@@ -165,6 +167,7 @@ export default function SalesPersons() {
       phone: "",
     });
     setSelectedSalesPerson(null);
+    setErrors({});
   };
 
   const handleOpenAdd = () => {
@@ -180,23 +183,29 @@ export default function SalesPersons() {
       email: sp.email || "",
       phone: sp.phone || "",
     });
+    setErrors({});
     setShowFormDialog(true);
   };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.userCode || !formData.name) {
-      toast.error("User Code and Name are required");
-      return;
-    }
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.userCode) newErrors.userCode = "User Code is required";
+    if (!formData.name) newErrors.name = "Full Name is required";
 
     if (formData.email && formData.email.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        toast.error("Please enter a valid email address");
-        return;
+        newErrors.email = "Please enter a valid email address";
       }
     }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
 
     setIsSubmitting(true);
     try {
@@ -453,62 +462,60 @@ export default function SalesPersons() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleFormSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="userCode">User Code *</Label>
-                <Input
-                  id="userCode"
-                  placeholder="e.g. SE001"
-                  value={formData.userCode}
-                  onChange={(e) =>
-                    setFormData({ ...formData, userCode: e.target.value })
-                  }
-                  disabled={!!selectedSalesPerson}
-                  autoComplete="off"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  placeholder="Contact number"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                  autoComplete="off"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name *</Label>
               <Input
-                id="name"
-                placeholder="Staff name"
-                value={formData.name}
+                id="userCode"
+                label="User Code"
+                required
+                placeholder="e.g. SE001"
+                value={formData.userCode}
+                onChange={(e) => {
+                  setFormData({ ...formData, userCode: e.target.value })
+                  if (errors.userCode) setErrors({ ...errors, userCode: "" })
+                }}
+                disabled={!!selectedSalesPerson}
+                autoComplete="off"
+                error={errors.userCode}
+              />
+              <Input
+                id="phone"
+                label="Phone"
+                placeholder="Contact number"
+                value={formData.phone}
                 onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
+                  setFormData({ ...formData, phone: e.target.value })
                 }
                 autoComplete="off"
               />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="email@example.com"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                autoComplete="off"
-              />
-            </div>
+            <Input
+              id="name"
+              label="Full Name"
+              required
+              placeholder="Staff name"
+              value={formData.name}
+              onChange={(e) => {
+                setFormData({ ...formData, name: e.target.value })
+                if (errors.name) setErrors({ ...errors, name: "" })
+              }}
+              autoComplete="off"
+              error={errors.name}
+            />
 
-            <DialogFooter className="mt-6 pt-4 border-t">
+            <Input
+              id="email"
+              label="Email Address"
+              type="email"
+              placeholder="email@example.com"
+              value={formData.email}
+              onChange={(e) => {
+                setFormData({ ...formData, email: e.target.value })
+                if (errors.email) setErrors({ ...errors, email: "" })
+              }}
+              autoComplete="off"
+              error={errors.email}
+            />
+
+            <DialogFooter className="mt-6 pt-4">
               <Button
                 type="button"
                 variant="outline"

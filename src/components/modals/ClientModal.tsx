@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { clientAPI, salesPersonAPI } from '@/services/api'
@@ -32,6 +31,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
     phone: '',
     salesExecCode: '',
   })
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     const loadSalesPersons = async () => {
@@ -68,6 +68,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
         salesExecCode: '',
       })
     }
+    setErrors({})
   }, [client, isOpen])
 
   const resetForm = () => {
@@ -78,6 +79,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
       phone: '',
       salesExecCode: '',
     })
+    setErrors({})
   }
 
   const handleClose = () => {
@@ -85,26 +87,30 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
     onClose()
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const validate = () => {
+    const newErrors: Record<string, string> = {}
+    if (!formData?.userCode) newErrors.userCode = 'User Code is required'
+    if (!formData?.name) newErrors.name = 'Client Name is required'
     
-    if (!formData?.userCode || !formData?.name) {
-      toast.error('User Code and Name are required')
-      return
-    }
-
     if (formData?.email && formData?.email.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData?.email)) {
-        toast.error("Please enter a valid email address");
-        return;
+        newErrors.email = "Please enter a valid email address";
       }
     }
 
     if (!client && (!formData?.salesExecCode || formData?.salesExecCode === 'unassigned')) {
-      toast.error('Please select a Sales Executive for new client')
-      return
+      newErrors.salesExecCode = 'Please select a Sales Executive'
     }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!validate()) return
 
     setLoading(true)
     try {
@@ -142,69 +148,73 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
           <DialogTitle>{client ? 'Edit Client' : 'Add New Client'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="userCode">User Code</Label>
-            <Input
-              id="userCode"
-              placeholder="e.g. C0909"
-              value={formData?.userCode}
-              onChange={(e) => setFormData({ ...formData, userCode: e?.target?.value })}
-              required
-              autoComplete="off"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="name">Client Name</Label>
-            <Input
-              id="name"
-              placeholder="e.g. Nakarani jewelers"
-              value={formData?.name}
-              onChange={(e) => setFormData({ ...formData, name: e?.target?.value })}
-              required
-              autoComplete="off"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="nakarani@yopmail.com"
-              value={formData?.email}
-              onChange={(e) => setFormData({ ...formData, email: e?.target?.value })}
-              autoComplete="off"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
-            <Input
-              id="phone"
-              placeholder="9898989898"
-              value={formData?.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e?.target?.value })}
-              autoComplete="off"
-            />
-          </div>
+          <Input
+            id="userCode"
+            label="User Code"
+            placeholder="e.g. C0909"
+            value={formData?.userCode}
+            onChange={(e) => {
+              setFormData({ ...formData, userCode: e?.target?.value })
+              if (errors.userCode) setErrors({ ...errors, userCode: '' })
+            }}
+            required
+            error={errors.userCode}
+            autoComplete="off"
+          />
+          <Input
+            id="name"
+            label="Client Name"
+            placeholder="e.g. Nakarani jewelers"
+            value={formData?.name}
+            onChange={(e) => {
+              setFormData({ ...formData, name: e?.target?.value })
+              if (errors.name) setErrors({ ...errors, name: '' })
+            }}
+            required
+            error={errors.name}
+            autoComplete="off"
+          />
+          <Input
+            id="email"
+            label="Email"
+            type="email"
+            placeholder="nakarani@yopmail.com"
+            value={formData?.email}
+            onChange={(e) => {
+              setFormData({ ...formData, email: e?.target?.value })
+              if (errors.email) setErrors({ ...errors, email: '' })
+            }}
+            error={errors.email}
+            autoComplete="off"
+          />
+          <Input
+            id="phone"
+            label="Phone"
+            placeholder="9898989898"
+            value={formData?.phone}
+            onChange={(e) => setFormData({ ...formData, phone: e?.target?.value })}
+            autoComplete="off"
+          />
           
-          <div className="space-y-2">
-            <Label htmlFor="salesExecCode">
-              Sales Executive Assignment {!client && <span className="text-red-500">*</span>}
-            </Label>
-            <Combobox
-              options={[
-                { value: "unassigned", label: client ? "Select sales executive" : "No Assignment" },
-                ...salesPersons.map(sp => ({
-                  value: sp.userCode,
-                  label: `${sp.name} (${sp.userCode})`
-                }))
-              ]}
-              value={formData?.salesExecCode || "unassigned"}
-              onSelect={(val) => setFormData({ ...formData, salesExecCode: val })}
-              placeholder="Select sales executive"
-              searchPlaceholder="Search sales executive..."
-              width="w-full"
-            />
-          </div>
+          <Combobox
+            label="Sales Executive"
+            required={!client}
+            options={[
+              { value: "unassigned", label: client ? "Select sales executive" : "No Assignment" },
+              ...salesPersons.map(sp => ({
+                value: sp.userCode,
+                label: `${sp.name} (${sp.userCode})`
+              }))
+            ]}
+            value={formData?.salesExecCode || "unassigned"}
+            onSelect={(val) => {
+              setFormData({ ...formData, salesExecCode: val })
+              if (errors.salesExecCode) setErrors({ ...errors, salesExecCode: '' })
+            }}
+            placeholder="Select sales executive"
+            searchPlaceholder="Search sales executive..."
+            error={errors.salesExecCode}
+          />
           
           <DialogFooter className="pt-4">
             <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>

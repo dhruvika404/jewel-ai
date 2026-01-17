@@ -23,7 +23,7 @@ interface TablePaginationProps {
   pageSize: number;
   setPageSize: (size: number) => void;
 }
-const pageSizeOptions = [10, 25, 50, 100, 500];
+const pageSizeOptions = [10, 25, 50, 100, 300, 500];
 const TablePagination: React.FC<TablePaginationProps> = ({
   currentPage = 1,
   totalPages = 1,
