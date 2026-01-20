@@ -52,7 +52,7 @@ export function FollowUpModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (data) {
+    if (data && isOpen) {
       setFormData({
         salesExecCode: data.salesExecCode || data.salesExecutive || "",
         nextFollowUpDate: formatDateForInput(data.nextFollowUpDate),
@@ -80,11 +80,12 @@ export function FollowUpModal({
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (formData.status === "pending") {
-      if (!formData.nextFollowUpDate) {
-        newErrors.nextFollowUpDate = "Next Follow-up Date is required for Pending status";
-      }
+
+    if (formData.status === "pending" && !formData.nextFollowUpDate) {
+      newErrors.nextFollowUpDate =
+        "Next Follow-up Date is required for Pending status";
     }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -96,11 +97,14 @@ export function FollowUpModal({
 
     setLoading(true);
     try {
-      const payload: any = {
-        nextFollowUpDate: formData.nextFollowUpDate,
-        status: formData.status,
-        remark: formData.remark,
-      };
+      const payload =
+        formData.status === "completed"
+          ? { status: formData.status }
+          : {
+              status: formData.status,
+              nextFollowUpDate: formData.nextFollowUpDate,
+              remark: formData.remark,
+            };
 
       const id = data.uuid || data.id || data._id;
 
@@ -109,19 +113,18 @@ export function FollowUpModal({
         response = await newOrderAPI.update(id, payload);
       } else if (type === "pending-order") {
         response = await pendingOrderAPI.update(id, payload);
-      } else if (type === "pending-material") {
+      } else {
         response = await pendingMaterialAPI.update(id, payload);
       }
 
-      if (response && response.success === false) {
+      if (response?.success === false) {
         toast.error(response.message || "Operation failed");
         return;
       }
 
       toast.success("Follow-up updated successfully");
       onSuccess();
-      resetForm();
-      onClose();
+      handleClose();
     } catch (error: any) {
       toast.error(error.message || "Operation failed");
     } finally {
@@ -150,24 +153,19 @@ export function FollowUpModal({
           <DialogDescription>Update follow-up details</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            id="nextFollowUpDate"
-            label="Next Follow-up Date"
-            required={formData.status === "pending"}
-            type="date"
-            min={new Date().toISOString().split('T')[0]}
-            value={formData.nextFollowUpDate}
-            onChange={(e) => {
-              setFormData({ ...formData, nextFollowUpDate: e.target.value })
-              if (errors.nextFollowUpDate) setErrors({ ...errors, nextFollowUpDate: "" })
-            }}
-            error={errors.nextFollowUpDate}
-          />
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
+            <Label>Status</Label>
             <Select
               value={formData.status}
-              onValueChange={(val) => setFormData({ ...formData, status: val })}
+              onValueChange={(val) =>
+                setFormData({
+                  ...formData,
+                  status: val,
+                  nextFollowUpDate:
+                    val === "completed" ? "" : formData.nextFollowUpDate,
+                  remark: val === "completed" ? "" : formData.remark,
+                })
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
@@ -178,6 +176,33 @@ export function FollowUpModal({
               </SelectContent>
             </Select>
           </div>
+          <Input
+            id="nextFollowUpDate"
+            label="Next Follow-up Date"
+            type="date"
+            min={new Date().toISOString().split("T")[0]}
+            value={formData.nextFollowUpDate}
+            onChange={(e) => {
+              const selectedDate = e.target.value;
+              const today = new Date().toISOString().split("T")[0];
+
+              if (selectedDate < today) {
+                setErrors({
+                  nextFollowUpDate: "Cannot select a past date",
+                });
+                return;
+              }
+
+              setFormData({
+                ...formData,
+                nextFollowUpDate: selectedDate,
+              });
+
+              setErrors({});
+            }}
+            disabled={formData.status === "completed"}
+            error={errors.nextFollowUpDate}
+          />
 
           <div className="space-y-2">
             <Label htmlFor="remark">Remark</Label>
@@ -189,9 +214,9 @@ export function FollowUpModal({
               }
               placeholder="Enter follow-up notes"
               rows={3}
+              disabled={formData.status === "completed"}
             />
           </div>
-
           <DialogFooter>
             <Button
               type="button"
