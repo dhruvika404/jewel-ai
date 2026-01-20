@@ -480,26 +480,6 @@ export default function ClientDetails() {
                               </p>
                             </div>
                           </div>
-
-                          <div className="grid grid-cols-2 gap-2.5">
-                            <div className="space-y-0.5">
-                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                                Order Date
-                              </p>
-                              <p className="text-xs font-semibold text-gray-900">
-                                {formatDisplayDate(item.orderDate)}
-                              </p>
-                            </div>
-                            <div className="space-y-0.5 text-right">
-                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                                Last Movement
-                              </p>
-                              <p className="text-xs font-semibold text-gray-900">
-                                {formatDisplayDate(item.lastMovementDate)}
-                              </p>
-                            </div>
-                          </div>
-
                           <div className="grid grid-cols-3 gap-2.5">
                             <div className="space-y-0.5">
                               <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">

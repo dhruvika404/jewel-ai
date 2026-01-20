@@ -36,6 +36,12 @@ export const API_CONFIG = {
       FOLLOW_UP: "/new-order/follow-up",
       ADD_FOLLOW_UP: "/new-order/add-followup",
     },
+    CAD_ORDER: {
+      LIST: "/cad-order",
+      IMPORT: "/cad-order/import",
+      FOLLOW_UP: "/cad-order/follow-up",
+      ADD_FOLLOW_UP: "/cad-order/add-followup",
+    },
     HEALTH: "/",
   },
 };

@@ -137,6 +137,8 @@ export function PendingMaterialModal({
     if (!formData.salesExecCode) newErrors.salesExecCode = "Sales Executive is required";
     if (!formData.styleNo) newErrors.styleNo = "Style No is required";
     if (!formData.orderNo) newErrors.orderNo = "Order No is required";
+    if (!formData.orderDate) newErrors.orderDate = "Order Date is required";
+    if (!formData.lastMovementDate) newErrors.lastMovementDate = "Last Movement Date is required";
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -250,6 +252,33 @@ export function PendingMaterialModal({
               }}
               placeholder="e.g. ORD-1001"
               error={errors.orderNo}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              id="orderDate"
+              label="Order Date"
+              type="date"
+              required
+              value={formData.orderDate}
+              onChange={(e) => {
+                setFormData({ ...formData, orderDate: e.target.value })
+                if (errors.orderDate) setErrors({ ...errors, orderDate: "" })
+              }}
+              error={errors.orderDate}
+            />
+            <Input
+              id="lastMovementDate"
+              label="Last Movement Date"
+              type="date"
+              required
+              value={formData.lastMovementDate}
+              onChange={(e) => {
+                setFormData({ ...formData, lastMovementDate: e.target.value })
+                if (errors.lastMovementDate) setErrors({ ...errors, lastMovementDate: "" })
+              }}
+              error={errors.lastMovementDate}
             />
           </div>
 

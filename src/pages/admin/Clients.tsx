@@ -17,13 +17,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import TablePagination from "@/components/ui/table-pagination";
-import { Upload, Loader2, Eye, Plus, Pencil } from "lucide-react";
+import { Upload, Loader2, Eye, Plus, Pencil, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { clientAPI, salesPersonAPI } from "@/services/api";
 import { ClientModal } from "@/components/modals/ClientModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDisplayDate } from "@/lib/utils";
+import { DeleteModal } from "@/components/modals/DeleteModal";
 
 interface Client {
   uuid: string;
@@ -87,6 +89,9 @@ export default function Clients() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingClient, setDeletingClient] = useState<Client | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
   const [selectedSalesPerson, setSelectedSalesPerson] = useState<string>("all");
   const [dateRange, setDateRange] = useState<{
@@ -96,6 +101,70 @@ export default function Clients() {
     startDate: "",
     endDate: "",
   });
+
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
+  const toggleSelection = (id: string) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const toggleAllSelection = (currentItems: Client[]) => {
+    const allSelected = currentItems.every((item) => selectedItems.has(item.uuid));
+    if (allSelected) {
+      const newSelected = new Set(selectedItems);
+      currentItems.forEach((item) => newSelected.delete(item.uuid));
+      setSelectedItems(newSelected);
+    } else {
+      const newSelected = new Set(selectedItems);
+      currentItems.forEach((item) => newSelected.add(item.uuid));
+      setSelectedItems(newSelected);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedItems.size === 0) return;
+    setIsBulkDeleting(true);
+    try {
+      const promises = Array.from(selectedItems).map((id) => clientAPI.delete(id));
+      const results = await Promise.all(promises);
+      
+      const failures = results.filter((res: any) => res.success === false);
+      const successes = results.filter((res: any) => res.success !== false);
+
+      if (failures.length > 0) {
+        toast.error(failures[0].message || "Failed to delete some clients");
+      }
+
+      if (successes.length > 0) {
+        if (failures.length === 0) {
+           toast.success("Selected clients deleted successfully");
+        } else {
+           toast.success(`${successes.length} clients deleted successfully`);
+        }
+        loadData();
+      }
+
+      if (failures.length === 0) {
+        setShowBulkDeleteConfirm(false);
+        setSelectedItems(new Set());
+      } else {
+        setShowBulkDeleteConfirm(false);
+        setSelectedItems(new Set());
+      }
+    } catch (e: any) {
+      toast.error("Failed to delete some clients");
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
 
   // Set header
   useEffect(() => {
@@ -132,17 +201,28 @@ export default function Clients() {
             <Upload className="w-4 h-4" />
             Import
           </Button>
-          <Button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Client
-          </Button>
+          {selectedItems.size > 0 ? (
+            <Button
+              variant="destructive"
+              onClick={() => setShowBulkDeleteConfirm(true)}
+              className="flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              ({selectedItems.size})
+            </Button>
+          ) : (
+            <Button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Client
+            </Button>
+          )}
         </>
       ),
     });
-  }, [searchQuery, dateRange, selectedSalesPerson, salesPersons]);
+  }, [searchQuery, dateRange, selectedSalesPerson, salesPersons, selectedItems.size]);
 
   useEffect(() => {
     const fetchSalesPersons = async () => {
@@ -236,6 +316,31 @@ export default function Clients() {
     setShowUploadDialog(false);
   };
 
+  const handleOpenDelete = (client: Client) => {
+    setDeletingClient(client);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingClient) return;
+    setIsDeleting(true);
+    try {
+      const res = await clientAPI.delete(deletingClient.uuid);
+      if (res?.success === false) {
+        toast.error(res?.message || "Failed to delete client");
+        return;
+      }
+      toast.success("Client deleted successfully");
+      setDeleteModalOpen(false);
+      setDeletingClient(null);
+      loadData();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to delete client");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const totalPages = Math.ceil(totalItems / pageSize);
 
   const FollowUpCell = ({ data }: { data?: FollowUpSummary }) => {
@@ -316,6 +421,15 @@ export default function Clients() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
+                  <TableHead className="w-[50px] align-center">
+                    <Checkbox
+                      checked={
+                        clients.length > 0 &&
+                        clients.every((client) => selectedItems.has(client.uuid))
+                      }
+                      onCheckedChange={() => toggleAllSelection(clients)}
+                    />
+                  </TableHead>
                   <TableHead className="font-medium text-gray-700 w-[200px]">
                     Client Name
                   </TableHead>
@@ -359,6 +473,12 @@ export default function Clients() {
                   clients.map((client) => (
                     <TableRow key={client.uuid} className="hover:bg-gray-50">
                       <TableCell className="align-center">
+                        <Checkbox
+                          checked={selectedItems.has(client.uuid)}
+                          onCheckedChange={() => toggleSelection(client.uuid)}
+                        />
+                      </TableCell>
+                      <TableCell className="align-center">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
                             {client.name?.charAt(0) ||
@@ -399,33 +519,45 @@ export default function Clients() {
                       </TableCell>
 
                       <TableCell className="align-center text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <Link
-                            to={`/admin/clients/${client.uuid}`}
-                            state={{ client }}
-                          >
+                          <div className="flex items-center justify-center">
+                            <Link
+                              to={`/admin/clients/${client.uuid}`}
+                              state={{ client }}
+                            >
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                                title="View Details"
+                                disabled={selectedItems.size > 0}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </Link>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                              title="View Details"
+                              className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                              title="Edit Client"
+                              onClick={() => {
+                                setEditingClient(client);
+                                setShowEditModal(true);
+                              }}
+                              disabled={selectedItems.size > 0}
                             >
-                              <Eye className="h-4 w-4" />
+                              <Pencil className="h-4 w-4" />
                             </Button>
-                          </Link>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                            title="Edit Client"
-                            onClick={() => {
-                              setEditingClient(client);
-                              setShowEditModal(true);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                              title="Delete Client"
+                              onClick={() => handleOpenDelete(client)}
+                              disabled={selectedItems.size > 0}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -476,6 +608,36 @@ export default function Clients() {
         }}
         onSuccess={loadData}
         client={editingClient}
+      />
+
+      <DeleteModal
+        isOpen={deleteModalOpen || showBulkDeleteConfirm}
+        onClose={() => {
+          if (isDeleting || isBulkDeleting) return;
+          if (deleteModalOpen) {
+            setDeleteModalOpen(false);
+            setDeletingClient(null);
+          } else {
+            setShowBulkDeleteConfirm(false);
+          }
+        }}
+        onConfirm={deleteModalOpen ? handleConfirmDelete : handleBulkDelete}
+        title={
+          deleteModalOpen
+            ? "Delete Client?"
+            : `Delete ${selectedItems.size} Clients?`
+        }
+        description={
+          deleteModalOpen
+            ? "This action cannot be undone."
+            : "Are you sure you want to delete the selected clients? This action cannot be undone."
+        }
+        itemName={
+          deleteModalOpen && deletingClient
+            ? `${deletingClient.name || "Client"} (${deletingClient.userCode})`
+            : undefined
+        }
+        isLoading={isDeleting || isBulkDeleting}
       />
     </div>
   );

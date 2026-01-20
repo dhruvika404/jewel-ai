@@ -55,7 +55,6 @@ export const authAPI = {
 
       return data;
     } catch (error: any) {
-      console.error("Set Password API Error:", error);
       throw error;
     }
   },
@@ -84,7 +83,6 @@ export const dashboardAPI = {
 
       return data;
     } catch (error: any) {
-      console.error("Dashboard API Error:", error);
       throw error;
     }
   },
@@ -167,11 +165,22 @@ export const salesPersonAPI = {
     );
     return response.json();
   },
+
+  // Delete sales person
+  delete: async (id: string) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.LIST}/${id}`,
+      {
+        method: "DELETE",
+        headers: getHeaders(),
+      }
+    );
+    return response.json();
+  },
 };
 
 // Client APIs
 export const clientAPI = {
-  // Get all clients with pagination and filters
   getAll: async (params?: {
     page?: number;
     size?: number;
@@ -251,7 +260,6 @@ export const clientAPI = {
   // Import client data
   import: async (file: File) => {
     try {
-      // Validate file
       if (!file) {
         throw new Error("No file provided");
       }
@@ -260,7 +268,6 @@ export const clientAPI = {
         throw new Error("File is empty");
       }
 
-      // Test file readability before upload
       await new Promise<ArrayBuffer>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -290,10 +297,6 @@ export const clientAPI = {
       try {
         result = await response.json();
       } catch (parseError) {
-        console.error(
-          "Client import - Failed to parse JSON response:",
-          parseError
-        );
         throw new Error(
           `Server returned invalid JSON. Status: ${response.status}`
         );
@@ -312,9 +315,20 @@ export const clientAPI = {
 
       return result;
     } catch (error: any) {
-      console.error("Client import - Error:", error);
       throw error;
     }
+  },
+
+  // Delete client
+  delete: async (id: string) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.LIST}/${id}`,
+      {
+        method: "DELETE",
+        headers: getHeaders(),
+      }
+    );
+    return response.json();
   },
 };
 
@@ -470,6 +484,18 @@ export const pendingOrderAPI = {
     );
     return response.json();
   },
+
+  // Delete pending order
+  delete: async (id: string) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.LIST}/${id}`,
+      {
+        method: "DELETE",
+        headers: getHeaders(),
+      }
+    );
+    return response.json();
+  },
 };
 
 // Pending Material APIs
@@ -554,6 +580,7 @@ export const pendingMaterialAPI = {
       nextFollowUpDate?: string;
       lastFollowUpMsg?: string;
       status?: string;
+      remark?: string;
     }
   ) => {
     const response = await fetch(
@@ -621,6 +648,18 @@ export const pendingMaterialAPI = {
         method: "POST",
         headers: getUploadHeaders(),
         body: formData,
+      }
+    );
+    return response.json();
+  },
+
+  // Delete pending material
+  delete: async (id: string) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.LIST}/${id}`,
+      {
+        method: "DELETE",
+        headers: getHeaders(),
       }
     );
     return response.json();
@@ -779,6 +818,99 @@ export const newOrderAPI = {
         method: "POST",
         headers: getUploadHeaders(),
         body: formData,
+      }
+    );
+    return response.json();
+  },
+
+  // Delete new order
+  delete: async (id: string) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.LIST}/${id}`,
+      {
+        method: "DELETE",
+        headers: getHeaders(),
+      }
+    );
+    return response.json();
+  },
+};
+
+// Cad Order APIs
+export const cadOrderAPI = {
+  // Get all cad orders with pagination
+  getAll: async (params?: {
+    page?: number;
+    size?: number;
+    clientCode?: string;
+    search?: string;
+    status?: string;
+    sortBy?: string;
+    sortOrder?: string;
+    startDate?: string;
+    endDate?: string;
+    salesExecCode?: string;
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.size) queryParams.append("size", params.size.toString());
+    if (params?.clientCode) queryParams.append("clientCode", params.clientCode);
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.sortBy) queryParams.append("shortBy", params.sortBy);
+    if (params?.sortOrder) queryParams.append("shortOrder", params.sortOrder);
+    if (params?.startDate) queryParams.append("startDate", params.startDate);
+    if (params?.endDate) queryParams.append("endDate", params.endDate);
+    if (params?.salesExecCode) queryParams.append("salesExecCode", params.salesExecCode);
+
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CAD_ORDER.LIST}?${queryParams}`,
+      { headers: getHeaders() }
+    );
+    return response.json();
+  },
+
+  // Import cad order data
+  import: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CAD_ORDER.IMPORT}`,
+      {
+        method: "POST",
+        headers: getUploadHeaders(),
+        body: formData,
+      }
+    );
+    return response.json();
+  },
+
+  // Add follow-up for cad order
+  addFollowUp: async (data: {
+    cadOrderRecordId: string;
+    followUpMsg: string;
+    nextFollowUpDate: string;
+    status: string;
+  }) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CAD_ORDER.ADD_FOLLOW_UP}`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
+  },
+
+  // Delete cad order
+  delete: async (id: string) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CAD_ORDER.LIST}/${id}`,
+      {
+        method: "DELETE",
+        headers: getHeaders(),
       }
     );
     return response.json();

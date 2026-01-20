@@ -129,13 +129,11 @@ export default function ExcelUpload() {
 
           toast.success(`File "${file.name}" selected and content preserved`);
         } else {
-          console.error(`❌ File ${file.name} is not readable or empty`);
           toast.error("Selected file cannot be read or is empty");
         }
       };
 
       reader.onerror = (e) => {
-        console.error("File read error:", e);
         toast.error("Error reading selected file");
       };
 
@@ -203,7 +201,6 @@ export default function ExcelUpload() {
         throw new Error(result.message || result.error || "Upload failed");
       }
     } catch (error: any) {
-      console.error(`Upload error for ${item.name}:`, error);
       setUploadStatus((prev) => ({
         ...prev,
         [item.id]: {

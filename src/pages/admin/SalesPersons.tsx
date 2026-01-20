@@ -36,11 +36,14 @@ import {
   FileText,
   Pencil,
   KeyRoundIcon,
+  Trash2,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { salesPersonAPI, authAPI } from "@/services/api";
 import { Label } from "@/components/ui/label";
+import { DeleteModal } from "@/components/modals/DeleteModal";
 
 interface SalesPerson {
   uuid: string;
@@ -84,6 +87,85 @@ export default function SalesPersons() {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [fileFormat, setFileFormat] = useState("excel");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingSalesPerson, setDeletingSalesPerson] =
+    useState<SalesPerson | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
+  const toggleSelection = (id: string) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const toggleAllSelection = (currentItems: SalesPerson[]) => {
+    const allSelected = currentItems.every((item) => selectedItems.has(item.uuid));
+    if (allSelected) {
+      const newSelected = new Set(selectedItems);
+      currentItems.forEach((item) => newSelected.delete(item.uuid));
+      setSelectedItems(newSelected);
+    } else {
+      const newSelected = new Set(selectedItems);
+      currentItems.forEach((item) => newSelected.add(item.uuid));
+      setSelectedItems(newSelected);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedItems.size === 0) return;
+    setIsBulkDeleting(true);
+    try {
+      const promises = Array.from(selectedItems).map((id) => salesPersonAPI.delete(id));
+      const results = await Promise.all(promises);
+      
+      const failures = results.filter((res: any) => res.success === false);
+      const successes = results.filter((res: any) => res.success !== false);
+
+      if (failures.length > 0) {
+        // Show the first error message as requested
+        toast.error(failures[0].message || "Failed to delete some sales persons");
+      }
+
+      if (successes.length > 0) {
+        if (failures.length === 0) {
+           toast.success("Selected sales persons deleted successfully");
+        } else {
+           toast.success(`${successes.length} sales persons deleted successfully`);
+        }
+        // Always refresh data if at least one success
+        loadData();
+      }
+
+      // If all succeeded, clear selection and close modal
+      if (failures.length === 0) {
+        setShowBulkDeleteConfirm(false);
+        setSelectedItems(new Set());
+      } else {
+        // Optional: Update selection to only reflect failed items? 
+        // For now, let's leave selection as is or maybe user wants to see what happened.
+        // But usually closing modal is expected if action is "done" (even partially).
+        // Let's keep modal open if there are failures so user knows? 
+        // Or close it.
+        // The user request was specific about showing the message.
+        setShowBulkDeleteConfirm(false); 
+        // We will clear selection to avoid confusion or re-deleting same things if UI didn't update yet
+        // Actually best UX is reload data, and if items persist (because failed delete), they reappear.
+        setSelectedItems(new Set());
+      }
+    } catch (e: any) {
+      toast.error("Failed to delete sales persons");
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
 
   const getAcceptType = () => {
     switch (fileFormat) {
@@ -113,14 +195,25 @@ export default function SalesPersons() {
             <Upload className="w-4 h-4" />
             Import
           </Button>
-          <Button onClick={handleOpenAdd} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Add New
-          </Button>
+          {selectedItems.size > 0 ? (
+            <Button
+              variant="destructive"
+              onClick={() => setShowBulkDeleteConfirm(true)}
+              className="flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              ({selectedItems.size})
+            </Button>
+          ) : (
+            <Button onClick={handleOpenAdd} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Add New
+            </Button>
+          )}
         </>
       ),
     });
-  }, [searchQuery]);
+  }, [searchQuery, selectedItems.size]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -185,6 +278,31 @@ export default function SalesPersons() {
     });
     setErrors({});
     setShowFormDialog(true);
+  };
+
+  const handleOpenDelete = (sp: SalesPerson) => {
+    setDeletingSalesPerson(sp);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingSalesPerson) return;
+    setIsDeleting(true);
+    try {
+      const res = await salesPersonAPI.delete(deletingSalesPerson.uuid);
+      if (res?.success === false) {
+        toast.error(res?.message || "Failed to delete sales person");
+        return;
+      }
+      toast.success("Sales person deleted successfully");
+      setDeleteModalOpen(false);
+      setDeletingSalesPerson(null);
+      loadData();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to delete sales person");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const validate = () => {
@@ -307,6 +425,15 @@ export default function SalesPersons() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
+                  <TableHead className="w-[50px] align-center">
+                    <Checkbox
+                      checked={
+                        salesPersons.length > 0 &&
+                        salesPersons.every((sp) => selectedItems.has(sp.uuid))
+                      }
+                      onCheckedChange={() => toggleAllSelection(salesPersons)}
+                    />
+                  </TableHead>
                   <TableHead className="font-medium text-gray-700 w-[100px]">
                     Name
                   </TableHead>
@@ -346,6 +473,12 @@ export default function SalesPersons() {
                 ) : (
                   salesPersons.map((sp) => (
                     <TableRow key={sp.uuid} className="hover:bg-gray-50">
+                      <TableCell className="align-center">
+                        <Checkbox
+                          checked={selectedItems.has(sp.uuid)}
+                          onCheckedChange={() => toggleSelection(sp.uuid)}
+                        />
+                      </TableCell>
                       <TableCell className="align-center">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs shrink-0">
@@ -396,27 +529,39 @@ export default function SalesPersons() {
                         </Badge>
                       </TableCell>
                       <TableCell className="align-center">
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                            className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
                             title="Edit Details"
                             onClick={() => handleOpenEdit(sp)}
+                            disabled={selectedItems.size > 0}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                            className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
                             title="Set Password"
                             onClick={() => {
                               setSelectedSalesPerson(sp);
                               setShowPasswordDialog(true);
                             }}
+                            disabled={selectedItems.size > 0}
                           >
                             <KeyRoundIcon className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-100"
+                            title="Delete"
+                            onClick={() => handleOpenDelete(sp)}
+                            disabled={selectedItems.size > 0}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -657,6 +802,36 @@ export default function SalesPersons() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DeleteModal
+        isOpen={deleteModalOpen || showBulkDeleteConfirm}
+        onClose={() => {
+          if (isDeleting || isBulkDeleting) return;
+          if (deleteModalOpen) {
+            setDeleteModalOpen(false);
+            setDeletingSalesPerson(null);
+          } else {
+            setShowBulkDeleteConfirm(false);
+          }
+        }}
+        onConfirm={deleteModalOpen ? handleConfirmDelete : handleBulkDelete}
+        title={
+          deleteModalOpen
+            ? "Delete Sales Person?"
+            : `Delete ${selectedItems.size} Sales Persons?`
+        }
+        description={
+          deleteModalOpen
+            ? "This action cannot be undone."
+            : "Are you sure you want to delete the selected sales persons? This action cannot be undone."
+        }
+        itemName={
+          deleteModalOpen && deletingSalesPerson
+            ? `${deletingSalesPerson.name} (${deletingSalesPerson.userCode})`
+            : undefined
+        }
+        isLoading={isDeleting || isBulkDeleting}
+      />
     </div>
   );
 }

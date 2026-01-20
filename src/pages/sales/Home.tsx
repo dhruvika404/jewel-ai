@@ -162,7 +162,6 @@ export default function SalesHome() {
 
       calculateCounts(allFollowUps);
     } catch (error: any) {
-      console.error("Error loading follow-ups:", error);
       toast.error("Failed to load follow-ups");
     } finally {
       setLoading(false);
