@@ -271,10 +271,13 @@ export function NewOrderModal({
               <Input
                 id="nextFollowUpDate"
                 type="date"
+                min={new Date().toISOString().split('T')[0]}
                 value={formData.nextFollowUpDate}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormData({ ...formData, nextFollowUpDate: e.target.value })
-                }
+                  if (errors.nextFollowUpDate) setErrors({ ...errors, nextFollowUpDate: "" })
+                }}
+                error={errors.nextFollowUpDate}
               />
             </div>
             <div className="space-y-2">

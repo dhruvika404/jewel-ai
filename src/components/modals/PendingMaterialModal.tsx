@@ -308,22 +308,28 @@ export function PendingMaterialModal({
               id="expectedDeliveryDate"
               label="Expected Delivery Date"
               type="date"
+              min={new Date().toISOString().split('T')[0]}
               value={formData.expectedDeliveryDate}
-              onChange={(e) =>
+              onChange={(e) => {
                 setFormData({
                   ...formData,
                   expectedDeliveryDate: e.target.value,
                 })
-              }
+                if (errors.expectedDeliveryDate) setErrors({ ...errors, expectedDeliveryDate: "" })
+              }}
+              error={errors.expectedDeliveryDate}
             />
             <Input
               id="nextFollowUpDate"
               label="Next Follow-up Date"
               type="date"
+              min={new Date().toISOString().split('T')[0]}
               value={formData.nextFollowUpDate}
-              onChange={(e) =>
+              onChange={(e) => {
                 setFormData({ ...formData, nextFollowUpDate: e.target.value })
-              }
+                if (errors.nextFollowUpDate) setErrors({ ...errors, nextFollowUpDate: "" })
+              }}
+              error={errors.nextFollowUpDate}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">

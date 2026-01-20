@@ -298,6 +298,7 @@ export default function SalesFollowups() {
                 <Input
                   id="dueDate"
                   type="date"
+                  min={new Date().toISOString().split('T')[0]}
                   value={newFollowup.dueDate}
                   onChange={(e) =>
                     setNewFollowup({ ...newFollowup, dueDate: e.target.value })

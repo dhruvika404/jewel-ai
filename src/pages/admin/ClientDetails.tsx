@@ -919,6 +919,7 @@ export default function ClientDetails() {
                 <Input
                   id="date"
                   type="date"
+                  min={new Date().toISOString().split('T')[0]}
                   value={formData.nextFollowUpDate}
                   onChange={(e) =>
                     setFormData({

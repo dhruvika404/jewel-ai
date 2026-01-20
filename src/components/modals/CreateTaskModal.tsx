@@ -241,8 +241,13 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
               id="expectedDeliveryDate"
               label="Expected Delivery Date"
               type="date"
+              min={new Date().toISOString().split('T')[0]}
               value={formData?.expectedDeliveryDate}
-              onChange={(e) => setFormData({ ...formData, expectedDeliveryDate: e?.target?.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, expectedDeliveryDate: e?.target?.value })
+                if (errors.expectedDeliveryDate) setErrors({ ...errors, expectedDeliveryDate: '' })
+              }}
+              error={errors.expectedDeliveryDate}
             />
             <Input
               id="orderDate"
@@ -381,6 +386,7 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
               label="Next Follow-up Date"
               required
               type="date"
+              min={new Date().toISOString().split('T')[0]}
               value={formData?.nextFollowUpDate}
               onChange={(e) => {
                 setFormData({ ...formData, nextFollowUpDate: e?.target?.value })

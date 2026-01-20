@@ -155,6 +155,7 @@ export function FollowUpModal({
             label="Next Follow-up Date"
             required={formData.status === "pending"}
             type="date"
+            min={new Date().toISOString().split('T')[0]}
             value={formData.nextFollowUpDate}
             onChange={(e) => {
               setFormData({ ...formData, nextFollowUpDate: e.target.value })

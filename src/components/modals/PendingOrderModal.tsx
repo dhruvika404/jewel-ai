@@ -126,7 +126,15 @@ export function PendingOrderModal({
     if (!formData.totalOrderPcs) newErrors.totalOrderPcs = "Total Order Pcs is required";
     if (!formData.pendingPcs) newErrors.pendingPcs = "Pending Pcs is required";
     if (!formData.nextFollowUpDate) newErrors.nextFollowUpDate = "Next Follow-up Date is required";
-
+    
+    if (formData.totalOrderPcs && formData.pendingPcs) {
+      const totalPcs = Number(formData.totalOrderPcs);
+      const pendingPcs = Number(formData.pendingPcs);
+      if (pendingPcs > totalPcs) {
+        newErrors.pendingPcs = "Pending Pcs cannot exceed Total Order Pcs";
+      }
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -288,6 +296,7 @@ export function PendingOrderModal({
               label="Next Follow-up Date"
               required
               type="date"
+              min={new Date().toISOString().split('T')[0]}
               value={formData.nextFollowUpDate}
               onChange={(e) => {
                 setFormData({ ...formData, nextFollowUpDate: e.target.value })
