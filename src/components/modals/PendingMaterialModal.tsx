@@ -267,6 +267,7 @@ export function PendingMaterialModal({
                 if (errors.orderDate) setErrors({ ...errors, orderDate: "" })
               }}
               error={errors.orderDate}
+              max={new Date().toISOString().split('T')[0]}
             />
             <Input
               id="lastMovementDate"
@@ -279,6 +280,7 @@ export function PendingMaterialModal({
                 if (errors.lastMovementDate) setErrors({ ...errors, lastMovementDate: "" })
               }}
               error={errors.lastMovementDate}
+              max={new Date().toISOString().split('T')[0]}
             />
           </div>
 

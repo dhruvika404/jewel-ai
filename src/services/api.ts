@@ -808,7 +808,6 @@ export const newOrderAPI = {
 
   // Import new order data
   import: async (file: File) => {
-
     const formData = new FormData();
     formData.append("file", file);
 

@@ -261,6 +261,7 @@ export function PendingOrderModal({
                 if (errors.orderDate) setErrors({ ...errors, orderDate: "" })
               }}
               error={errors.orderDate}
+              max={new Date().toISOString().split('T')[0]}
             />
           </div>
 

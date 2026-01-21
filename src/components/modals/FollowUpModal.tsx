@@ -97,14 +97,13 @@ export function FollowUpModal({
 
     setLoading(true);
     try {
-      const payload =
-        formData.status === "completed"
-          ? { status: formData.status }
-          : {
-              status: formData.status,
-              nextFollowUpDate: formData.nextFollowUpDate,
-              remark: formData.remark,
-            };
+      const payload = Object.fromEntries(
+        Object.entries({
+          nextFollowUpDate: formData.nextFollowUpDate,
+          status: formData.status,
+          remark: formData.remark,
+        }).filter(([_, v]) => v !== "" && v !== null && v !== undefined),
+      );
 
       const id = data.uuid || data.id || data._id;
 
@@ -214,7 +213,6 @@ export function FollowUpModal({
               }
               placeholder="Enter follow-up notes"
               rows={3}
-              disabled={formData.status === "completed"}
             />
           </div>
           <DialogFooter>

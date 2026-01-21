@@ -255,6 +255,7 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
               type="date"
               value={formData?.orderDate}
               onChange={(e) => setFormData({ ...formData, orderDate: e?.target?.value })}
+              max={new Date().toISOString().split('T')[0]}
             />
             <Input
               id="lastMovementDate"
@@ -262,6 +263,7 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
               type="date"
               value={formData?.lastMovementDate}
               onChange={(e) => setFormData({ ...formData, lastMovementDate: e?.target?.value })}
+              max={new Date().toISOString().split('T')[0]}
             />
           </>
         )
@@ -292,6 +294,7 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
                 if (errors.orderDate) setErrors({ ...errors, orderDate: '' })
               }}
               error={errors.orderDate}
+              max={new Date().toISOString().split('T')[0]}
             />
             <Input
               id="grossWtTotal"
@@ -333,6 +336,7 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
               type="date"
               value={formData?.lastSaleDate}
               onChange={(e) => setFormData({ ...formData, lastSaleDate: e?.target?.value })}
+              max={new Date().toISOString().split('T')[0]}
             />
             <Input
               id="lastOrderDate"
@@ -340,6 +344,7 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
               type="date"
               value={formData?.lastOrderDate}
               onChange={(e) => setFormData({ ...formData, lastOrderDate: e?.target?.value })}
+              max={new Date().toISOString().split('T')[0]}
             />
           </>
         )

@@ -250,6 +250,7 @@ export function NewOrderModal({
                 onChange={(e) =>
                   setFormData({ ...formData, lastSaleDate: e.target.value })
                 }
+                max={new Date().toISOString().split('T')[0]}
               />
             </div>
             <div className="space-y-2">
@@ -261,6 +262,7 @@ export function NewOrderModal({
                 onChange={(e) =>
                   setFormData({ ...formData, lastOrderDate: e.target.value })
                 }
+                max={new Date().toISOString().split('T')[0]}
               />
             </div>
           </div>
