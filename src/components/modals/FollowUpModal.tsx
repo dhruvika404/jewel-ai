@@ -162,7 +162,6 @@ export function FollowUpModal({
                   status: val,
                   nextFollowUpDate:
                     val === "completed" ? "" : formData.nextFollowUpDate,
-                  remark: val === "completed" ? "" : formData.remark,
                 })
               }
             >

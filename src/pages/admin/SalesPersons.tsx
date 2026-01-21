@@ -418,12 +418,11 @@ export default function SalesPersons() {
   const totalPages = Math.ceil(totalItems / pageSize);
 
   return (
-    <div className="bg-gray-50 pb-6">
+    <div className="bg-gray-50">
       <div className="p-6 space-y-6">
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
+            <Table containerClassName="max-h-[calc(100vh-180px)] overflow-auto">
+              <TableHeader className="sticky top-0 z-20 bg-gray-50">
                 <TableRow className="bg-gray-50">
                   <TableHead className="w-[50px] align-center">
                     <Checkbox
@@ -569,9 +568,7 @@ export default function SalesPersons() {
                   ))
                 )}
               </TableBody>
-            </Table>
-          </div>
-
+              </Table>
           {totalItems > 0 && (
             <div className="p-4 border-t bg-white flex justify-between items-center">
               <div className="text-sm text-gray-600">

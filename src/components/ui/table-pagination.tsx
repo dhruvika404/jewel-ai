@@ -105,7 +105,11 @@ const TablePagination: React.FC<TablePaginationProps> = ({
         <span className="whitespace-nowrap text-gray-500">Rows per page:</span>
         <Select
           value={String(pageSize)}
-          onValueChange={(val) => setPageSize(Number(val))}
+          onValueChange={(val) => {
+            const nextSize = Number(val);
+            onPageChange(1);
+            setPageSize(nextSize);
+          }}
         >
           <SelectTrigger className="h-8 w-[70px] bg-gray-50 border-none shadow-none focus:ring-0">
             <SelectValue />

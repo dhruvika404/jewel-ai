@@ -94,7 +94,7 @@ export default function Clients() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
   const [selectedSalesPerson, setSelectedSalesPerson] = useState<string>("all");
-  const [dateRange, setDateRange] = useState<{
+  const [dateRange] = useState<{
     startDate: string;
     endDate: string;
   }>({
@@ -417,9 +417,8 @@ export default function Clients() {
               <span className="text-gray-600">5+ Days Overdue</span>
             </div>
           </div>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
+          <Table containerClassName="max-h-[calc(100vh-236px)] overflow-auto">
+              <TableHeader className="sticky top-0 z-20 bg-gray-50">
                 <TableRow className="bg-gray-50">
                   <TableHead className="w-[50px] align-center">
                     <Checkbox
@@ -564,7 +563,6 @@ export default function Clients() {
                 )}
               </TableBody>
             </Table>
-          </div>
 
           <div className="p-4 border-t bg-white flex justify-between items-center">
             <div className="text-sm text-gray-600">

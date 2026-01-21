@@ -263,16 +263,10 @@ export default function Followups() {
     setIsBulkProcessing(true);
     try {
       const promises = Array.from(selectedItems).map((id) => {
-        // For bulk remark, we assume we update the remark field or add a follow-up with the remark
-        // Based on single item update, we use update endpoint with remark field
         const payload = { remark: bulkRemarkText };
         if (followupType === "new-order") return newOrderAPI.update(id, payload);
         if (followupType === "pending-order") return pendingOrderAPI.update(id, payload);
         if (followupType === "pending-material") return pendingMaterialAPI.update(id, payload);
-        // Cad order doesn't seem to have update in the same way or wasn't prominent, skipping or assuming update exists
-        // Checking api.ts for cadOrderAPI... actually it wasn't valid in my previous read? 
-        // validTypes includes 'cad-order'. Let me check api.ts for cadOrderAPI later. 
-        // For now safe to assume if validType allows it.
         return Promise.resolve(); 
       });
 
@@ -1082,9 +1076,8 @@ export default function Followups() {
         </Dialog>
 
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
+         <Table containerClassName="max-h-[calc(100vh-247px)] overflow-auto">
+              <TableHeader className="sticky top-0 z-20 bg-gray-50">
                 <TableRow className="bg-gray-50">
                   <TableHead className="w-[50px] align-center">
                     <Checkbox
@@ -1783,7 +1776,6 @@ export default function Followups() {
                 )}
               </TableBody>
             </Table>
-          </div>
 
           <div className="p-4 border-t bg-white flex justify-between items-center">
             <div className="text-sm text-gray-600">
