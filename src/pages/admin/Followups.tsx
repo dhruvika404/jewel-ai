@@ -1146,9 +1146,9 @@ export default function Followups() {
                           {getSortIcon("lastFollowUpDate")}
                         </div>
                       </TableHead>
-                      <TableHead className="font-medium text-gray-700 whitespace-nowrap">
+                      {/* <TableHead className="font-medium text-gray-700 whitespace-nowrap">
                         Taken By
-                      </TableHead>
+                      </TableHead> */}
                       <TableHead
                         className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
                         onClick={() => handleSort("nextFollowUpDate")}
@@ -1223,9 +1223,9 @@ export default function Followups() {
                           {getSortIcon("lastFollowUpDate")}
                         </div>
                       </TableHead>
-                      <TableHead className="font-medium text-gray-700 whitespace-nowrap">
+                      {/* <TableHead className="font-medium text-gray-700 whitespace-nowrap">
                         Taken By
-                      </TableHead>
+                      </TableHead> */}
                       <TableHead
                         className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
                         onClick={() => handleSort("nextFollowUpDate")}
@@ -1290,9 +1290,9 @@ export default function Followups() {
                           {getSortIcon("lastFollowUpDate")}
                         </div>
                       </TableHead>
-                      <TableHead className="font-medium text-gray-700 whitespace-nowrap">
+                      {/* <TableHead className="font-medium text-gray-700 whitespace-nowrap">
                         Taken By
-                      </TableHead>
+                      </TableHead> */}
                       <TableHead
                         className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
                         onClick={() => handleSort("nextFollowupDate")}
@@ -1426,14 +1426,14 @@ export default function Followups() {
                               {formatDisplayDate(fu.lastFollowUpDate)}
                             </div>
                           </TableCell>
-                          <TableCell className="align-center">
+                          {/* <TableCell className="align-center">
                             <div
                               className="text-sm text-gray-900 truncate max-w-[100px]"
                               title={fu.lastFollowUpBy || ""}
                             >
                               {fu.lastFollowUpBy || "-"}
                             </div>
-                          </TableCell>
+                          </TableCell> */}
                           <TableCell className="align-center">
                             <div className="text-sm text-gray-900">
                               {formatDisplayDate(fu.nextFollowupDate)}
@@ -1556,14 +1556,14 @@ export default function Followups() {
                               {formatDisplayDate(fu.lastFollowUpDate)}
                             </div>
                           </TableCell>
-                          <TableCell className="align-center">
+                          {/* <TableCell className="align-center">
                             <div
                               className="text-sm text-gray-900 truncate max-w-[100px]"
                               title={fu.lastFollowUpBy || ""}
                             >
                               {fu.lastFollowUpBy || "-"}
                             </div>
-                          </TableCell>
+                          </TableCell> */}
                           <TableCell className="align-center">
                             <div className="text-sm text-gray-900">
                               {formatDisplayDate(fu.nextFollowupDate)}
@@ -1687,14 +1687,14 @@ export default function Followups() {
                               {formatDisplayDate(fu.lastFollowUpDate)}
                             </div>
                           </TableCell>
-                          <TableCell className="align-center">
+                          {/* <TableCell className="align-center">
                             <div
                               className="text-sm text-gray-900 truncate max-w-[100px]"
                               title={fu.lastFollowUpBy || ""}
                             >
                               {fu.lastFollowUpBy || "-"}
                             </div>
-                          </TableCell>
+                          </TableCell> */}
                           <TableCell className="align-center">
                             <div className="text-sm text-gray-900">
                               {formatDisplayDate(fu.nextFollowupDate)}
