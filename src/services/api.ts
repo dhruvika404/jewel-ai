@@ -916,11 +916,83 @@ export const cadOrderAPI = {
   },
 };
 
-// Health check
-export const healthAPI = {
-  check: async () => {
+export const remarkAPI = {
+  getAll: async (params?: {
+    page?: number;
+    size?: number;
+    followUpTypeId?: string | null;
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.size) queryParams.append("size", params.size.toString());
+    if (params?.followUpTypeId !== undefined) {
+      if (params.followUpTypeId) {
+        queryParams.append("followUpTypeId", params.followUpTypeId);
+      } else {
+        queryParams.append("followUpTypeId", "null");
+      }
+    }
+
     const response = await fetch(
-      `${API_CONFIG.BASE_URL.replace("/api", "")}${API_CONFIG.ENDPOINTS.HEALTH}`
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.REMARK.LIST}?${queryParams}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.json();
+  },
+  createBulk: async (data: {
+    remarks: Array<{
+      remarkMsg: string;
+      salesExecCode: string;
+      clientCode: string;
+      entityType: "pendingOrders" | "pendingMaterials" | "newOrders" | "cadOrders";
+      entityId: string;
+    }>;
+  }) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.REMARK.LIST}`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
+  },
+  getByFollowUpTypeId: async (params: {
+    followUpTypeId: string;
+    page?: number;
+    size?: number;
+  }) => {
+    const queryParams = new URLSearchParams();
+    queryParams.append("followUpTypeId", params.followUpTypeId);
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.size) queryParams.append("size", params.size.toString());
+
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.REMARK.LIST}?${queryParams}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return response.json();
+  },
+};
+
+export const sharedAPI = {
+  updateStatus: async (data: {
+    entityType: "pendingOrders" | "pendingMaterials" | "newOrders";
+    status: "pending" | "completed";
+    ids: string[];
+  }) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SHARED.STATUS}`,
+      {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
     );
     return response.json();
   },

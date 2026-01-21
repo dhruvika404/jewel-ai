@@ -42,7 +42,12 @@ export const API_CONFIG = {
       FOLLOW_UP: "/cad-order/follow-up",
       ADD_FOLLOW_UP: "/cad-order/add-followup",
     },
-    HEALTH: "/",
+    REMARK: {
+      LIST: "/remark",
+    },
+    SHARED: {
+      STATUS: "/shared-api/status",
+    },
   },
 };
 
