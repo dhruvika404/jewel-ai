@@ -460,13 +460,10 @@ export default function SalesPersons() {
                 ) : salesPersons.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={5}
-                      className="text-center py-24 text-gray-500"
+                      colSpan={7}
+                      className="text-center py-8 text-muted-foreground"
                     >
-                      <Users className="h-12 w-12 text-gray-200 mb-4 mx-auto" />
-                      <h3 className="text-lg font-medium text-gray-900">
-                        No sales persons found
-                      </h3>
+                      No sales persons found
                     </TableCell>
                   </TableRow>
                 ) : (
