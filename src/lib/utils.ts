@@ -42,3 +42,14 @@ export function formatDisplayDate(dateString: string | null | undefined): string
     return '-'
   }
 }
+
+/**
+ * Removes null, undefined, and empty string values from an object
+ * @param obj Object to filter
+ * @returns New object with empty values removed
+ */
+export function filterEmptyValues<T extends Record<string, any>>(obj: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, v]) => v !== null && v !== undefined && v !== '')
+  ) as Partial<T>
+}

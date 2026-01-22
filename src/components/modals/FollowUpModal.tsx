@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { formatDateForInput } from "@/lib/utils";
+import { formatDateForInput, filterEmptyValues } from "@/lib/utils";
 
 interface FollowUpModalProps {
   isOpen: boolean;
@@ -97,13 +97,11 @@ export function FollowUpModal({
 
     setLoading(true);
     try {
-      const payload = Object.fromEntries(
-        Object.entries({
-          nextFollowUpDate: formData.nextFollowUpDate,
-          status: formData.status,
-          remark: formData.remark,
-        }).filter(([_, v]) => v !== "" && v !== null && v !== undefined),
-      );
+      const payload = filterEmptyValues({
+        nextFollowUpDate: formData.nextFollowUpDate,
+        status: formData.status,
+        remark: formData.remark,
+      });
 
       const id = data.uuid || data.id || data._id;
 
@@ -182,20 +180,24 @@ export function FollowUpModal({
             value={formData.nextFollowUpDate}
             onChange={(e) => {
               const selectedDate = e.target.value;
-              const today = new Date().toISOString().split("T")[0];
-
-              if (selectedDate < today) {
-                setErrors({
-                  nextFollowUpDate: "Cannot select a past date",
-                });
-                return;
-              }
-
               setFormData({
                 ...formData,
                 nextFollowUpDate: selectedDate,
               });
-
+            }}
+            onBlur={(e) => {
+              const typedDate = e.target.value;
+              const today = new Date().toISOString().split("T")[0];
+              if (typedDate && typedDate < today) {
+                setErrors({
+                  nextFollowUpDate: "Cannot select a past date",
+                });
+                setFormData({
+                  ...formData,
+                  nextFollowUpDate: "",
+                });
+                return;
+              }
               setErrors({});
             }}
             disabled={formData.status === "completed"}
