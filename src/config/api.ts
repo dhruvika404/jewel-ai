@@ -47,6 +47,7 @@ export const API_CONFIG = {
     },
     SHARED: {
       STATUS: "/shared-api/status",
+      DELETE_MULTIPLE: "/shared-api/delete-multiple-followups",
     },
   },
 };

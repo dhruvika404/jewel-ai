@@ -996,4 +996,18 @@ export const sharedAPI = {
     );
     return response.json();
   },
+  deleteMultiple: async (data: {
+    entityType: "pendingOrders" | "pendingMaterials" | "newOrders" | "cadOrders";
+    ids: string[];
+  }) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SHARED.DELETE_MULTIPLE}`,
+      {
+        method: "DELETE",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
+  },
 };

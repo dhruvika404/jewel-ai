@@ -250,22 +250,37 @@ export default function Followups() {
     if (selectedItems.size === 0) return;
     setIsBulkProcessing(true);
     try {
-      const promises = Array.from(selectedItems).map((id) => {
-        if (followupType === "new-order") return newOrderAPI.delete(id);
-        if (followupType === "pending-order") return pendingOrderAPI.delete(id);
-        if (followupType === "pending-material")
-          return pendingMaterialAPI.delete(id);
-        if (followupType === "cad-order") return cadOrderAPI.delete(id);
-        return Promise.resolve();
-      });
+      const entityTypeMap: Record<
+        FollowupType,
+        "pendingOrders" | "pendingMaterials" | "newOrders" | "cadOrders"
+      > = {
+        "new-order": "newOrders",
+        "pending-order": "pendingOrders",
+        "pending-material": "pendingMaterials",
+        "cad-order": "cadOrders",
+      };
 
-      await Promise.all(promises);
-      toast.success("Selected records deleted successfully");
-      setShowBulkDeleteConfirm(false);
-      setSelectedItems(new Set());
-      loadFollowupData();
+      const payload = {
+        entityType: entityTypeMap[followupType],
+        ids: Array.from(selectedItems),
+      };
+
+      const response = await sharedAPI.deleteMultiple(payload);
+
+      if (response?.success === false) {
+        toast.error(response?.message || "Failed to delete selected records");
+      } else {
+        toast.success(
+          `Successfully deleted ${selectedItems.size} selected records`,
+        );
+        setShowBulkDeleteConfirm(false);
+        setSelectedItems(new Set());
+        loadFollowupData();
+      }
     } catch (e: any) {
-      toast.error("Failed to delete some records");
+      toast.error(
+        e?.message || "Failed to delete selected records. Please try again.",
+      );
     } finally {
       setIsBulkProcessing(false);
     }
