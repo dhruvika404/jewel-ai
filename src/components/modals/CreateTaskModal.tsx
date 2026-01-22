@@ -247,6 +247,14 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
                 setFormData({ ...formData, expectedDeliveryDate: e?.target?.value })
                 if (errors.expectedDeliveryDate) setErrors({ ...errors, expectedDeliveryDate: '' })
               }}
+              onBlur={(e) => {
+                const typedDate = e.target.value;
+                const today = new Date().toISOString().split('T')[0];
+                if (typedDate && typedDate < today) {
+                  setErrors({ ...errors, expectedDeliveryDate: 'Cannot select a past date' });
+                  setFormData({ ...formData, expectedDeliveryDate: '' });
+                }
+              }}
               error={errors.expectedDeliveryDate}
             />
             <Input
@@ -255,6 +263,15 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
               type="date"
               value={formData?.orderDate}
               onChange={(e) => setFormData({ ...formData, orderDate: e?.target?.value })}
+              onBlur={(e) => {
+                const typedDate = e.target.value;
+                const today = new Date().toISOString().split('T')[0];
+                if (typedDate && typedDate > today) {
+                  setErrors({ ...errors, orderDate: 'Cannot select a future date' });
+                  setFormData({ ...formData, orderDate: '' });
+                }
+              }}
+              error={errors.orderDate}
               max={new Date().toISOString().split('T')[0]}
             />
             <Input
@@ -263,6 +280,15 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
               type="date"
               value={formData?.lastMovementDate}
               onChange={(e) => setFormData({ ...formData, lastMovementDate: e?.target?.value })}
+              onBlur={(e) => {
+                const typedDate = e.target.value;
+                const today = new Date().toISOString().split('T')[0];
+                if (typedDate && typedDate > today) {
+                  setErrors({ ...errors, lastMovementDate: 'Cannot select a future date' });
+                  setFormData({ ...formData, lastMovementDate: '' });
+                }
+              }}
+              error={errors.lastMovementDate}
               max={new Date().toISOString().split('T')[0]}
             />
           </>
@@ -292,6 +318,14 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
               onChange={(e) => {
                 setFormData({ ...formData, orderDate: e?.target?.value })
                 if (errors.orderDate) setErrors({ ...errors, orderDate: '' })
+              }}
+              onBlur={(e) => {
+                const typedDate = e.target.value;
+                const today = new Date().toISOString().split('T')[0];
+                if (typedDate && typedDate > today) {
+                  setErrors({ ...errors, orderDate: 'Cannot select a future date' });
+                  setFormData({ ...formData, orderDate: '' });
+                }
               }}
               error={errors.orderDate}
               max={new Date().toISOString().split('T')[0]}
@@ -336,6 +370,15 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
               type="date"
               value={formData?.lastSaleDate}
               onChange={(e) => setFormData({ ...formData, lastSaleDate: e?.target?.value })}
+              onBlur={(e) => {
+                const typedDate = e.target.value;
+                const today = new Date().toISOString().split('T')[0];
+                if (typedDate && typedDate > today) {
+                  setErrors({ ...errors, lastSaleDate: 'Cannot select a future date' });
+                  setFormData({ ...formData, lastSaleDate: '' });
+                }
+              }}
+              error={errors.lastSaleDate}
               max={new Date().toISOString().split('T')[0]}
             />
             <Input
@@ -344,6 +387,15 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
               type="date"
               value={formData?.lastOrderDate}
               onChange={(e) => setFormData({ ...formData, lastOrderDate: e?.target?.value })}
+              onBlur={(e) => {
+                const typedDate = e.target.value;
+                const today = new Date().toISOString().split('T')[0];
+                if (typedDate && typedDate > today) {
+                  setErrors({ ...errors, lastOrderDate: 'Cannot select a future date' });
+                  setFormData({ ...formData, lastOrderDate: '' });
+                }
+              }}
+              error={errors.lastOrderDate}
               max={new Date().toISOString().split('T')[0]}
             />
           </>
@@ -396,6 +448,14 @@ export function CreateTaskModal({ isOpen, onClose, onSuccess }: CreateTaskModalP
               onChange={(e) => {
                 setFormData({ ...formData, nextFollowUpDate: e?.target?.value })
                 if (errors.nextFollowUpDate) setErrors({ ...errors, nextFollowUpDate: '' })
+              }}
+              onBlur={(e) => {
+                const typedDate = e.target.value;
+                const today = new Date().toISOString().split('T')[0];
+                if (typedDate && typedDate < today) {
+                  setErrors({ ...errors, nextFollowUpDate: 'Cannot select a past date' });
+                  setFormData({ ...formData, nextFollowUpDate: '' });
+                }
               }}
               error={errors.nextFollowUpDate}
             />

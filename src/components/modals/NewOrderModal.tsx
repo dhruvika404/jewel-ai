@@ -250,6 +250,15 @@ export function NewOrderModal({
                 onChange={(e) =>
                   setFormData({ ...formData, lastSaleDate: e.target.value })
                 }
+                onBlur={(e) => {
+                  const typedDate = e.target.value;
+                  const today = new Date().toISOString().split('T')[0];
+                  if (typedDate && typedDate > today) {
+                    setErrors({ ...errors, lastSaleDate: 'Cannot select a future date' });
+                    setFormData({ ...formData, lastSaleDate: "" });
+                  }
+                }}
+                error={errors.lastSaleDate}
                 max={new Date().toISOString().split('T')[0]}
               />
             </div>
@@ -262,6 +271,15 @@ export function NewOrderModal({
                 onChange={(e) =>
                   setFormData({ ...formData, lastOrderDate: e.target.value })
                 }
+                onBlur={(e) => {
+                  const typedDate = e.target.value;
+                  const today = new Date().toISOString().split('T')[0];
+                  if (typedDate && typedDate > today) {
+                    setErrors({ ...errors, lastOrderDate: 'Cannot select a future date' });
+                    setFormData({ ...formData, lastOrderDate: "" });
+                  }
+                }}
+                error={errors.lastOrderDate}
                 max={new Date().toISOString().split('T')[0]}
               />
             </div>
@@ -278,6 +296,14 @@ export function NewOrderModal({
                 onChange={(e) => {
                   setFormData({ ...formData, nextFollowUpDate: e.target.value })
                   if (errors.nextFollowUpDate) setErrors({ ...errors, nextFollowUpDate: "" })
+                }}
+                onBlur={(e) => {
+                  const typedDate = e.target.value;
+                  const today = new Date().toISOString().split('T')[0];
+                  if (typedDate && typedDate < today) {
+                    setErrors({ ...errors, nextFollowUpDate: "Cannot select a past date" });
+                    setFormData({ ...formData, nextFollowUpDate: "" });
+                  }
                 }}
                 error={errors.nextFollowUpDate}
               />

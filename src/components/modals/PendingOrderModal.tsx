@@ -260,6 +260,14 @@ export function PendingOrderModal({
                 setFormData({ ...formData, orderDate: e.target.value })
                 if (errors.orderDate) setErrors({ ...errors, orderDate: "" })
               }}
+              onBlur={(e) => {
+                const typedDate = e.target.value;
+                const today = new Date().toISOString().split('T')[0];
+                if (typedDate && typedDate > today) {
+                  setErrors({ ...errors, orderDate: "Cannot select a future date" });
+                  setFormData({ ...formData, orderDate: "" });
+                }
+              }}
               error={errors.orderDate}
               max={new Date().toISOString().split('T')[0]}
             />
@@ -302,6 +310,14 @@ export function PendingOrderModal({
               onChange={(e) => {
                 setFormData({ ...formData, nextFollowUpDate: e.target.value })
                 if (errors.nextFollowUpDate) setErrors({ ...errors, nextFollowUpDate: "" })
+              }}
+              onBlur={(e) => {
+                const typedDate = e.target.value;
+                const today = new Date().toISOString().split('T')[0];
+                if (typedDate && typedDate < today) {
+                  setErrors({ ...errors, nextFollowUpDate: "Cannot select a past date" });
+                  setFormData({ ...formData, nextFollowUpDate: "" });
+                }
               }}
               error={errors.nextFollowUpDate}
             />
