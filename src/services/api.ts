@@ -1,4 +1,5 @@
 import { API_CONFIG, getHeaders, getUploadHeaders } from "@/config/api";
+import { filterEmptyValues } from "@/lib/utils";
 
 // Auth APIs
 export const authAPI = {
@@ -18,7 +19,7 @@ export const authAPI = {
             "Content-Type": "application/json",
             "ngrok-skip-browser-warning": "true",
           },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(filterEmptyValues(payload)),
         }
       );
 
@@ -41,7 +42,7 @@ export const authAPI = {
         {
           method: "PUT",
           headers: getHeaders(),
-          body: JSON.stringify({ userCode, password }),
+          body: JSON.stringify(filterEmptyValues({ userCode, password })),
         }
       );
 
@@ -97,11 +98,7 @@ export const salesPersonAPI = {
     search?: string;
     role?: string;
   }) => {
-    const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.size) queryParams.append("size", params.size.toString());
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.role) queryParams.append("role", params.role);
+    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.LIST}?${queryParams}`,
@@ -119,7 +116,7 @@ export const salesPersonAPI = {
       {
         method: "POST",
         headers: getHeaders(),
-        body: JSON.stringify(data),
+        body: JSON.stringify(filterEmptyValues(data)),
       }
     );
     return response.json();
@@ -132,7 +129,7 @@ export const salesPersonAPI = {
       {
         method: "PUT",
         headers: getHeaders(),
-        body: JSON.stringify(data),
+        body: JSON.stringify(filterEmptyValues(data)),
       }
     );
     return response.json();
@@ -188,13 +185,7 @@ export const clientAPI = {
     role?: string;
     salesExecCode?: string;
   }) => {
-    const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.size) queryParams.append("size", params.size.toString());
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.role) queryParams.append("role", params.role);
-    if (params?.salesExecCode)
-      queryParams.append("salesExecCode", params.salesExecCode);
+    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.LIST}?${queryParams}`,
@@ -229,7 +220,7 @@ export const clientAPI = {
       {
         method: "POST",
         headers: getHeaders(),
-        body: JSON.stringify(data),
+        body: JSON.stringify(filterEmptyValues(data)),
       }
     );
     return response.json();
@@ -350,20 +341,7 @@ export const pendingOrderAPI = {
     todayCompletedFollowUp?: boolean;
     sevenDayPendingFollowUp?: boolean;
   }) => {
-    const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.size) queryParams.append("size", params.size.toString());
-    if (params?.clientCode) queryParams.append("clientCode", params.clientCode);
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.status) queryParams.append("status", params.status);
-    if (params?.sortBy) queryParams.append("shortBy", params.sortBy);
-    if (params?.sortOrder) queryParams.append("shortOrder", params.sortOrder);
-    if (params?.startDate) queryParams.append("startDate", params.startDate);
-    if (params?.endDate) queryParams.append("endDate", params.endDate);
-    if (params?.salesExecCode) queryParams.append("salesExecCode", params.salesExecCode);
-    if (params?.todayDueFollowUp) queryParams.append("todayDueFollowUp", "true");
-    if (params?.todayCompletedFollowUp) queryParams.append("todayCompletedFollowUp", "true");
-    if (params?.sevenDayPendingFollowUp) queryParams.append("sevenDayPendingFollowUp", "true");
+    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.LIST}?${queryParams}`,
@@ -393,7 +371,7 @@ export const pendingOrderAPI = {
       {
         method: "POST",
         headers: getHeaders(),
-        body: JSON.stringify(data),
+        body: JSON.stringify(filterEmptyValues(data)),
       }
     );
     return response.json();
@@ -435,12 +413,7 @@ export const pendingOrderAPI = {
     status?: string;
     sortBy?: string;
   }) => {
-    const queryParams = new URLSearchParams();
-    if (params.page) queryParams.append("page", params.page.toString());
-    if (params.size) queryParams.append("size", params.size.toString());
-    if (params.clientCode) queryParams.append("clientCode", params.clientCode);
-    if (params.status) queryParams.append("status", params.status);
-    if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.FOLLOW_UP}?${queryParams}`,
@@ -516,20 +489,7 @@ export const pendingMaterialAPI = {
     todayCompletedFollowUp?: boolean;
     sevenDayPendingFollowUp?: boolean;
   }) => {
-    const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.size) queryParams.append("size", params.size.toString());
-    if (params?.clientCode) queryParams.append("clientCode", params.clientCode);
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.status) queryParams.append("status", params.status);
-    if (params?.sortBy) queryParams.append("shortBy", params.sortBy);
-    if (params?.sortOrder) queryParams.append("shortOrder", params.sortOrder);
-    if (params?.startDate) queryParams.append("startDate", params.startDate);
-    if (params?.endDate) queryParams.append("endDate", params.endDate);
-    if (params?.salesExecCode) queryParams.append("salesExecCode", params.salesExecCode);
-    if (params?.todayDueFollowUp) queryParams.append("todayDueFollowUp", "true");
-    if (params?.todayCompletedFollowUp) queryParams.append("todayCompletedFollowUp", "true");
-    if (params?.sevenDayPendingFollowUp) queryParams.append("sevenDayPendingFollowUp", "true");
+    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.LIST}?${queryParams}`,
@@ -560,7 +520,7 @@ export const pendingMaterialAPI = {
       {
         method: "POST",
         headers: getHeaders(),
-        body: JSON.stringify(data),
+        body: JSON.stringify(filterEmptyValues(data)),
       }
     );
     return response.json();
@@ -588,7 +548,7 @@ export const pendingMaterialAPI = {
       {
         method: "PUT",
         headers: getHeaders(),
-        body: JSON.stringify(data),
+        body: JSON.stringify(filterEmptyValues(data)),
       }
     );
     return response.json();
@@ -602,12 +562,7 @@ export const pendingMaterialAPI = {
     status?: string;
     sortBy?: string;
   }) => {
-    const queryParams = new URLSearchParams();
-    if (params.page) queryParams.append("page", params.page.toString());
-    if (params.size) queryParams.append("size", params.size.toString());
-    if (params.clientCode) queryParams.append("clientCode", params.clientCode);
-    if (params.status) queryParams.append("status", params.status);
-    if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.FOLLOW_UP}?${queryParams}`,
@@ -630,7 +585,7 @@ export const pendingMaterialAPI = {
       {
         method: "POST",
         headers: getHeaders(),
-        body: JSON.stringify(data),
+        body: JSON.stringify(filterEmptyValues(data)),
       }
     );
     return response.json();
@@ -687,23 +642,7 @@ export const newOrderAPI = {
     todayCompletedFollowUp?: boolean;
     sevenDayPendingFollowUp?: boolean;
   }) => {
-    const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.size) queryParams.append("size", params.size.toString());
-    if (params?.clientCode) queryParams.append("clientCode", params.clientCode);
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.status) queryParams.append("status", params.status);
-    if (params?.sortBy) queryParams.append("shortBy", params.sortBy);
-    if (params?.sortOrder) queryParams.append("shortOrder", params.sortOrder);
-    if (params?.searchClientCode) queryParams.append("searchClientCode", params.searchClientCode);
-    if (params?.searchClientName) queryParams.append("searchClientName", params.searchClientName);
-    if (params?.searchRemark) queryParams.append("searchRemark", params.searchRemark);
-    if (params?.startDate) queryParams.append("startDate", params.startDate);
-    if (params?.endDate) queryParams.append("endDate", params.endDate);
-    if (params?.salesExecCode) queryParams.append("salesExecCode", params.salesExecCode);
-    if (params?.todayDueFollowUp) queryParams.append("todayDueFollowUp", "true");
-    if (params?.todayCompletedFollowUp) queryParams.append("todayCompletedFollowUp", "true");
-    if (params?.sevenDayPendingFollowUp) queryParams.append("sevenDayPendingFollowUp", "true");
+    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.LIST}?${queryParams}`,
@@ -731,7 +670,7 @@ export const newOrderAPI = {
       {
         method: "POST",
         headers: getHeaders(),
-        body: JSON.stringify(data),
+        body: JSON.stringify(filterEmptyValues(data)),
       }
     );
     return response.json();
@@ -758,7 +697,7 @@ export const newOrderAPI = {
       {
         method: "PUT",
         headers: getHeaders(),
-        body: JSON.stringify(data),
+        body: JSON.stringify(filterEmptyValues(data)),
       }
     );
     return response.json();
@@ -772,12 +711,7 @@ export const newOrderAPI = {
     status?: string;
     sortBy?: string;
   }) => {
-    const queryParams = new URLSearchParams();
-    if (params.page) queryParams.append("page", params.page.toString());
-    if (params.size) queryParams.append("size", params.size.toString());
-    if (params.clientCode) queryParams.append("clientCode", params.clientCode);
-    if (params.status) queryParams.append("status", params.status);
-    if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.FOLLOW_UP}?${queryParams}`,
@@ -800,7 +734,7 @@ export const newOrderAPI = {
       {
         method: "POST",
         headers: getHeaders(),
-        body: JSON.stringify(data),
+        body: JSON.stringify(filterEmptyValues(data)),
       }
     );
     return response.json();
@@ -850,17 +784,7 @@ export const cadOrderAPI = {
     endDate?: string;
     salesExecCode?: string;
   }) => {
-    const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.size) queryParams.append("size", params.size.toString());
-    if (params?.clientCode) queryParams.append("clientCode", params.clientCode);
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.status) queryParams.append("status", params.status);
-    if (params?.sortBy) queryParams.append("shortBy", params.sortBy);
-    if (params?.sortOrder) queryParams.append("shortOrder", params.sortOrder);
-    if (params?.startDate) queryParams.append("startDate", params.startDate);
-    if (params?.endDate) queryParams.append("endDate", params.endDate);
-    if (params?.salesExecCode) queryParams.append("salesExecCode", params.salesExecCode);
+    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CAD_ORDER.LIST}?${queryParams}`,
@@ -922,16 +846,7 @@ export const remarkAPI = {
     size?: number;
     followUpTypeId?: string | null;
   }) => {
-    const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.size) queryParams.append("size", params.size.toString());
-    if (params?.followUpTypeId !== undefined) {
-      if (params.followUpTypeId) {
-        queryParams.append("followUpTypeId", params.followUpTypeId);
-      } else {
-        queryParams.append("followUpTypeId", "null");
-      }
-    }
+    const queryParams = new URLSearchParams(filterEmptyValues(params || {}));
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.REMARK.LIST}?${queryParams}`,
@@ -965,10 +880,7 @@ export const remarkAPI = {
     page?: number;
     size?: number;
   }) => {
-    const queryParams = new URLSearchParams();
-    queryParams.append("followUpTypeId", params.followUpTypeId);
-    if (params.page) queryParams.append("page", params.page.toString());
-    if (params.size) queryParams.append("size", params.size.toString());
+    const queryParams = new URLSearchParams(filterEmptyValues(params || {}));
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.REMARK.LIST}?${queryParams}`,
@@ -1002,6 +914,20 @@ export const sharedAPI = {
   }) => {
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SHARED.DELETE_MULTIPLE}`,
+      {
+        method: "DELETE",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      }
+    );
+    return response.json();
+  },
+  deleteMultipleUsers: async (data: {
+    userType: "sales_executive" | "client";
+    ids: string[];
+  }) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SHARED.DELETE_MULTIPLE_USER}`,
       {
         method: "DELETE",
         headers: getHeaders(),

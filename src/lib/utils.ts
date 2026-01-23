@@ -44,12 +44,19 @@ export function formatDisplayDate(dateString: string | null | undefined): string
 }
 
 /**
- * Removes null, undefined, and empty string values from an object
+ * Removes null, undefined, and empty string values from an object.
+ * Optionally converts all values to strings for URLSearchParams.
  * @param obj Object to filter
+ * @param toString Whether to convert values to strings
  * @returns New object with empty values removed
  */
-export function filterEmptyValues<T extends Record<string, any>>(obj: T): Partial<T> {
+export function filterEmptyValues<T extends Record<string, any>>(
+  obj: T,
+  toString = false
+): Record<string, any> {
   return Object.fromEntries(
-    Object.entries(obj).filter(([_, v]) => v !== null && v !== undefined && v !== '')
-  ) as Partial<T>
+    Object.entries(obj)
+      .filter(([_, v]) => v !== null && v !== undefined && v !== '')
+      .map(([k, v]) => [k, toString ? String(v) : v])
+  )
 }

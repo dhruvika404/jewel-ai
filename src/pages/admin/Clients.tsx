@@ -21,7 +21,7 @@ import { Upload, Loader2, Eye, Plus, Pencil, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { clientAPI, salesPersonAPI } from "@/services/api";
+import { clientAPI, salesPersonAPI, sharedAPI } from "@/services/api";
 import { ClientModal } from "@/components/modals/ClientModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDisplayDate } from "@/lib/utils";
@@ -128,39 +128,27 @@ export default function Clients() {
       setSelectedItems(newSelected);
     }
   };
-
   const handleBulkDelete = async () => {
     if (selectedItems.size === 0) return;
     setIsBulkDeleting(true);
     try {
-      const promises = Array.from(selectedItems).map((id) => clientAPI.delete(id));
-      const results = await Promise.all(promises);
-      
-      const failures = results.filter((res: any) => res.success === false);
-      const successes = results.filter((res: any) => res.success !== false);
+      const response = await sharedAPI.deleteMultipleUsers({
+        userType: "client",
+        ids: Array.from(selectedItems),
+      });
 
-      if (failures.length > 0) {
-        toast.error(failures[0].message || "Failed to delete some clients");
-      }
-
-      if (successes.length > 0) {
-        if (failures.length === 0) {
-           toast.success("Selected clients deleted successfully");
-        } else {
-           toast.success(`${successes.length} clients deleted successfully`);
-        }
-        loadData();
-      }
-
-      if (failures.length === 0) {
-        setShowBulkDeleteConfirm(false);
-        setSelectedItems(new Set());
+      if (response.success === false) {
+        toast.error(response.message || "Failed to delete clients");
       } else {
+        toast.success(
+          response.message || "Selected clients deleted successfully"
+        );
+        loadData();
         setShowBulkDeleteConfirm(false);
         setSelectedItems(new Set());
       }
     } catch (e: any) {
-      toast.error("Failed to delete some clients");
+      toast.error("Failed to delete clients");
     } finally {
       setIsBulkDeleting(false);
     }

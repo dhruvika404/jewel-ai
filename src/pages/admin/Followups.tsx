@@ -1189,7 +1189,7 @@ export default function Followups() {
           <Table containerClassName="max-h-[calc(100vh-247px)] overflow-auto">
             <TableHeader className="sticky top-0 z-20 bg-gray-50">
               <TableRow className="bg-gray-50">
-                <TableHead className="w-[50px] align-center">
+                <TableHead className="w-[50px] align-center sticky left-0 z-30 bg-gray-50">
                   <Checkbox
                     checked={
                       paginatedFollowups.length > 0 &&
@@ -1203,10 +1203,10 @@ export default function Followups() {
                 {followupType !== "pending-order" &&
                   followupType !== "pending-material" && (
                     <>
-                      <TableHead className="font-medium text-gray-700 ">
+                      <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 w-[100px]">
                         Client Code
                       </TableHead>
-                      <TableHead className="font-medium text-gray-700 ">
+                      <TableHead className="font-medium text-gray-700 sticky left-[150px] z-30 bg-gray-50 w-[180px]">
                         Client Name
                       </TableHead>
                     </>
@@ -1251,9 +1251,9 @@ export default function Followups() {
                         {getSortIcon("lastFollowUpDate")}
                       </div>
                     </TableHead>
-                    {/* <TableHead className="font-medium text-gray-700 whitespace-nowrap">
+                     <TableHead className="font-medium text-gray-700 whitespace-nowrap">
                         Taken By
-                      </TableHead> */}
+                      </TableHead> 
                     <TableHead
                       className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("nextFollowUpDate")}
@@ -1273,20 +1273,20 @@ export default function Followups() {
                     <TableHead className="font-medium text-gray-700">
                       Status
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50  w-[100px]">
                       Actions
                     </TableHead>
                   </>
                 )}
                 {followupType === "pending-order" && (
                   <>
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 ">
                       Order No
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 ">
+                    <TableHead className="font-medium text-gray-700 sticky left-[170px] z-30 bg-gray-50 w-[100px]">
                       Client Code
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 ">
+                    <TableHead className="font-medium text-gray-700 sticky left-[270px] z-30 bg-gray-50 w-[180px] ">
                       Client Name
                     </TableHead>
                     <TableHead className="font-medium text-gray-700">
@@ -1328,9 +1328,9 @@ export default function Followups() {
                         {getSortIcon("lastFollowUpDate")}
                       </div>
                     </TableHead>
-                    {/* <TableHead className="font-medium text-gray-700 whitespace-nowrap">
+                   <TableHead className="font-medium text-gray-700 whitespace-nowrap">
                         Taken By
-                      </TableHead> */}
+                      </TableHead> 
                     <TableHead
                       className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("nextFollowUpDate")}
@@ -1346,20 +1346,20 @@ export default function Followups() {
                     <TableHead className="font-medium text-gray-700">
                       Status
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50  w-[100px]">
                       Actions
                     </TableHead>
                   </>
                 )}
                 {followupType === "pending-material" && (
                   <>
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 w-[120px]">
                       Order No
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 ">
+                    <TableHead className="font-medium text-gray-700 sticky left-[170px] z-30 bg-gray-50 w-[100px]">
                       Client Code
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 ">
+                    <TableHead className="font-medium text-gray-700 sticky left-[270px] z-30 bg-gray-50 w-[180px] ">
                       Client Name
                     </TableHead>
                     <TableHead className="font-medium text-gray-700">
@@ -1395,9 +1395,9 @@ export default function Followups() {
                         {getSortIcon("lastFollowUpDate")}
                       </div>
                     </TableHead>
-                    {/* <TableHead className="font-medium text-gray-700 whitespace-nowrap">
+                    <TableHead className="font-medium text-gray-700 whitespace-nowrap">
                         Taken By
-                      </TableHead> */}
+                      </TableHead> 
                     <TableHead
                       className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("nextFollowupDate")}
@@ -1413,7 +1413,7 @@ export default function Followups() {
                     <TableHead className="font-medium text-gray-700">
                       Status
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50  w-[100px]">
                       Actions
                     </TableHead>
                   </>
@@ -1465,8 +1465,8 @@ export default function Followups() {
                 </TableRow>
               ) : (
                 paginatedFollowups.map((fu) => (
-                  <TableRow key={fu.id} className="hover:bg-gray-50">
-                    <TableCell className="align-center">
+                  <TableRow key={fu.id} className="hover:bg-gray-50 group">
+                    <TableCell className="align-center sticky left-0 z-10 bg-white group-hover:bg-gray-50">
                       <Checkbox
                         checked={selectedItems.has(fu.id)}
                         onCheckedChange={() => toggleSelection(fu.id)}
@@ -1475,10 +1475,10 @@ export default function Followups() {
                     {followupType !== "pending-order" &&
                       followupType !== "pending-material" && (
                         <>
-                          <TableCell className="font-medium text-gray-900 align-center">
+                          <TableCell className="font-medium text-gray-900 align-center sticky left-[50px] z-10 bg-white group-hover:bg-gray-50 w-[100px]">
                             {fu.userCode}
                           </TableCell>
-                          <TableCell className="align-center">
+                          <TableCell className="align-center sticky left-[150px] z-10 bg-white group-hover:bg-gray-50 w-[180px]">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
                                 {fu.name?.charAt(0) ||
@@ -1531,14 +1531,14 @@ export default function Followups() {
                             {formatDisplayDate(fu.lastFollowUpDate)}
                           </div>
                         </TableCell>
-                        {/* <TableCell className="align-center">
+                       <TableCell className="align-center">
                             <div
                               className="text-sm text-gray-900 truncate max-w-[100px]"
                               title={fu.lastFollowUpBy || ""}
                             >
                               {fu.lastFollowUpBy || "-"}
                             </div>
-                          </TableCell> */}
+                          </TableCell> 
                         <TableCell className="align-center">
                           <div className="text-sm text-gray-900">
                             {formatDisplayDate(fu.nextFollowupDate)}
@@ -1577,7 +1577,7 @@ export default function Followups() {
                             {fu.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px]">
                           <div className="flex items-center">
                             <Button
                               variant="ghost"
@@ -1614,18 +1614,18 @@ export default function Followups() {
                     )}
                     {fu.type === "pending-order" && (
                       <>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center sticky left-[50px] z-10 bg-white group-hover:bg-gray-50 w-[120px]">
                           <div
-                            className="text-sm font-medium text-gray-900 max-w-[120px] truncate"
+                            className="text-sm font-medium text-gray-900 max-w-[100px] truncate"
                             title={fu.orderNo}
                           >
                             {fu.orderNo}
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium text-gray-900 align-center">
+                        <TableCell className="font-medium text-gray-900 align-center sticky left-[170px] z-10 bg-white group-hover:bg-gray-50 w-[100px]">
                           {fu.userCode}
                         </TableCell>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center sticky left-[270px] z-10 bg-white group-hover:bg-gray-50 w-[180px] ">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
                               {fu.name?.charAt(0) ||
@@ -1669,14 +1669,14 @@ export default function Followups() {
                             {formatDisplayDate(fu.lastFollowUpDate)}
                           </div>
                         </TableCell>
-                        {/* <TableCell className="align-center">
+                        <TableCell className="align-center">
                             <div
                               className="text-sm text-gray-900 truncate max-w-[100px]"
                               title={fu.lastFollowUpBy || ""}
                             >
                               {fu.lastFollowUpBy || "-"}
                             </div>
-                          </TableCell> */}
+                          </TableCell>
                         <TableCell className="align-center">
                           <div className="text-sm text-gray-900">
                             {formatDisplayDate(fu.nextFollowupDate)}
@@ -1710,7 +1710,7 @@ export default function Followups() {
                             {fu.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px]">
                           <div className="flex items-center">
                             <Button
                               variant="ghost"
@@ -1747,18 +1747,18 @@ export default function Followups() {
                     )}
                     {fu.type === "pending-material" && (
                       <>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center sticky left-[50px] z-10 bg-white group-hover:bg-gray-50 w-[120px]">
                           <div
-                            className="text-sm text-gray-900 max-w-[120px] truncate"
+                            className="text-sm text-gray-900 max-w-[100px] truncate"
                             title={fu.orderNo}
                           >
                             {fu.orderNo}
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium text-gray-900 align-center">
+                        <TableCell className="font-medium text-gray-900 align-center sticky left-[170px] z-10 bg-white group-hover:bg-gray-50 w-[100px]">
                           {fu.userCode}
                         </TableCell>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center sticky left-[270px] z-10 bg-white group-hover:bg-gray-50 w-[180px] ">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
                               {fu.name?.charAt(0) ||
@@ -1808,14 +1808,14 @@ export default function Followups() {
                             {formatDisplayDate(fu.lastFollowUpDate)}
                           </div>
                         </TableCell>
-                        {/* <TableCell className="align-center">
+                         <TableCell className="align-center">
                             <div
                               className="text-sm text-gray-900 truncate max-w-[100px]"
                               title={fu.lastFollowUpBy || ""}
                             >
                               {fu.lastFollowUpBy || "-"}
                             </div>
-                          </TableCell> */}
+                          </TableCell>
                         <TableCell className="align-center">
                           <div className="text-sm text-gray-900">
                             {formatDisplayDate(fu.nextFollowupDate)}
@@ -1849,7 +1849,7 @@ export default function Followups() {
                             {fu.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px]">
                           <div className="flex items-center">
                             <Button
                               variant="ghost"

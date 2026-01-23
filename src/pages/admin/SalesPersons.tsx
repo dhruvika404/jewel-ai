@@ -41,7 +41,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { salesPersonAPI, authAPI } from "@/services/api";
+import { salesPersonAPI, authAPI, sharedAPI } from "@/services/api";
 import { Label } from "@/components/ui/label";
 import { DeleteModal } from "@/components/modals/DeleteModal";
 
@@ -123,41 +123,17 @@ export default function SalesPersons() {
     if (selectedItems.size === 0) return;
     setIsBulkDeleting(true);
     try {
-      const promises = Array.from(selectedItems).map((id) => salesPersonAPI.delete(id));
-      const results = await Promise.all(promises);
-      
-      const failures = results.filter((res: any) => res.success === false);
-      const successes = results.filter((res: any) => res.success !== false);
+      const response = await sharedAPI.deleteMultipleUsers({
+        userType: "sales_executive",
+        ids: Array.from(selectedItems),
+      });
 
-      if (failures.length > 0) {
-        // Show the first error message as requested
-        toast.error(failures[0].message || "Failed to delete some sales persons");
-      }
-
-      if (successes.length > 0) {
-        if (failures.length === 0) {
-           toast.success("Selected sales persons deleted successfully");
-        } else {
-           toast.success(`${successes.length} sales persons deleted successfully`);
-        }
-        // Always refresh data if at least one success
-        loadData();
-      }
-
-      // If all succeeded, clear selection and close modal
-      if (failures.length === 0) {
-        setShowBulkDeleteConfirm(false);
-        setSelectedItems(new Set());
+      if (response.success === false) {
+        toast.error(response.message || "Failed to delete sales persons");
       } else {
-        // Optional: Update selection to only reflect failed items? 
-        // For now, let's leave selection as is or maybe user wants to see what happened.
-        // But usually closing modal is expected if action is "done" (even partially).
-        // Let's keep modal open if there are failures so user knows? 
-        // Or close it.
-        // The user request was specific about showing the message.
-        setShowBulkDeleteConfirm(false); 
-        // We will clear selection to avoid confusion or re-deleting same things if UI didn't update yet
-        // Actually best UX is reload data, and if items persist (because failed delete), they reappear.
+        toast.success(response.message || "Selected sales persons deleted successfully");
+        loadData();
+        setShowBulkDeleteConfirm(false);
         setSelectedItems(new Set());
       }
     } catch (e: any) {
