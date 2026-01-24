@@ -73,7 +73,7 @@ export default function ClientDetails() {
   const { user } = useAuth();
 
   const [client, setClient] = useState<Client | null>(
-    location.state?.client || null
+    location.state?.client || null,
   );
   const [loading, setLoading] = useState(!location.state?.client);
   const [materials, setMaterials] = useState<any[]>([]);
@@ -254,15 +254,15 @@ export default function ClientDetails() {
       activeTab === "pending-material"
         ? materials
         : activeTab === "pending-order"
-        ? pendingOrders
-        : newOrders;
+          ? pendingOrders
+          : newOrders;
 
     if (items.length === 0) {
       toast.error(
         `No active ${activeTab.replace(
           "-",
-          " "
-        )} items found to attach follow-up to.`
+          " ",
+        )} items found to attach follow-up to.`,
       );
       return;
     }
@@ -319,7 +319,7 @@ export default function ClientDetails() {
     loadingState: boolean,
     followUps: any[],
     loadingFollowUps: boolean,
-    icon: any
+    icon: any,
   ) => {
     const Icon = icon;
     return (
@@ -331,8 +331,8 @@ export default function ClientDetails() {
                 type === "pending-material"
                   ? "bg-orange-50 text-orange-600"
                   : type === "pending-order"
-                  ? "bg-blue-50 text-blue-600"
-                  : "bg-emerald-50 text-emerald-600"
+                    ? "bg-blue-50 text-blue-600"
+                    : "bg-emerald-50 text-emerald-600"
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -369,13 +369,9 @@ export default function ClientDetails() {
           </div>
         </CardHeader>
 
-        <CardContent
-          className={`flex-1 p-0 min-h-0 overflow-y-auto ${
-            items.length > 0 && !loadingState ? "" : "overflow-hidden"
-          }`}
-        >
-          {/* Section 1: Basic Info (Sticky) */}
-          <div className="sticky top-0 z-20 bg-white border-b border-gray-100 px-6 py-4">
+        <CardContent className="flex-1 p-0 min-h-0 flex flex-col overflow-hidden">
+          {/* Section 1: Basic Info */}
+          <div className="shrink-0 bg-white border-b border-gray-100 px-6 py-4">
             <div className="flex items-center gap-1.5 mb-3">
               <div className="h-3 w-0.5 bg-primary rounded-full" />
               <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
@@ -440,8 +436,8 @@ export default function ClientDetails() {
                           item.status === "completed"
                             ? "bg-emerald-100 text-emerald-700"
                             : item.status === "pending"
-                            ? "bg-orange-100 text-orange-700"
-                            : "bg-gray-100 text-gray-700"
+                              ? "bg-orange-100 text-orange-700"
+                              : "bg-gray-100 text-gray-700"
                         }`}
                       >
                         {item.status || "pending"}
@@ -488,7 +484,7 @@ export default function ClientDetails() {
                               <p className="text-xs font-semibold text-gray-900">
                                 {item.lastFollowUpDate
                                   ? new Date(
-                                      item.lastFollowUpDate
+                                      item.lastFollowUpDate,
                                     ).toLocaleDateString(undefined, {
                                       day: "numeric",
                                       month: "short",
@@ -568,7 +564,7 @@ export default function ClientDetails() {
                               <p className="text-xs font-bold text-primary">
                                 {item.nextFollowUpDate
                                   ? new Date(
-                                      item.nextFollowUpDate
+                                      item.nextFollowUpDate,
                                     ).toLocaleDateString(undefined, {
                                       day: "numeric",
                                       month: "short",
@@ -617,7 +613,7 @@ export default function ClientDetails() {
                               <p className="text-xs font-semibold text-gray-900">
                                 {item.lastFollowUpDate
                                   ? new Date(
-                                      item.lastFollowUpDate
+                                      item.lastFollowUpDate,
                                     ).toLocaleDateString(undefined, {
                                       day: "numeric",
                                       month: "short",
@@ -641,7 +637,7 @@ export default function ClientDetails() {
                               <p className="text-xs font-bold text-primary">
                                 {item.nextFollowUpDate
                                   ? new Date(
-                                      item.nextFollowUpDate
+                                      item.nextFollowUpDate,
                                     ).toLocaleDateString(undefined, {
                                       day: "numeric",
                                       month: "short",
@@ -660,9 +656,9 @@ export default function ClientDetails() {
             )}
           </div>
 
-          {/* Section 2: Follow-ups List (Scrolling) */}
-          <div className="px-6 py-4 space-y-3">
-            <div className="flex items-center justify-between mb-2">
+          {/* Section 2: Follow-ups List */}
+          <div className="flex-1 min-h-0 flex flex-col pt-4 overflow-hidden">
+            <div className="flex items-center justify-between mb-2 px-6">
               <div className="flex items-center gap-1.5">
                 <div className="h-3 w-0.5 bg-emerald-500 rounded-full" />
                 <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide">
@@ -682,63 +678,65 @@ export default function ClientDetails() {
               )}
             </div>
 
-            {loadingFollowUps ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <Loader2 className="w-5 h-5 animate-spin text-primary mb-2" />
-                <p className="text-xs text-gray-500">Loading...</p>
-              </div>
-            ) : followUps.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 bg-gray-50 border border-dashed border-gray-200 rounded">
-                <RefreshCw className="w-8 h-8 mb-2 text-gray-300" />
-                <p className="text-xs font-medium text-gray-500">
-                  No follow-ups yet
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {followUps.map((fu, fidx) => (
-                  <div
-                    key={fidx}
-                    className="bg-white rounded border border-gray-200 p-3 hover:border-gray-300 hover:shadow-sm transition-all"
-                  >
-                    <div className="space-y-2.5">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-medium text-gray-600 mb-1 uppercase tracking-wide">
-                          Message
-                        </span>
-                        <div className="bg-gray-50 border-l-2 border-primary p-2 rounded-r-md">
-                          <p className="text-xs text-gray-800 leading-relaxed font-medium">
-                            {fu.lastFollowUpMsg ||
-                              fu.followUpMsg ||
-                              "No notes added"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4 pt-2 border-t border-gray-100">
-                        <div className="flex flex-col flex-1">
-                          <span className="text-[10px] font-medium text-gray-600 mb-0.5 uppercase tracking-wide">
-                            Last Follow-up Date
+            <div className="flex-1 overflow-y-auto px-6 pb-4">
+              {loadingFollowUps ? (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <Loader2 className="w-5 h-5 animate-spin text-primary mb-2" />
+                  <p className="text-xs text-gray-500">Loading...</p>
+                </div>
+              ) : followUps.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 bg-gray-50 border border-dashed border-gray-200 rounded">
+                  <RefreshCw className="w-8 h-8 mb-2 text-gray-300" />
+                  <p className="text-xs font-medium text-gray-500">
+                    No follow-ups yet
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {followUps.map((fu, fidx) => (
+                    <div
+                      key={fidx}
+                      className="bg-white rounded border border-gray-200 p-3 hover:border-gray-300 hover:shadow-sm transition-all"
+                    >
+                      <div className="space-y-2.5">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-medium text-gray-600 mb-1 uppercase tracking-wide">
+                            Message
                           </span>
-                          <span className="text-xs font-semibold text-gray-900">
-                            {formatDisplayDate(fu.createdAt)}
-                          </span>
+                          <div className="bg-gray-50 border-l-2 border-primary p-2 rounded-r-md">
+                            <p className="text-xs text-gray-800 leading-relaxed font-medium">
+                              {fu.lastFollowUpMsg ||
+                                fu.followUpMsg ||
+                                "No notes added"}
+                            </p>
+                          </div>
                         </div>
 
-                        <div className="flex flex-col flex-1">
-                          <span className="text-[10px] font-medium text-gray-600 mb-0.5 uppercase tracking-wide">
-                            Next Follow-up Date
-                          </span>
-                          <span className="text-xs font-semibold text-primary">
-                            {formatDisplayDate(fu.nextFollowUpDate)}
-                          </span>
+                        <div className="flex items-center gap-4 pt-2 border-t border-gray-100">
+                          <div className="flex flex-col flex-1">
+                            <span className="text-[10px] font-medium text-gray-600 mb-0.5 uppercase tracking-wide">
+                              Last Follow-up Date
+                            </span>
+                            <span className="text-xs font-semibold text-gray-900">
+                              {formatDisplayDate(fu.createdAt)}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-col flex-1">
+                            <span className="text-[10px] font-medium text-gray-600 mb-0.5 uppercase tracking-wide">
+                              Next Follow-up Date
+                            </span>
+                            <span className="text-xs font-semibold text-primary">
+                              {formatDisplayDate(fu.nextFollowUpDate)}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -844,7 +842,7 @@ export default function ClientDetails() {
               loadingPM,
               pmFollowUps,
               loadingPMFollowUps,
-              Package
+              Package,
             )}
           </div>
 
@@ -857,7 +855,7 @@ export default function ClientDetails() {
               loadingPO,
               poFollowUps,
               loadingPOFollowUps,
-              ShoppingCart
+              ShoppingCart,
             )}
           </div>
 
@@ -870,7 +868,7 @@ export default function ClientDetails() {
               loadingNO,
               noFollowUps,
               loadingNOFollowUps,
-              FileText
+              FileText,
             )}
           </div>
         </div>
@@ -919,7 +917,7 @@ export default function ClientDetails() {
                 <Input
                   id="date"
                   type="date"
-                  min={new Date().toISOString().split('T')[0]}
+                  min={new Date().toISOString().split("T")[0]}
                   value={formData.nextFollowUpDate}
                   onChange={(e) =>
                     setFormData({
