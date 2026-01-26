@@ -1579,7 +1579,7 @@ export default function Followups() {
                         </TableCell>
                         <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px]">
                           <div className="flex items-center">
-                            <Button
+                            {/* <Button
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
@@ -1587,7 +1587,7 @@ export default function Followups() {
                               disabled={selectedItems.size > 0}
                             >
                               <Eye className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                             <Button
                               variant="ghost"
                               size="icon"
@@ -1712,7 +1712,7 @@ export default function Followups() {
                         </TableCell>
                         <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px]">
                           <div className="flex items-center">
-                            <Button
+                            {/* <Button
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
@@ -1720,7 +1720,7 @@ export default function Followups() {
                               disabled={selectedItems.size > 0}
                             >
                               <Eye className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                             <Button
                               variant="ghost"
                               size="icon"
@@ -1851,7 +1851,7 @@ export default function Followups() {
                         </TableCell>
                         <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px]">
                           <div className="flex items-center">
-                            <Button
+                            {/* <Button
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
@@ -1859,7 +1859,7 @@ export default function Followups() {
                               disabled={selectedItems.size > 0}
                             >
                               <Eye className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                             <Button
                               variant="ghost"
                               size="icon"
