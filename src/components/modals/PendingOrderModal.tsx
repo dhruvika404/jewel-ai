@@ -119,14 +119,18 @@ export function PendingOrderModal({
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.salesExecCode) newErrors.salesExecCode = "Sales Executive is required";
+    if (!formData.salesExecCode)
+      newErrors.salesExecCode = "Sales Executive is required";
     if (!formData.orderNo) newErrors.orderNo = "Order No is required";
     if (!formData.orderDate) newErrors.orderDate = "Order Date is required";
-    if (!formData.grossWtTotal) newErrors.grossWtTotal = "Gross Weight is required";
-    if (!formData.totalOrderPcs) newErrors.totalOrderPcs = "Total Order Pcs is required";
+    if (!formData.grossWtTotal)
+      newErrors.grossWtTotal = "Gross Weight is required";
+    if (!formData.totalOrderPcs)
+      newErrors.totalOrderPcs = "Total Order Pcs is required";
     if (!formData.pendingPcs) newErrors.pendingPcs = "Pending Pcs is required";
-    if (!formData.nextFollowUpDate) newErrors.nextFollowUpDate = "Next Follow-up Date is required";
-    
+    if (!formData.nextFollowUpDate)
+      newErrors.nextFollowUpDate = "Next Follow-up Date is required";
+
     if (formData.totalOrderPcs && formData.pendingPcs) {
       const totalPcs = Number(formData.totalOrderPcs);
       const pendingPcs = Number(formData.pendingPcs);
@@ -134,7 +138,7 @@ export function PendingOrderModal({
         newErrors.pendingPcs = "Pending Pcs cannot exceed Total Order Pcs";
       }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -145,14 +149,14 @@ export function PendingOrderModal({
     if (!validate()) return;
 
     const filterEmptyFields = (data: Record<string, any>) => {
-      const cleanData: Record<string, any> = {}
+      const cleanData: Record<string, any> = {};
       Object.entries(data).forEach(([key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          cleanData[key] = value
+        if (value !== "" && value !== null && value !== undefined) {
+          cleanData[key] = value;
         }
-      })
-      return cleanData
-    }
+      });
+      return cleanData;
+    };
 
     setLoading(true);
     try {
@@ -168,13 +172,13 @@ export function PendingOrderModal({
         nextFollowUpDate: formData.nextFollowUpDate,
       };
 
-      const payload = filterEmptyFields(initialPayload)
+      const payload = filterEmptyFields(initialPayload);
 
       let response;
       if (order) {
         response = await pendingOrderAPI.update(
           order.uuid || order.id,
-          payload
+          payload,
         );
       } else {
         response = await pendingOrderAPI.create(payload as any);
@@ -188,7 +192,7 @@ export function PendingOrderModal({
       toast.success(
         order
           ? "Pending order updated successfully"
-          : "Pending order created successfully"
+          : "Pending order created successfully",
       );
       onSuccess();
       resetForm();
@@ -217,23 +221,24 @@ export function PendingOrderModal({
               label="Sales Executive"
               required
               options={salesPersons.map((sp) => ({
-                  value: sp.userCode,
-                  label: `${sp.name} (${sp.userCode})`,
+                value: sp.userCode,
+                label: sp.name ? `${sp.name} (${sp.userCode})` : sp.userCode,
               }))}
               value={formData.salesExecCode}
               onSelect={(val) => {
-                setFormData({ ...formData, salesExecCode: val })
-                if (errors.salesExecCode) setErrors({ ...errors, salesExecCode: "" })
+                setFormData({ ...formData, salesExecCode: val });
+                if (errors.salesExecCode)
+                  setErrors({ ...errors, salesExecCode: "" });
               }}
               placeholder="Select sales executive"
               searchPlaceholder="Search sales executive..."
               error={errors.salesExecCode}
             />
-            <Input 
-              id="clientCode" 
+            <Input
+              id="clientCode"
               label="Client Code"
-              value={formData.clientCode} 
-              disabled 
+              value={formData.clientCode}
+              disabled
             />
           </div>
 
@@ -244,8 +249,8 @@ export function PendingOrderModal({
               required
               value={formData.orderNo}
               onChange={(e) => {
-                setFormData({ ...formData, orderNo: e.target.value })
-                if (errors.orderNo) setErrors({ ...errors, orderNo: "" })
+                setFormData({ ...formData, orderNo: e.target.value });
+                if (errors.orderNo) setErrors({ ...errors, orderNo: "" });
               }}
               placeholder="e.g. ORD-1001"
               error={errors.orderNo}
@@ -257,19 +262,22 @@ export function PendingOrderModal({
               type="date"
               value={formData.orderDate}
               onChange={(e) => {
-                setFormData({ ...formData, orderDate: e.target.value })
-                if (errors.orderDate) setErrors({ ...errors, orderDate: "" })
+                setFormData({ ...formData, orderDate: e.target.value });
+                if (errors.orderDate) setErrors({ ...errors, orderDate: "" });
               }}
               onBlur={(e) => {
                 const typedDate = e.target.value;
-                const today = new Date().toISOString().split('T')[0];
+                const today = new Date().toISOString().split("T")[0];
                 if (typedDate && typedDate > today) {
-                  setErrors({ ...errors, orderDate: "Cannot select a future date" });
+                  setErrors({
+                    ...errors,
+                    orderDate: "Cannot select a future date",
+                  });
                   setFormData({ ...formData, orderDate: "" });
                 }
               }}
               error={errors.orderDate}
-              max={new Date().toISOString().split('T')[0]}
+              max={new Date().toISOString().split("T")[0]}
             />
           </div>
 
@@ -281,8 +289,9 @@ export function PendingOrderModal({
               type="number"
               value={formData.totalOrderPcs}
               onChange={(e) => {
-                setFormData({ ...formData, totalOrderPcs: e.target.value })
-                if (errors.totalOrderPcs) setErrors({ ...errors, totalOrderPcs: "" })
+                setFormData({ ...formData, totalOrderPcs: e.target.value });
+                if (errors.totalOrderPcs)
+                  setErrors({ ...errors, totalOrderPcs: "" });
               }}
               placeholder="e.g. 100"
               error={errors.totalOrderPcs}
@@ -294,8 +303,8 @@ export function PendingOrderModal({
               type="number"
               value={formData.pendingPcs}
               onChange={(e) => {
-                setFormData({ ...formData, pendingPcs: e.target.value })
-                if (errors.pendingPcs) setErrors({ ...errors, pendingPcs: "" })
+                setFormData({ ...formData, pendingPcs: e.target.value });
+                if (errors.pendingPcs) setErrors({ ...errors, pendingPcs: "" });
               }}
               placeholder="e.g. 50"
               error={errors.pendingPcs}
@@ -305,17 +314,21 @@ export function PendingOrderModal({
               label="Next Follow-up Date"
               required
               type="date"
-              min={new Date().toISOString().split('T')[0]}
+              min={new Date().toISOString().split("T")[0]}
               value={formData.nextFollowUpDate}
               onChange={(e) => {
-                setFormData({ ...formData, nextFollowUpDate: e.target.value })
-                if (errors.nextFollowUpDate) setErrors({ ...errors, nextFollowUpDate: "" })
+                setFormData({ ...formData, nextFollowUpDate: e.target.value });
+                if (errors.nextFollowUpDate)
+                  setErrors({ ...errors, nextFollowUpDate: "" });
               }}
               onBlur={(e) => {
                 const typedDate = e.target.value;
-                const today = new Date().toISOString().split('T')[0];
+                const today = new Date().toISOString().split("T")[0];
                 if (typedDate && typedDate < today) {
-                  setErrors({ ...errors, nextFollowUpDate: "Cannot select a past date" });
+                  setErrors({
+                    ...errors,
+                    nextFollowUpDate: "Cannot select a past date",
+                  });
                   setFormData({ ...formData, nextFollowUpDate: "" });
                 }
               }}
@@ -329,8 +342,9 @@ export function PendingOrderModal({
               step="0.01"
               value={formData.grossWtTotal}
               onChange={(e) => {
-                setFormData({ ...formData, grossWtTotal: e.target.value })
-                if (errors.grossWtTotal) setErrors({ ...errors, grossWtTotal: "" })
+                setFormData({ ...formData, grossWtTotal: e.target.value });
+                if (errors.grossWtTotal)
+                  setErrors({ ...errors, grossWtTotal: "" });
               }}
               placeholder="e.g. 125.75"
               error={errors.grossWtTotal}

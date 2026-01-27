@@ -51,6 +51,7 @@ import { formatDisplayDate } from "@/lib/utils";
 interface Client {
   uuid: string;
   userCode: string;
+  salesExecCode?: string;
   name: string;
   email?: string;
   phone?: string;
@@ -71,6 +72,7 @@ export default function ClientDetails() {
   const location = useLocation();
   const { setHeader, clearHeader } = usePageHeader();
   const { user } = useAuth();
+  const isAdmin = user?.role !== "sales_executive";
 
   const [client, setClient] = useState<Client | null>(
     location.state?.client || null,
@@ -115,19 +117,19 @@ export default function ClientDetails() {
         const clientData = response?.data || response?.client;
 
         if (
-          user?.role === "sales_executive" &&
+          !isAdmin &&
           user?.userCode &&
           clientData?.salesExecCode !== user.userCode
         ) {
           toast.error("You do not have access to this client");
-          navigate("/sales");
+          navigate("/clients");
           return;
         }
 
         setClient(clientData);
       } else if (!client) {
         toast.error("Failed to load client details");
-        navigate(user?.role === "admin" ? "/admin/clients" : "/sales");
+        navigate("/clients");
       }
     } catch (error: any) {
       if (!client) {
@@ -344,7 +346,7 @@ export default function ClientDetails() {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            {items.length === 0 && (
+            {items.length === 0 && isAdmin && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -398,26 +400,28 @@ export default function ClientDetails() {
                     key={idx}
                     className="bg-gray-50 rounded border border-gray-200 p-3 relative group"
                   >
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-3 right-3 h-5 w-5 transition-opacity text-primary"
-                      onClick={() => {
-                        if (type === "pending-material") {
-                          setEditingPM(item);
-                          setShowPMModal(true);
-                        } else if (type === "pending-order") {
-                          setEditingPO(item);
-                          setShowPOModal(true);
-                        } else {
-                          setEditingNO(item);
-                          setShowNOModal(true);
-                        }
-                      }}
-                      title="Edit"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-3 right-3 h-5 w-5 transition-opacity text-primary"
+                        onClick={() => {
+                          if (type === "pending-material") {
+                            setEditingPM(item);
+                            setShowPMModal(true);
+                          } else if (type === "pending-order") {
+                            setEditingPO(item);
+                            setShowPOModal(true);
+                          } else {
+                            setEditingNO(item);
+                            setShowNOModal(true);
+                          }
+                        }}
+                        title="Edit"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                     <div className="flex justify-between items-start mb-3 pr-8">
                       <div className="flex min-w-0 items-center gap-2 ">
                         <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
@@ -482,23 +486,7 @@ export default function ClientDetails() {
                                 Last Follow-up
                               </p>
                               <p className="text-xs font-semibold text-gray-900">
-                                {item.lastFollowUpDate
-                                  ? new Date(
-                                      item.lastFollowUpDate,
-                                    ).toLocaleDateString(undefined, {
-                                      day: "numeric",
-                                      month: "short",
-                                      year: "numeric",
-                                    })
-                                  : "-"}
-                              </p>
-                            </div>
-                            <div className="space-y-0.5 text-center">
-                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                                Sales Exec
-                              </p>
-                              <p className="text-xs font-bold text-gray-900">
-                                {item.salesExecCode || "-"}
+                                {formatDisplayDate(item.lastFollowUpDate)}
                               </p>
                             </div>
                             <div className="space-y-0.5 text-right">
@@ -562,15 +550,7 @@ export default function ClientDetails() {
                                 Next Follow-up
                               </p>
                               <p className="text-xs font-bold text-primary">
-                                {item.nextFollowUpDate
-                                  ? new Date(
-                                      item.nextFollowUpDate,
-                                    ).toLocaleDateString(undefined, {
-                                      day: "numeric",
-                                      month: "short",
-                                      year: "numeric",
-                                    })
-                                  : "-"}
+                                {formatDisplayDate(item.nextFollowUpDate)}
                               </p>
                             </div>
                           </div>
@@ -611,15 +591,7 @@ export default function ClientDetails() {
                                 Last Follow-up
                               </p>
                               <p className="text-xs font-semibold text-gray-900">
-                                {item.lastFollowUpDate
-                                  ? new Date(
-                                      item.lastFollowUpDate,
-                                    ).toLocaleDateString(undefined, {
-                                      day: "numeric",
-                                      month: "short",
-                                      year: "numeric",
-                                    })
-                                  : "-"}
+                                {formatDisplayDate(item.lastFollowUpDate)}
                               </p>
                             </div>
                             <div className="space-y-0.5 text-center">
@@ -635,15 +607,7 @@ export default function ClientDetails() {
                                 Next Follow-up
                               </p>
                               <p className="text-xs font-bold text-primary">
-                                {item.nextFollowUpDate
-                                  ? new Date(
-                                      item.nextFollowUpDate,
-                                    ).toLocaleDateString(undefined, {
-                                      day: "numeric",
-                                      month: "short",
-                                      year: "numeric",
-                                    })
-                                  : "-"}
+                                {formatDisplayDate(item.nextFollowUpDate)}
                               </p>
                             </div>
                           </div>
@@ -773,9 +737,7 @@ export default function ClientDetails() {
             The client you are looking for does not exist or has been removed.
           </p>
           <Button
-            onClick={() =>
-              navigate(user?.role === "admin" ? "/admin/clients" : "/sales")
-            }
+            onClick={() => navigate("/clients")}
             variant="outline"
             className="h-9 px-4 text-xs"
           >
@@ -794,9 +756,7 @@ export default function ClientDetails() {
           <Button
             variant="outline"
             size="icon"
-            onClick={() =>
-              navigate(user?.role === "admin" ? "/admin/clients" : "/sales")
-            }
+            onClick={() => navigate("/clients")}
             className="hover:bg-accent rounded-lg h-9 w-9 border-border"
           >
             <ArrowLeft className="h-4 w-4 text-muted-foreground" />
@@ -979,48 +939,40 @@ export default function ClientDetails() {
         </DialogContent>
       </Dialog>
 
-      <ClientModal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        onSuccess={fetchClient}
-        client={client}
-      />
-
-      {/* Pending Material Modal */}
-      <PendingMaterialModal
-        isOpen={showPMModal}
-        onClose={() => {
-          setShowPMModal(false);
-          setEditingPM(null);
-        }}
-        onSuccess={refreshData}
-        clientCode={client?.userCode || ""}
-        material={editingPM}
-      />
-
-      {/* Pending Order Modal */}
-      <PendingOrderModal
-        isOpen={showPOModal}
-        onClose={() => {
-          setShowPOModal(false);
-          setEditingPO(null);
-        }}
-        onSuccess={refreshData}
-        clientCode={client?.userCode || ""}
-        order={editingPO}
-      />
-
-      {/* New Order Modal */}
-      <NewOrderModal
-        isOpen={showNOModal}
-        onClose={() => {
-          setShowNOModal(false);
-          setEditingNO(null);
-        }}
-        onSuccess={refreshData}
-        clientCode={client?.userCode || ""}
-        order={editingNO}
-      />
+      {isAdmin && (
+        <>
+          <PendingMaterialModal
+            isOpen={showPMModal}
+            onClose={() => {
+              setShowPMModal(false);
+              setEditingPM(null);
+            }}
+            onSuccess={refreshData}
+            material={editingPM}
+            clientCode={client.userCode}
+          />
+          <PendingOrderModal
+            isOpen={showPOModal}
+            onClose={() => {
+              setShowPOModal(false);
+              setEditingPO(null);
+            }}
+            onSuccess={refreshData}
+            order={editingPO}
+            clientCode={client.userCode}
+          />
+          <NewOrderModal
+            isOpen={showNOModal}
+            onClose={() => {
+              setShowNOModal(false);
+              setEditingNO(null);
+            }}
+            onSuccess={refreshData}
+            order={editingNO}
+            clientCode={client.userCode}
+          />
+        </>
+      )}
     </div>
   );
 }

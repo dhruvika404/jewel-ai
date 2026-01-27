@@ -11,13 +11,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -32,7 +25,6 @@ import {
   Plus,
   Phone,
   Mail,
-  FileText,
   Pencil,
   KeyRoundIcon,
   Trash2,
@@ -43,7 +35,8 @@ import { toast } from "sonner";
 import { salesPersonAPI, authAPI, sharedAPI } from "@/services/api";
 import { Label } from "@/components/ui/label";
 import { DeleteModal } from "@/components/modals/DeleteModal";
-
+import { ImportModal } from "@/components/modals/ImportModal";
+import { usePageHeader } from "@/contexts/PageHeaderProvider";
 interface SalesPerson {
   uuid: string;
   userCode: string;
@@ -56,8 +49,6 @@ interface SalesPerson {
   createdAt?: string;
   updatedAt?: string;
 }
-
-import { usePageHeader } from "@/contexts/PageHeaderProvider";
 
 export default function SalesPersons() {
   const { setHeader } = usePageHeader();
@@ -83,14 +74,11 @@ export default function SalesPersons() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [fileFormat, setFileFormat] = useState("excel");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingSalesPerson, setDeletingSalesPerson] =
     useState<SalesPerson | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -106,7 +94,9 @@ export default function SalesPersons() {
   };
 
   const toggleAllSelection = (currentItems: SalesPerson[]) => {
-    const allSelected = currentItems.every((item) => selectedItems.has(item.uuid));
+    const allSelected = currentItems.every((item) =>
+      selectedItems.has(item.uuid),
+    );
     if (allSelected) {
       const newSelected = new Set(selectedItems);
       currentItems.forEach((item) => newSelected.delete(item.uuid));
@@ -130,7 +120,9 @@ export default function SalesPersons() {
       if (response.success === false) {
         toast.error(response.message || "Failed to delete sales persons");
       } else {
-        toast.success(response.message || "Selected sales persons deleted successfully");
+        toast.success(
+          response.message || "Selected sales persons deleted successfully",
+        );
         loadData();
         setShowBulkDeleteConfirm(false);
         setSelectedItems(new Set());
@@ -139,16 +131,6 @@ export default function SalesPersons() {
       toast.error("Failed to delete sales persons");
     } finally {
       setIsBulkDeleting(false);
-    }
-  };
-
-  const getAcceptType = () => {
-    switch (fileFormat) {
-      case "csv":
-        return ".csv";
-      case "excel":
-      default:
-        return ".xlsx,.xls";
     }
   };
 
@@ -176,8 +158,7 @@ export default function SalesPersons() {
               onClick={() => setShowBulkDeleteConfirm(true)}
               className="flex items-center gap-2"
             >
-              <Trash2 className="w-4 h-4" />
-              ({selectedItems.size})
+              <Trash2 className="w-4 h-4" />({selectedItems.size})
             </Button>
           ) : (
             <Button onClick={handleOpenAdd} className="gap-2">
@@ -285,11 +266,15 @@ export default function SalesPersons() {
     if (!formData.userCode) newErrors.userCode = "User Code is required";
     if (!formData.name) newErrors.name = "Full Name is required";
 
-    if (formData.email && formData.email.trim()) {
+    if (formData.email.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
         newErrors.email = "Please enter a valid email address";
       }
+    }
+
+    if (formData.phone && formData.phone.length < 10) {
+      newErrors.phone = "Phone number must be at least 10 digits";
     }
 
     setErrors(newErrors);
@@ -305,10 +290,15 @@ export default function SalesPersons() {
       if (selectedSalesPerson) {
         const response = await salesPersonAPI.update(
           selectedSalesPerson.uuid,
-          formData
+          formData,
         );
-        if (response.success) {
-          toast.success("Sales person updated successfully");
+        if (
+          response.success &&
+          !response.message?.toLowerCase().includes("exist")
+        ) {
+          toast.success(
+            response.message || "Sales person updated successfully",
+          );
           setShowFormDialog(false);
           loadData();
         } else {
@@ -316,8 +306,13 @@ export default function SalesPersons() {
         }
       } else {
         const response = await salesPersonAPI.create(formData);
-        if (response.success) {
-          toast.success("Sales person created successfully");
+        if (
+          response.success &&
+          !response.message?.toLowerCase().includes("exist")
+        ) {
+          toast.success(
+            response.message || "Sales person created successfully",
+          );
           setShowFormDialog(false);
           loadData();
         } else {
@@ -334,18 +329,21 @@ export default function SalesPersons() {
   const handleSetPassword = async () => {
     if (!selectedSalesPerson) return;
 
-    if (!newPassword || !confirmPassword) {
-      toast.error("Please fill in all fields");
-      return;
+    const newErrors: Record<string, string> = {};
+    if (!newPassword) newErrors.newPassword = "New Password is required";
+    if (!confirmPassword)
+      newErrors.confirmPassword = "Confirm Password is required";
+
+    if (newPassword && confirmPassword) {
+      if (newPassword !== confirmPassword) {
+        newErrors.confirmPassword = "Passwords do not match";
+      } else if (newPassword.length < 6) {
+        newErrors.newPassword = "Password must be at least 6 characters";
+      }
     }
 
-    if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -367,16 +365,13 @@ export default function SalesPersons() {
     setSelectedSalesPerson(null);
   };
 
-  const handleUpload = async () => {
-    if (!uploadFile) return;
-
+  const handleUpload = async (file: File) => {
     setIsUploading(true);
     try {
-      const response = await salesPersonAPI.import(uploadFile);
+      const response = await salesPersonAPI.import(file);
       if (response.success) {
         toast.success("Sales persons imported successfully");
         setShowUploadDialog(false);
-        setUploadFile(null);
         loadData();
       } else {
         const errorMsg =
@@ -396,151 +391,155 @@ export default function SalesPersons() {
     <div className="bg-gray-50">
       <div className="p-6 space-y-6">
         <Card className="overflow-hidden">
-            <Table containerClassName="max-h-[calc(100vh-180px)] overflow-auto">
-              <TableHeader className="sticky top-0 z-20 bg-gray-50">
-                <TableRow className="bg-gray-50">
-                  <TableHead className="w-[50px] align-center">
-                    <Checkbox
-                      checked={
-                        salesPersons.length > 0 &&
-                        salesPersons.every((sp) => selectedItems.has(sp.uuid))
-                      }
-                      onCheckedChange={() => toggleAllSelection(salesPersons)}
-                    />
-                  </TableHead>
-                  <TableHead className="font-medium text-gray-700 w-[100px]">
-                    Name
-                  </TableHead>
-                  <TableHead className="font-medium text-gray-700 w-[100px]">
-                    Code
-                  </TableHead>
-                  <TableHead className="font-medium text-gray-700 w-[200px]">
-                    Contact
-                  </TableHead>
-                  <TableHead className="font-medium text-gray-700 w-[120px]">
-                    Status
-                  </TableHead>
-                  <TableHead className="font-medium text-gray-700 text-center w-[120px]">
-                    Actions
-                  </TableHead>
+          <Table containerClassName="max-h-[calc(100vh-180px)] overflow-auto">
+            <TableHeader className="sticky top-0 z-20 bg-gray-50">
+              <TableRow className="bg-gray-50">
+                <TableHead className="w-[50px] align-center">
+                  <Checkbox
+                    checked={
+                      salesPersons.length > 0 &&
+                      salesPersons.every((sp) => selectedItems.has(sp.uuid))
+                    }
+                    onCheckedChange={() => toggleAllSelection(salesPersons)}
+                  />
+                </TableHead>
+                <TableHead className="font-medium text-gray-700 w-[100px]">
+                  Name
+                </TableHead>
+                <TableHead className="font-medium text-gray-700 w-[100px]">
+                  Code
+                </TableHead>
+                 <TableHead className="font-medium text-gray-700 w-[200px]">
+                  Email
+                </TableHead>
+                <TableHead className="font-medium text-gray-700 w-[150px]">
+                  Phone
+                </TableHead>
+                <TableHead className="font-medium text-gray-700 w-[120px]">
+                  Status
+                </TableHead>
+                <TableHead className="font-medium text-gray-700 text-center w-[120px]">
+                  Actions
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-12">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+              ) : salesPersons.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={8}
+                    className="text-center py-8 text-muted-foreground"
+                  >
+                    No sales persons found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                salesPersons.map((sp) => (
+                  <TableRow key={sp.uuid} className="hover:bg-gray-50">
+                    <TableCell className="align-center">
+                      <Checkbox
+                        checked={selectedItems.has(sp.uuid)}
+                        onCheckedChange={() => toggleSelection(sp.uuid)}
+                      />
                     </TableCell>
-                  </TableRow>
-                ) : salesPersons.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      className="text-center py-8 text-muted-foreground"
-                    >
-                      No sales persons found
+                    <TableCell className="align-center">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs shrink-0">
+                          {sp.name?.charAt(0).toUpperCase() || "U"}
+                        </div>
+                        <div className="font-medium text-gray-900">
+                          {sp.name}
+                        </div>
+                      </div>
                     </TableCell>
-                  </TableRow>
-                ) : (
-                  salesPersons.map((sp) => (
-                    <TableRow key={sp.uuid} className="hover:bg-gray-50">
-                      <TableCell className="align-center">
-                        <Checkbox
-                          checked={selectedItems.has(sp.uuid)}
-                          onCheckedChange={() => toggleSelection(sp.uuid)}
-                        />
-                      </TableCell>
-                      <TableCell className="align-center">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs shrink-0">
-                            {sp.name?.charAt(0).toUpperCase() || "U"}
-                          </div>
-                          <div className="font-medium text-gray-900">
-                            {sp.name}
-                          </div>
+                    <TableCell className="font-medium text-gray-900 align-center">
+                      {sp.userCode}
+                    </TableCell>
+                    <TableCell className="align-center">
+                      {sp.email ? (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Mail className="w-3 h-3 text-gray-400" />
+                          <span
+                            className="truncate max-w-[180px]"
+                            title={sp.email}
+                          >
+                            {sp.email}
+                          </span>
                         </div>
-                      </TableCell>
-                      <TableCell className="font-medium text-gray-900 align-center">
-                        {sp.userCode}
-                      </TableCell>
-                      <TableCell className="align-center">
-                        <div className="flex flex-col gap-1">
-                          {sp.email && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <Mail className="w-3 h-3 text-gray-400" />
-                              <span
-                                className="truncate max-w-[180px]"
-                                title={sp.email}
-                              >
-                                {sp.email}
-                              </span>
-                            </div>
-                          )}
-                          {sp.phone && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <Phone className="w-3 h-3 text-gray-400" />
-                              {sp.phone}
-                            </div>
-                          )}
-                          {!sp.email && !sp.phone && (
-                            <span className="text-gray-400 text-sm">-</span>
-                          )}
+                      ) : (
+                        <span className="text-gray-400 text-sm">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="align-center">
+                      {sp.phone ? (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Phone className="w-3 h-3 text-gray-400" />
+                          {sp.phone}
                         </div>
-                      </TableCell>
-                      <TableCell className="align-center">
-                        <Badge
-                          variant={sp.isActive ? "default" : "secondary"}
-                          className={
-                            sp.isActive
-                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200"
-                              : "bg-gray-100 text-gray-700"
-                          }
+                      ) : (
+                        <span className="text-gray-400 text-sm">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="align-center">
+                      <Badge
+                        variant={sp.isActive ? "default" : "secondary"}
+                        className={
+                          sp.isActive
+                            ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200"
+                            : "bg-gray-100 text-gray-700"
+                        }
+                      >
+                        {sp.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="align-center">
+                      <div className="flex items-center justify-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                          title="Edit Details"
+                          onClick={() => handleOpenEdit(sp)}
+                          disabled={selectedItems.size > 0}
                         >
-                          {sp.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="align-center">
-                        <div className="flex items-center justify-center">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
-                            title="Edit Details"
-                            onClick={() => handleOpenEdit(sp)}
-                            disabled={selectedItems.size > 0}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
-                            title="Set Password"
-                            onClick={() => {
-                              setSelectedSalesPerson(sp);
-                              setShowPasswordDialog(true);
-                            }}
-                            disabled={selectedItems.size > 0}
-                          >
-                            <KeyRoundIcon className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-100"
-                            title="Delete"
-                            onClick={() => handleOpenDelete(sp)}
-                            disabled={selectedItems.size > 0}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-              </Table>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                          title="Set Password"
+                          onClick={() => {
+                            setSelectedSalesPerson(sp);
+                            setShowPasswordDialog(true);
+                          }}
+                          disabled={selectedItems.size > 0}
+                        >
+                          <KeyRoundIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                          title="Delete"
+                          onClick={() => handleOpenDelete(sp)}
+                          disabled={selectedItems.size > 0}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
           {totalItems > 0 && (
             <div className="p-4 border-t bg-white flex justify-between items-center">
               <div className="text-sm text-gray-600">
@@ -576,30 +575,34 @@ export default function SalesPersons() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleFormSubmit} className="space-y-4">
-              <Input
-                id="userCode"
-                label="User Code"
-                required
-                placeholder="e.g. SE001"
-                value={formData.userCode}
-                onChange={(e) => {
-                  setFormData({ ...formData, userCode: e.target.value })
-                  if (errors.userCode) setErrors({ ...errors, userCode: "" })
-                }}
-                disabled={!!selectedSalesPerson}
-                autoComplete="off"
-                error={errors.userCode}
-              />
-              <Input
-                id="phone"
-                label="Phone"
-                placeholder="Contact number"
-                value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-                autoComplete="off"
-              />
+            <Input
+              id="userCode"
+              label="User Code"
+              required
+              placeholder="e.g. SE001"
+              value={formData.userCode}
+              onChange={(e) => {
+                setFormData({ ...formData, userCode: e.target.value });
+                if (errors.userCode) setErrors({ ...errors, userCode: "" });
+              }}
+              disabled={!!selectedSalesPerson}
+              autoComplete="off"
+              error={errors.userCode}
+            />
+            <Input
+              id="phone"
+              label="Phone"
+              placeholder="Contact number"
+              value={formData.phone}
+              maxLength={10}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9]/g, "");
+                setFormData({ ...formData, phone: value });
+                if (errors.phone) setErrors({ ...errors, phone: "" });
+              }}
+              autoComplete="off"
+              error={errors.phone}
+            />
 
             <Input
               id="name"
@@ -608,8 +611,8 @@ export default function SalesPersons() {
               placeholder="Staff name"
               value={formData.name}
               onChange={(e) => {
-                setFormData({ ...formData, name: e.target.value })
-                if (errors.name) setErrors({ ...errors, name: "" })
+                setFormData({ ...formData, name: e.target.value });
+                if (errors.name) setErrors({ ...errors, name: "" });
               }}
               autoComplete="off"
               error={errors.name}
@@ -618,15 +621,14 @@ export default function SalesPersons() {
             <Input
               id="email"
               label="Email Address"
-              type="email"
               placeholder="email@example.com"
               value={formData.email}
               onChange={(e) => {
-                setFormData({ ...formData, email: e.target.value })
-                if (errors.email) setErrors({ ...errors, email: "" })
+                setFormData({ ...formData, email: e.target.value });
+                  if (errors.email) setErrors({ ...errors, email: "" });
               }}
               autoComplete="off"
-              error={errors.email}
+               error={errors.email}
             />
 
             <DialogFooter className="mt-6 pt-4">
@@ -663,30 +665,42 @@ export default function SalesPersons() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>New Password</Label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter new password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="pr-10"
-                  autoComplete="new-password"
-                />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label required>New Password</Label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter new password"
+                    value={newPassword}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      if (errors.newPassword)
+                        setErrors({ ...errors, newPassword: "" });
+                    }}
+                    className="pr-10"
+                    autoComplete="new-password"
+                    error={errors.newPassword}
+                  />
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Confirm Password</Label>
-              <div className="relative">
-                <Input
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Confirm new password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pr-10"
-                  autoComplete="new-password"
-                />
+              <div className="space-y-2">
+                <Label required>Confirm Password</Label>
+                <div className="relative">
+                  <Input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      if (errors.confirmPassword)
+                        setErrors({ ...errors, confirmPassword: "" });
+                    }}
+                    className="pr-10"
+                    autoComplete="new-password"
+                    error={errors.confirmPassword}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -699,78 +713,15 @@ export default function SalesPersons() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Import Data</DialogTitle>
-            <DialogDescription>
-              Upload an Excel file to bulk import sales persons. Supported
-              formats: .xlsx, .xls
-            </DialogDescription>
-          </DialogHeader>
-
-            <div className="space-y-4 mb-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">
-                  Select File Format
-                </Label>
-                <Select value={fileFormat} onValueChange={setFileFormat}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select file format" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="excel">Excel (.xlsx, .xls)</SelectItem>
-                    <SelectItem value="csv">CSV (.csv)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div
-              className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:bg-gray-50/50 transition-colors cursor-pointer"
-              onClick={() => document.getElementById("file-upload")?.click()}
-            >
-              <input
-                id="file-upload"
-                type="file"
-                className="hidden"
-                accept={getAcceptType()}
-                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-              />
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
-                <FileText className="w-6 h-6" />
-              </div>
-              <h3 className="text-sm font-medium text-gray-900">
-                {uploadFile ? uploadFile.name : "Click to select file"}
-            </h3>
-            <p className="text-xs text-gray-500 mt-1">
-              {uploadFile
-                ? `${(uploadFile.size / 1024).toFixed(1)} KB`
-                : "or drag and drop here"}
-            </p>
-          </div>
-
-          <DialogFooter className="mt-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowUploadDialog(false);
-                setUploadFile(null);
-              }}
-              disabled={isUploading}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleUpload}
-              disabled={!uploadFile || isUploading}
-            >
-              {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isUploading ? "Importing..." : "Start Import"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ImportModal
+        open={showUploadDialog}
+        onOpenChange={setShowUploadDialog}
+        title="Import Sales Persons"
+        description="Upload an Excel file to bulk import sales persons"
+        onImport={handleUpload}
+        isUploading={isUploading}
+        onClose={() => setShowUploadDialog(false)}
+      />
 
       <DeleteModal
         isOpen={deleteModalOpen || showBulkDeleteConfirm}

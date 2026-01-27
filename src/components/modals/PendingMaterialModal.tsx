@@ -134,12 +134,21 @@ export function PendingMaterialModal({
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.salesExecCode) newErrors.salesExecCode = "Sales Executive is required";
+    if (!formData.salesExecCode)
+      newErrors.salesExecCode = "Sales Executive is required";
     if (!formData.styleNo) newErrors.styleNo = "Style No is required";
     if (!formData.orderNo) newErrors.orderNo = "Order No is required";
     if (!formData.orderDate) newErrors.orderDate = "Order Date is required";
-    if (!formData.lastMovementDate) newErrors.lastMovementDate = "Last Movement Date is required";
-    
+    if (!formData.lastMovementDate)
+      newErrors.lastMovementDate = "Last Movement Date is required";
+    if (!formData.departmentName)
+      newErrors.departmentName = "Department Name is required";
+    if (!formData.totalNetWt) newErrors.totalNetWt = "Total Net Wt is required";
+    if (!formData.expectedDeliveryDate)
+      newErrors.expectedDeliveryDate = "Expected delivery date is required";
+    if (!formData.nextFollowUpDate)
+      newErrors.nextFollowUpDate = "Next follow-up date is required";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -150,14 +159,14 @@ export function PendingMaterialModal({
     if (!validate()) return;
 
     const filterEmptyFields = (data: Record<string, any>) => {
-      const cleanData: Record<string, any> = {}
+      const cleanData: Record<string, any> = {};
       Object.entries(data).forEach(([key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          cleanData[key] = value
+        if (value !== "" && value !== null && value !== undefined) {
+          cleanData[key] = value;
         }
-      })
-      return cleanData
-    }
+      });
+      return cleanData;
+    };
 
     setLoading(true);
     try {
@@ -165,11 +174,11 @@ export function PendingMaterialModal({
       if (material) {
         response = await pendingMaterialAPI.update(
           material.uuid || material.id,
-          formData
+          formData,
         );
       } else {
         const { status, ...createPayload } = formData;
-        const payload = filterEmptyFields(createPayload)
+        const payload = filterEmptyFields(createPayload);
         response = await pendingMaterialAPI.create(payload as any);
       }
 
@@ -181,7 +190,7 @@ export function PendingMaterialModal({
       toast.success(
         material
           ? "Pending material updated successfully"
-          : "Pending material created successfully"
+          : "Pending material created successfully",
       );
       onSuccess();
       resetForm();
@@ -212,20 +221,26 @@ export function PendingMaterialModal({
               label="Sales Executive"
               required
               options={salesPersons.map((sp) => ({
-                  value: sp.userCode,
-                  label: `${sp.name} (${sp.userCode})`,
+                value: sp.userCode,
+                label: sp.name ? `${sp.name} (${sp.userCode})` : sp.userCode,
               }))}
               value={formData.salesExecCode}
               onSelect={(val) => {
-                setFormData({ ...formData, salesExecCode: val })
-                if (errors.salesExecCode) setErrors({ ...errors, salesExecCode: "" })
+                setFormData({ ...formData, salesExecCode: val });
+                if (errors.salesExecCode)
+                  setErrors({ ...errors, salesExecCode: "" });
               }}
               placeholder="Select sales executive"
               searchPlaceholder="Search sales executive..."
               error={errors.salesExecCode}
               className="!h-full"
             />
-            <Input id="clientCode" label="Client Code" value={formData.clientCode} disabled />
+            <Input
+              id="clientCode"
+              label="Client Code"
+              value={formData.clientCode}
+              disabled
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -235,8 +250,8 @@ export function PendingMaterialModal({
               required
               value={formData.styleNo}
               onChange={(e) => {
-                setFormData({ ...formData, styleNo: e.target.value })
-                if (errors.styleNo) setErrors({ ...errors, styleNo: "" })
+                setFormData({ ...formData, styleNo: e.target.value });
+                if (errors.styleNo) setErrors({ ...errors, styleNo: "" });
               }}
               placeholder="e.g. 67GBB"
               error={errors.styleNo}
@@ -247,8 +262,8 @@ export function PendingMaterialModal({
               required
               value={formData.orderNo}
               onChange={(e) => {
-                setFormData({ ...formData, orderNo: e.target.value })
-                if (errors.orderNo) setErrors({ ...errors, orderNo: "" })
+                setFormData({ ...formData, orderNo: e.target.value });
+                if (errors.orderNo) setErrors({ ...errors, orderNo: "" });
               }}
               placeholder="e.g. ORD-1001"
               error={errors.orderNo}
@@ -263,19 +278,22 @@ export function PendingMaterialModal({
               required
               value={formData.orderDate}
               onChange={(e) => {
-                setFormData({ ...formData, orderDate: e.target.value })
-                if (errors.orderDate) setErrors({ ...errors, orderDate: "" })
+                setFormData({ ...formData, orderDate: e.target.value });
+                if (errors.orderDate) setErrors({ ...errors, orderDate: "" });
               }}
               onBlur={(e) => {
                 const typedDate = e.target.value;
-                const today = new Date().toISOString().split('T')[0];
+                const today = new Date().toISOString().split("T")[0];
                 if (typedDate && typedDate > today) {
-                  setErrors({ ...errors, orderDate: "Cannot select a future date" });
+                  setErrors({
+                    ...errors,
+                    orderDate: "Cannot select a future date",
+                  });
                   setFormData({ ...formData, orderDate: "" });
                 }
               }}
               error={errors.orderDate}
-              max={new Date().toISOString().split('T')[0]}
+              max={new Date().toISOString().split("T")[0]}
             />
             <Input
               id="lastMovementDate"
@@ -284,19 +302,23 @@ export function PendingMaterialModal({
               required
               value={formData.lastMovementDate}
               onChange={(e) => {
-                setFormData({ ...formData, lastMovementDate: e.target.value })
-                if (errors.lastMovementDate) setErrors({ ...errors, lastMovementDate: "" })
+                setFormData({ ...formData, lastMovementDate: e.target.value });
+                if (errors.lastMovementDate)
+                  setErrors({ ...errors, lastMovementDate: "" });
               }}
               onBlur={(e) => {
                 const typedDate = e.target.value;
-                const today = new Date().toISOString().split('T')[0];
+                const today = new Date().toISOString().split("T")[0];
                 if (typedDate && typedDate > today) {
-                  setErrors({ ...errors, lastMovementDate: "Cannot select a future date" });
+                  setErrors({
+                    ...errors,
+                    lastMovementDate: "Cannot select a future date",
+                  });
                   setFormData({ ...formData, lastMovementDate: "" });
                 }
               }}
               error={errors.lastMovementDate}
-              max={new Date().toISOString().split('T')[0]}
+              max={new Date().toISOString().split("T")[0]}
             />
           </div>
 
@@ -304,20 +326,29 @@ export function PendingMaterialModal({
             <Input
               id="departmentName"
               label="Department Name"
+              required
               value={formData.departmentName}
-              onChange={(e) =>
-                setFormData({ ...formData, departmentName: e.target.value })
-              }
+              onChange={(e) => {
+                setFormData({ ...formData, departmentName: e.target.value });
+                if (errors.departmentName)
+                  setErrors({ ...errors, departmentName: "" });
+              }}
               placeholder="e.g. diamond"
+              error={errors.departmentName}
             />
             <Input
               id="totalNetWt"
               label="Total Net Weight"
+              required
+              type="number"
+              step="0.01"
               value={formData.totalNetWt}
-              onChange={(e) =>
-                setFormData({ ...formData, totalNetWt: e.target.value })
-              }
+              onChange={(e) => {
+                setFormData({ ...formData, totalNetWt: e.target.value });
+                if (errors.totalNetWt) setErrors({ ...errors, totalNetWt: "" });
+              }}
               placeholder="e.g. 10.57"
+              error={errors.totalNetWt}
             />
           </div>
 
@@ -325,21 +356,26 @@ export function PendingMaterialModal({
             <Input
               id="expectedDeliveryDate"
               label="Expected Delivery Date"
+              required
               type="date"
-              min={new Date().toISOString().split('T')[0]}
+              min={new Date().toISOString().split("T")[0]}
               value={formData.expectedDeliveryDate}
               onChange={(e) => {
                 setFormData({
                   ...formData,
                   expectedDeliveryDate: e.target.value,
-                })
-                if (errors.expectedDeliveryDate) setErrors({ ...errors, expectedDeliveryDate: "" })
+                });
+                if (errors.expectedDeliveryDate)
+                  setErrors({ ...errors, expectedDeliveryDate: "" });
               }}
               onBlur={(e) => {
                 const typedDate = e.target.value;
-                const today = new Date().toISOString().split('T')[0];
+                const today = new Date().toISOString().split("T")[0];
                 if (typedDate && typedDate < today) {
-                  setErrors({ ...errors, expectedDeliveryDate: "Cannot select a past date" });
+                  setErrors({
+                    ...errors,
+                    expectedDeliveryDate: "Cannot select a past date",
+                  });
                   setFormData({ ...formData, expectedDeliveryDate: "" });
                 }
               }}
@@ -348,18 +384,23 @@ export function PendingMaterialModal({
             <Input
               id="nextFollowUpDate"
               label="Next Follow-up Date"
+              required
               type="date"
-              min={new Date().toISOString().split('T')[0]}
+              min={new Date().toISOString().split("T")[0]}
               value={formData.nextFollowUpDate}
               onChange={(e) => {
-                setFormData({ ...formData, nextFollowUpDate: e.target.value })
-                if (errors.nextFollowUpDate) setErrors({ ...errors, nextFollowUpDate: "" })
+                setFormData({ ...formData, nextFollowUpDate: e.target.value });
+                if (errors.nextFollowUpDate)
+                  setErrors({ ...errors, nextFollowUpDate: "" });
               }}
               onBlur={(e) => {
                 const typedDate = e.target.value;
-                const today = new Date().toISOString().split('T')[0];
+                const today = new Date().toISOString().split("T")[0];
                 if (typedDate && typedDate < today) {
-                  setErrors({ ...errors, nextFollowUpDate: "Cannot select a past date" });
+                  setErrors({
+                    ...errors,
+                    nextFollowUpDate: "Cannot select a past date",
+                  });
                   setFormData({ ...formData, nextFollowUpDate: "" });
                 }
               }}

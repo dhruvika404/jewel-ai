@@ -1,11 +1,21 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import Login from "./pages/Login";
-import AdminDashboard from "./pages/AdminDashboard";
-import SalesDashboard from "./pages/SalesDashboard";
+import AdminRoutes from "./routes/AdminRoutes";
+import SalesRoutes from "./routes/SalesRoutes";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { PageHeaderProvider } from "./contexts/PageHeaderProvider";
+
+function RoleBasedRoutes() {
+  const { user } = useAuth();
+
+  if (user?.role === "sales_executive") {
+    return <SalesRoutes />;
+  }
+
+  return <AdminRoutes />;
+}
 
 function App() {
   return (
@@ -15,22 +25,13 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route
-              path="/admin/*"
+              path="/*"
               element={
-                <ProtectedRoute role="admin">
-                  <AdminDashboard />
+                <ProtectedRoute>
+                  <RoleBasedRoutes />
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/sales/*"
-              element={
-                <ProtectedRoute role="sales">
-                  <SalesDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/" element={<Navigate to="/login" replace />} />
           </Routes>
           <Toaster />
         </PageHeaderProvider>

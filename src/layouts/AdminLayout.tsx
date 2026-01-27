@@ -1,11 +1,16 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Gem,
   LayoutDashboard,
+  Users,
   LogOut,
   Search,
+  FileText,
+  UsersRound,
+  Headset,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ConfirmationModal from "@/components/modals/ConfirmationModal";
@@ -13,27 +18,63 @@ import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-interface SalesLayoutProps {
+interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
-export default function SalesLayout({ children }: SalesLayoutProps) {
+interface MenuItem {
+  label: string;
+  href?: string;
+  icon: any;
+  submenu?: { label: string; href: string }[];
+}
+
+export default function AdminLayout({ children }: AdminLayoutProps) {
   const { logout, user } = useAuth();
   const { header } = usePageHeader();
   const location = useLocation();
   const [isSidebar, setIsSidebar] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const sideBarref = useRef<HTMLDivElement>(null);
 
-  const menuItems = [
-    { label: "Dashboard", href: "/sales", icon: LayoutDashboard },
+  useEffect(() => {
+    if (location.pathname.startsWith("/followups")) {
+      setExpandedMenu("Followups");
+    }
+  }, [location.pathname]);
+
+  const menuItems: MenuItem[] = [
+    { label: "Dashboard", href: "/", icon: LayoutDashboard },
+    { label: "Clients", href: "/clients", icon: UsersRound },
+    ...(user?.role !== "sales_executive"
+      ? [
+          { label: "Sales Persons", href: "/sales-persons", icon: Users },
+          { label: "Reports", href: "/reports", icon: FileText },
+        ]
+      : []),
+    {
+      label: "Followups",
+      icon: Headset,
+      submenu: [
+        { label: "New Order", href: "/followups/new-order" },
+        { label: "Pending Order", href: "/followups/pending-order" },
+        { label: "Pending Material", href: "/followups/pending-material" },
+        // { label: "CAD Order", href: "/followups/cad-order" },
+      ],
+    },
   ];
 
   const isActive = (href: string) => {
-    if (href === "/sales") {
-      return location?.pathname === "/sales";
+    if (href === "/") {
+      return location.pathname === "/";
     }
-    return location?.pathname.startsWith(href);
+    return location.pathname.startsWith(href);
+  };
+
+  const isSubmenuActive = (submenu?: { label: string; href: string }[]) => {
+    if (!submenu) return false;
+    return submenu.some((item) => location?.pathname === item.href);
   };
 
   return (
@@ -45,12 +86,12 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
           "w-64 bg-card border-r border-border overflow-hidden",
           "transition-transform duration-300 ease-in-out",
           isSidebar ? "translate-x-0" : "-translate-x-full",
-          "lg:translate-x-0"
+          "lg:translate-x-0",
         )}
       >
         <div className="w-full h-screen flex flex-col">
           <div className="p-3 border-b border-border min-h-16">
-            <Link to="/sales" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
               <div className="w-7 h-7 bg-primary rounded flex items-center justify-center">
                 <Gem className="w-4 h-4 text-primary-foreground" />
               </div>
@@ -67,21 +108,77 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
             <ul className="space-y-1">
               {menuItems.map((item) => {
                 const Icon = item?.icon;
+                const hasSubmenu = item?.submenu && item?.submenu?.length > 0;
+                const isExpanded = expandedMenu === item?.label;
+                const isItemActive = item.href
+                  ? isActive(item.href)
+                  : isSubmenuActive(item?.submenu);
+
                 return (
-                  <li key={item?.href}>
-                    <Link
-                      to={item?.href}
-                      onClick={() => setIsSidebar(false)}
-                      className={cn(
-                        "w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md transition-colors",
-                        isActive(item?.href)
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      )}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {item?.label}
-                    </Link>
+                  <li key={item?.label}>
+                    {hasSubmenu ? (
+                      <>
+                        <button
+                          onClick={() =>
+                            setExpandedMenu(isExpanded ? null : item?.label)
+                          }
+                          className={cn(
+                            "w-full flex items-center justify-between gap-2 px-2 py-2 text-sm rounded-md transition-colors",
+                            isItemActive || isExpanded
+                              ? "bg-primary/10 text-primary"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon className="w-4 h-4" />
+                            {item?.label}
+                          </div>
+                          <ChevronDown
+                            className={cn(
+                              "w-4 h-4 transition-transform",
+                              isExpanded && "rotate-180",
+                            )}
+                          />
+                        </button>
+                        {isExpanded && (
+                          <ul className="mt-1 ml-4 space-y-1 border-l border-border pl-2">
+                            {item?.submenu?.map((subitem) => (
+                              <li key={subitem?.href}>
+                                <Link
+                                  to={subitem?.href}
+                                  onClick={() => setIsSidebar(false)}
+                                  className={cn(
+                                    "w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md transition-colors",
+                                    location?.pathname === subitem?.href
+                                      ? "bg-primary/10 text-primary font-medium"
+                                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                                  )}
+                                >
+                                  {subitem?.label}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </>
+                    ) : (
+                      <Link
+                        to={item.href || "#"}
+                        onClick={() => {
+                          setIsSidebar(false);
+                          setExpandedMenu(null);
+                        }}
+                        className={cn(
+                          "w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md transition-colors",
+                          isActive(item.href || "")
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                      >
+                        <Icon className="w-4 h-4" />
+                        {item?.label}
+                      </Link>
+                    )}
                   </li>
                 );
               })}
@@ -148,7 +245,10 @@ export default function SalesLayout({ children }: SalesLayoutProps) {
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full">
                 {header?.search && (
                   <Input
-                    onChange={(e) => header?.search?.onChange?.(e?.target?.value)}
+                    value={header?.search?.value ?? ""}
+                    onChange={(e) =>
+                      header?.search?.onChange?.(e?.target?.value)
+                    }
                     placeholder={header?.search?.placeholder ?? "Search"}
                     className="h-9 w-full sm:w-60"
                     rightIcon={

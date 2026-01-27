@@ -23,7 +23,7 @@ interface AuthContextType {
   login: (
     identifier: string,
     password: string,
-    role: UserRole
+    role: UserRole,
   ) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (
     identifier: string,
     password: string,
-    role: UserRole
+    role: UserRole,
   ) => {
     setIsLoading(true);
     try {
@@ -96,12 +96,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("jewelai_token", token);
       }
 
-      const navigateRole =
-        userSession.role === "sales_executive" ? "sales" : userSession.role;
-      navigate(`/${navigateRole}`);
+      navigate("/");
     } catch (error: any) {
       throw new Error(
-        error.message || "Login failed. Please check your credentials."
+        error.message || "Login failed. Please check your credentials.",
       );
     } finally {
       setIsLoading(false);

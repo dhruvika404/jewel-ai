@@ -12,54 +12,37 @@ import {
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, subDays } from "date-fns";
-import {
-  dashboardAPI,
-  newOrderAPI,
-  pendingOrderAPI,
-  pendingMaterialAPI,
-} from "@/services/api";
+import { dashboardAPI } from "@/services/api";
 import { toast } from "sonner";
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import { CreateTaskModal } from "@/components/modals/CreateTaskModal";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface SystemStats {
-  todaysTotalPendingFollowUps: number;
-  todaysTotalTakenFollowUps: number;
-  last7daysTotalPendingFollowUps: number;
-
-  todaysTotalPendingFollowUpsOfPendingOrder: number;
-  todaysTotalTakenFollowUpsOfPendingOrder: number;
-  last7DayPendingFollowUpsOfPendingOrder: number;
-
-  todaysTotalPendingFollowUpsOfPendingMaterial: number;
-  todaysTotalTakenFollowUpsOfPendingMaterial: number;
-  last7DayPendingFollowUpsOfPendingMaterial: number;
-
-  todaysTotalPendingFollowUpsOfNewOrder: number;
-  todaysTotalTakenFollowUpsOfNewOrder: number;
-  last7DayPendingFollowUpsOfNewOrder: number;
+interface StatCardProps {
+  label: string;
+  value: number;
+  icon: any;
+  color: "blue" | "emerald" | "orange" | "purple" | "red";
+  loading: boolean;
 }
 
-export default function AdminHome() {
+export default function Dashboard() {
+  const { user } = useAuth();
+  const isAdmin = user?.role !== "sales_executive";
   const { setHeader } = usePageHeader();
   const navigate = useNavigate();
-
   const [loading, setLoading] = useState(false);
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
-
-  const [systemStats, setSystemStats] = useState<SystemStats>({
+  const [systemStats, setSystemStats] = useState({
     todaysTotalPendingFollowUps: 0,
     todaysTotalTakenFollowUps: 0,
     last7daysTotalPendingFollowUps: 0,
-
     todaysTotalPendingFollowUpsOfPendingOrder: 0,
     todaysTotalTakenFollowUpsOfPendingOrder: 0,
     last7DayPendingFollowUpsOfPendingOrder: 0,
-
     todaysTotalPendingFollowUpsOfPendingMaterial: 0,
     todaysTotalTakenFollowUpsOfPendingMaterial: 0,
     last7DayPendingFollowUpsOfPendingMaterial: 0,
-
     todaysTotalPendingFollowUpsOfNewOrder: 0,
     todaysTotalTakenFollowUpsOfNewOrder: 0,
     last7DayPendingFollowUpsOfNewOrder: 0,
@@ -68,7 +51,7 @@ export default function AdminHome() {
   useEffect(() => {
     setHeader({
       title: "Dashboard",
-      children: (
+      children: isAdmin ? (
         <Button
           onClick={() => setShowCreateTaskModal(true)}
           className="flex items-center gap-2"
@@ -76,26 +59,18 @@ export default function AdminHome() {
           <Plus className="w-4 h-4" />
           Create Task
         </Button>
-      ),
+      ) : undefined,
     });
-  }, []);
+  }, [isAdmin]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [statsRes] = await Promise.all([
-        dashboardAPI.getOverview(),
-        newOrderAPI.getFollowUpsByClientCode({ page: 1, size: 500 }),
-        pendingOrderAPI.getFollowUpsByClientCode({
-          page: 1,
-          size: 500,
-        }),
-        pendingMaterialAPI.getFollowUpsByClientCode({
-          page: 1,
-          size: 500,
-        }),
-      ]);
-
+      const params: any = {};
+      if (!isAdmin && user?.userCode) {
+        params.salesExecCode = user.userCode;
+      }
+      const statsRes = await dashboardAPI.getOverview(params);
       if (statsRes?.data) {
         setSystemStats(statsRes.data);
       }
@@ -107,9 +82,13 @@ export default function AdminHome() {
     }
   };
 
+  useEffect(() => {
+    loadData();
+  }, [user]);
+
   const handleSectionClick = (
     type: string,
-    filterType: "due" | "completed" | "pending7"
+    filterType: "due" | "completed" | "pending7",
   ) => {
     let endpoint = "";
     if (type === "Pending Orders Follow-ups") endpoint = "pending-order";
@@ -128,12 +107,8 @@ export default function AdminHome() {
       const sevenDaysAgo = format(subDays(new Date(), 7), "yyyy-MM-dd");
       params = `?startDate=${sevenDaysAgo}&endDate=${today}&sevenDayPendingFollowUp=true`;
     }
-    navigate(`/admin/followups/${endpoint}${params}`);
+    navigate(`/followups/${endpoint}${params}`);
   };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   return (
     <div className="p-6 space-y-8">
@@ -184,7 +159,6 @@ export default function AdminHome() {
             handleSectionClick("Pending Orders Follow-ups", filterType)
           }
         />
-
         <BreakdownSection
           title="Pending Material Follow-ups"
           icon={Database}
@@ -198,24 +172,28 @@ export default function AdminHome() {
         />
       </div>
 
-      <CreateTaskModal
-        isOpen={showCreateTaskModal}
-        onClose={() => setShowCreateTaskModal(false)}
-        onSuccess={loadData}
-      />
+      {isAdmin && (
+        <CreateTaskModal
+          isOpen={showCreateTaskModal}
+          onClose={() => setShowCreateTaskModal(false)}
+          onSuccess={loadData}
+        />
+      )}
     </div>
   );
 }
 
-function StatCard({ label, value, icon: Icon, color, loading }: any) {
+function StatCard({ label, value, icon: Icon, color, loading }: StatCardProps) {
   const colors: any = {
     blue: "bg-blue-100 text-blue-600",
     emerald: "bg-emerald-100 text-emerald-600",
     orange: "bg-orange-100 text-orange-600",
+    purple: "bg-purple-100 text-purple-600",
+    red: "bg-red-100 text-red-600",
   };
 
   return (
-    <Card className="p-4 shadow-sm">
+    <Card className="p-4 shadow-sm border-none ring-1 ring-black/[0.05] bg-white">
       <div className="flex items-center gap-3">
         <div
           className={`w-10 h-10 rounded-full flex items-center justify-center ${colors[color]}`}
@@ -223,7 +201,7 @@ function StatCard({ label, value, icon: Icon, color, loading }: any) {
           <Icon className="w-5 h-5" />
         </div>
         <div>
-          <p className="text-xs text-gray-500">{label}</p>
+          <p className="text-xs font-medium text-gray-500">{label}</p>
           <p className="text-2xl font-bold">{loading ? "..." : value}</p>
         </div>
       </div>

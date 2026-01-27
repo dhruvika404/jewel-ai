@@ -92,6 +92,8 @@ export default function Clients() {
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
+  const isAdmin = user?.role !== "sales_executive";
+
   const toggleSelection = (id: string) => {
     const newSelected = new Set(selectedItems);
     if (newSelected.has(id)) {
@@ -153,46 +155,50 @@ export default function Clients() {
       },
       children: (
         <>
-          {user?.role !== "sales_executive" && (
-            <Combobox
-              options={[
-                { value: "all", label: "Select Sales Person" },
-                ...salesPersons.map((sp) => ({
-                  value: sp.userCode,
-                  label: `${sp.name} (${sp.userCode})`,
-                })),
-              ]}
-              value={selectedSalesPerson}
-              onSelect={setSelectedSalesPerson}
-              placeholder="Select Sales Person"
-              searchPlaceholder="Search salesperson..."
-              width="w-[180px]"
-            />
-          )}
-          <Button
-            variant="outline"
-            onClick={() => setShowUploadDialog(true)}
-            className="flex items-center gap-2"
-          >
-            <Upload className="w-4 h-4" />
-            Import
-          </Button>
-          {selectedItems.size > 0 ? (
-            <Button
-              variant="destructive"
-              onClick={() => setShowBulkDeleteConfirm(true)}
-              className="flex items-center gap-2"
-            >
-              <Trash2 className="w-4 h-4" />({selectedItems.size})
-            </Button>
-          ) : (
-            <Button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Client
-            </Button>
+          {isAdmin && (
+            <>
+              <Combobox
+                options={[
+                  { value: "all", label: "Select Sales Person" },
+                  ...salesPersons.map((sp) => ({
+                    value: sp.userCode,
+                    label: sp.name
+                      ? `${sp.name} (${sp.userCode})`
+                      : sp.userCode,
+                  })),
+                ]}
+                value={selectedSalesPerson}
+                onSelect={setSelectedSalesPerson}
+                placeholder="Select Sales Person"
+                searchPlaceholder="Search salesperson..."
+                width="w-[180px]"
+              />
+              <Button
+                variant="outline"
+                onClick={() => setShowUploadDialog(true)}
+                className="flex items-center gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                Import
+              </Button>
+              {selectedItems.size > 0 ? (
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowBulkDeleteConfirm(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />({selectedItems.size})
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => setShowAddModal(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Client
+                </Button>
+              )}
+            </>
           )}
         </>
       ),
@@ -203,12 +209,13 @@ export default function Clients() {
     selectedSalesPerson,
     salesPersons,
     selectedItems.size,
+    isAdmin,
   ]);
 
   useEffect(() => {
     const fetchSalesPersons = async () => {
       try {
-        if (user?.role !== "sales_executive") {
+        if (isAdmin) {
           const response = await salesPersonAPI.getAll({
             size: 1000,
             role: "sales_executive",
@@ -223,7 +230,7 @@ export default function Clients() {
     };
 
     fetchSalesPersons();
-  }, [user]);
+  }, [user, isAdmin]);
 
   const loadData = async () => {
     setLoading(true);
@@ -436,9 +443,11 @@ export default function Clients() {
                 <TableHead className="font-medium text-gray-700 w-[130px]">
                   Client Code
                 </TableHead>
-                <TableHead className="font-medium text-gray-700 w-[150px]">
-                  Sales Person
-                </TableHead>
+                {isAdmin && (
+                  <TableHead className="font-medium text-gray-700 w-[150px]">
+                    Sales Person
+                  </TableHead>
+                )}
                 <TableHead className="font-medium text-gray-700 w-[220px]">
                   Pending Material
                 </TableHead>
@@ -456,14 +465,17 @@ export default function Clients() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12">
+                  <TableCell
+                    colSpan={isAdmin ? 8 : 7}
+                    className="text-center py-12"
+                  >
                     <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : clients.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={7}
+                    colSpan={isAdmin ? 8 : 7}
                     className="text-center py-8 text-muted-foreground"
                   >
                     No clients found
@@ -504,9 +516,11 @@ export default function Clients() {
                     <TableCell className="font-medium text-gray-900 align-center">
                       {client?.userCode}
                     </TableCell>
-                    <TableCell className="font-medium text-gray-900 align-center">
-                      {client?.salesExecCode}
-                    </TableCell>
+                    {isAdmin && (
+                      <TableCell className="font-medium text-gray-900 align-center">
+                        {client?.salesExecCode}
+                      </TableCell>
+                    )}
 
                     <TableCell className="align-center">
                       <FollowUpCell data={client.pendingMaterial} />
@@ -520,10 +534,7 @@ export default function Clients() {
 
                     <TableCell className="align-center text-center">
                       <div className="flex items-center justify-center">
-                        <Link
-                          to={`/admin/clients/${client.uuid}`}
-                          state={{ client }}
-                        >
+                        <Link to={`/clients/${client.uuid}`} state={{ client }}>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -534,29 +545,33 @@ export default function Clients() {
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
-                          title="Edit Client"
-                          onClick={() => {
-                            setEditingClient(client);
-                            setShowEditModal(true);
-                          }}
-                          disabled={selectedItems.size > 0}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
-                          title="Delete Client"
-                          onClick={() => handleOpenDelete(client)}
-                          disabled={selectedItems.size > 0}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {isAdmin && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                              title="Edit Client"
+                              onClick={() => {
+                                setEditingClient(client);
+                                setShowEditModal(true);
+                              }}
+                              disabled={selectedItems.size > 0}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                              title="Delete Client"
+                              onClick={() => handleOpenDelete(client)}
+                              disabled={selectedItems.size > 0}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

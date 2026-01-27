@@ -30,6 +30,8 @@ interface ComboboxProps {
   error?: string;
   label?: string;
   required?: boolean;
+  onEndReached?: () => void;
+  loading?: boolean;
 }
 
 export function Combobox({
@@ -44,12 +46,34 @@ export function Combobox({
   label,
   required,
   width,
+  onEndReached,
+  loading,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
+  const observerTarget = React.useRef(null);
 
   const selectedLabel = React.useMemo(() => {
     return options.find((option) => option.value === value)?.label;
   }, [options, value]);
+
+  React.useEffect(() => {
+    if (loading || !onEndReached || !open) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onEndReached();
+        }
+      },
+      { threshold: 1.0 },
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [loading, onEndReached, open]);
 
   return (
     <div className={cn("space-y-2", width, className)}>
@@ -63,7 +87,7 @@ export function Combobox({
             className={cn(
               "w-full h-9 justify-between font-normal px-3 py-2",
               !value && "text-muted-foreground",
-              error && "border-red-500"
+              error && "border-red-500",
             )}
           >
             <span className="truncate">{selectedLabel || placeholder}</span>
@@ -88,12 +112,24 @@ export function Combobox({
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
-                        value === option.value ? "opacity-100" : "opacity-0"
+                        value === option.value ? "opacity-100" : "opacity-0",
                       )}
                     />
                     {option.label}
                   </CommandItem>
                 ))}
+                {onEndReached && (
+                  <div ref={observerTarget} className="h-1 w-full" />
+                )}
+
+                {loading && (
+                  <div className="p-2 text-center text-xs text-muted-foreground">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      Loading more...
+                    </div>
+                  </div>
+                )}
               </CommandGroup>
             </CommandList>
           </Command>

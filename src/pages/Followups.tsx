@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   useParams,
   Navigate,
@@ -35,12 +36,11 @@ import {
 import TablePagination from "@/components/ui/table-pagination";
 import { Badge } from "@/components/ui/badge";
 import { FollowUpModal } from "@/components/modals/FollowUpModal";
+import { ImportModal } from "@/components/modals/ImportModal";
 import {
   Download,
   Loader2,
   Upload,
-  FileText,
-  Eye,
   Pencil,
   Trash2,
   ArrowUpDown,
@@ -166,6 +166,8 @@ export default function Followups() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { setHeader } = usePageHeader();
+  const { user } = useAuth();
+  const isAdmin = user?.role !== "sales_executive";
   const followupType = (type as FollowupType) || "new-order";
   const [salesPersonFilter, setSalesPersonFilter] = useState("all");
   const [clientFilter, setClientFilter] = useState("all");
@@ -198,7 +200,6 @@ export default function Followups() {
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC" | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [showUploadDialog, setShowUploadDialog] = useState(false);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -206,8 +207,6 @@ export default function Followups() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingItem, setDeletingItem] = useState<FollowupRecord | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  // Bulk Actions State
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [bulkRemarkModalOpen, setBulkRemarkModalOpen] = useState(false);
   const [bulkRemarkText, setBulkRemarkText] = useState("");
@@ -597,6 +596,10 @@ export default function Followups() {
         params.salesExecCode = salesPersonFilter;
       }
 
+      if (!isAdmin && user?.userCode) {
+        params.salesExecCode = user.userCode;
+      }
+
       const isManualSort = sortBy && MANUAL_SORT_COLUMNS.includes(sortBy);
 
       if (isManualSort) {
@@ -679,7 +682,9 @@ export default function Followups() {
     setStatusFilter("all");
     setSortBy(null);
     setSortOrder(null);
-    navigate(`/admin/followups/${followupType}`, { replace: true });
+    navigate(`/${isAdmin ? "admin" : "sales"}/followups/${followupType}`, {
+      replace: true,
+    });
     loadFollowupData({ overrideDateRange: null, skipAllFilters: true });
   };
 
@@ -846,7 +851,7 @@ export default function Followups() {
       )
     : filteredFollowups;
 
-  const isInitialMount = useState(true);
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
     const hasUrlParams =
@@ -855,9 +860,13 @@ export default function Followups() {
       searchParams.get("todayCompletedFollowUp") ||
       searchParams.get("sevenDayPendingFollowUp");
 
-    if (hasUrlParams && isInitialMount[0]) {
-      isInitialMount[1](false);
+    if (hasUrlParams && isInitialMount.current) {
+      isInitialMount.current = false;
       return;
+    }
+
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
     }
 
     setSalesPersonFilter("all");
@@ -872,6 +881,9 @@ export default function Followups() {
     setSortOrder(null);
     setCurrentPage(1);
     setPageSize(10);
+    setSelectedItems(new Set());
+    setBulkRemarkText("");
+    setBulkStatusValue("completed");
     loadFollowupData({ overrideDateRange: null, skipAllFilters: true });
   }, [followupType]);
 
@@ -885,23 +897,27 @@ export default function Followups() {
       },
       children: (
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowUploadDialog(true)}
-            className="flex items-center gap-2"
-          >
-            <Upload className="w-4 h-4" />
-            Import
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleExport}
-            className="flex items-center gap-2"
-            disabled={filteredFollowups.length === 0}
-          >
-            <Download className="w-4 h-4" />
-            Export
-          </Button>
+          {isAdmin && (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setShowUploadDialog(true)}
+                className="flex items-center gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                Import
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleExport}
+                className="flex items-center gap-2"
+                disabled={filteredFollowups.length === 0}
+              >
+                <Download className="w-4 h-4" />
+                Export
+              </Button>
+            </>
+          )}
         </div>
       ),
     });
@@ -941,18 +957,16 @@ export default function Followups() {
     return count;
   };
 
-  const handleImport = async () => {
-    if (!uploadFile) return;
-
+  const handleImport = async (file: File) => {
     setIsUploading(true);
     try {
       let response;
       if (followupType === "new-order") {
-        response = await newOrderAPI.import(uploadFile);
+        response = await newOrderAPI.import(file);
       } else if (followupType === "pending-order") {
-        response = await pendingOrderAPI.import(uploadFile);
+        response = await pendingOrderAPI.import(file);
       } else if (followupType === "pending-material") {
-        response = await pendingMaterialAPI.import(uploadFile);
+        response = await pendingMaterialAPI.import(file);
       } else if (followupType === "cad-order") {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         response = {
@@ -963,7 +977,6 @@ export default function Followups() {
       if (response && (response.success || response.status === 200)) {
         toast.success(`${getFollowupTypeTitle()} imported successfully`);
         setShowUploadDialog(false);
-        setUploadFile(null);
         loadFollowupData();
       } else {
         toast.error(
@@ -1034,27 +1047,31 @@ export default function Followups() {
     <div className="bg-gray-50">
       <div className="p-6 space-y-6">
         <div className="flex items-center gap-3 overflow-x-auto p-1">
-          <Combobox
-            options={[
-              { value: "all", label: "Select Sales Person" },
-              ...salesPersons.map((sp) => ({
-                value: sp.userCode,
-                label: `${sp.name} (${sp.userCode})`,
-              })),
-            ]}
-            value={salesPersonFilter}
-            onSelect={setSalesPersonFilter}
-            placeholder="Sales Person"
-            searchPlaceholder="Search salesperson..."
-            width="w-[180px]"
-            className="h-9 bg-white"
-          />
+          {isAdmin && (
+            <Combobox
+              options={[
+                { value: "all", label: "Select Sales Person" },
+                ...salesPersons.map((sp) => ({
+                  value: sp.userCode,
+                  label: sp.name ? `${sp.name} (${sp.userCode})` : sp.userCode,
+                })),
+              ]}
+              value={salesPersonFilter}
+              onSelect={setSalesPersonFilter}
+              placeholder="Sales Person"
+              searchPlaceholder="Search salesperson..."
+              width="w-[180px]"
+              className="h-9 bg-white"
+            />
+          )}
           <Combobox
             options={[
               { value: "all", label: "Select Client" },
               ...clients.map((client) => ({
                 value: client.userCode,
-                label: `${client.name} (${client.userCode})`,
+                label: client.name
+                  ? `${client.name} (${client.userCode})`
+                  : client.userCode,
               })),
             ]}
             value={clientFilter}
@@ -1105,13 +1122,15 @@ export default function Followups() {
               >
                 Update Status
               </Button>
-              <Button
-                variant="destructive"
-                onClick={() => setShowBulkDeleteConfirm(true)}
-                className="flex items-center gap-2"
-              >
-                <Trash2 className="w-4 h-4" />({selectedItems.size})
-              </Button>
+              {isAdmin && (
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowBulkDeleteConfirm(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />({selectedItems.size})
+                </Button>
+              )}
             </div>
           )}
 
@@ -1127,63 +1146,15 @@ export default function Followups() {
           )}
         </div>
 
-        <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Import {getFollowupTypeTitle()}</DialogTitle>
-              <DialogDescription>
-                Upload an Excel file to bulk import data. Supported formats:
-                .xlsx, .xls
-              </DialogDescription>
-            </DialogHeader>
-
-            <div
-              className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:bg-gray-50/50 transition-colors cursor-pointer"
-              onClick={() => document.getElementById("file-upload")?.click()}
-            >
-              <input
-                id="file-upload"
-                type="file"
-                className="hidden"
-                accept=".xlsx,.xls"
-                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-              />
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
-                <FileText className="w-6 h-6" />
-              </div>
-              <h3 className="text-sm font-medium text-gray-900">
-                {uploadFile ? uploadFile.name : "Click to select file"}
-              </h3>
-              <p className="text-xs text-gray-500 mt-1">
-                {uploadFile
-                  ? `${(uploadFile.size / 1024).toFixed(1)} KB`
-                  : "or drag and drop here"}
-              </p>
-            </div>
-
-            <DialogFooter className="mt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowUploadDialog(false);
-                  setUploadFile(null);
-                }}
-                disabled={isUploading}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleImport}
-                disabled={!uploadFile || isUploading}
-              >
-                {isUploading && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                {isUploading ? "Importing..." : "Start Import"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <ImportModal
+          open={showUploadDialog}
+          onOpenChange={setShowUploadDialog}
+          title={`Import ${getFollowupTypeTitle()}`}
+          description="Upload an Excel file to bulk import data"
+          onImport={handleImport}
+          isUploading={isUploading}
+          onClose={() => setShowUploadDialog(false)}
+        />
 
         <Card className="overflow-hidden">
           <Table containerClassName="max-h-[calc(100vh-247px)] overflow-auto">
@@ -1251,9 +1222,9 @@ export default function Followups() {
                         {getSortIcon("lastFollowUpDate")}
                       </div>
                     </TableHead>
-                     <TableHead className="font-medium text-gray-700 whitespace-nowrap">
-                        Taken By
-                      </TableHead> 
+                    <TableHead className="font-medium text-gray-700 whitespace-nowrap">
+                      Taken By
+                    </TableHead>
                     <TableHead
                       className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("nextFollowUpDate")}
@@ -1328,9 +1299,9 @@ export default function Followups() {
                         {getSortIcon("lastFollowUpDate")}
                       </div>
                     </TableHead>
-                   <TableHead className="font-medium text-gray-700 whitespace-nowrap">
-                        Taken By
-                      </TableHead> 
+                    <TableHead className="font-medium text-gray-700 whitespace-nowrap">
+                      Taken By
+                    </TableHead>
                     <TableHead
                       className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("nextFollowUpDate")}
@@ -1396,8 +1367,8 @@ export default function Followups() {
                       </div>
                     </TableHead>
                     <TableHead className="font-medium text-gray-700 whitespace-nowrap">
-                        Taken By
-                      </TableHead> 
+                      Taken By
+                    </TableHead>
                     <TableHead
                       className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("nextFollowupDate")}
@@ -1531,14 +1502,14 @@ export default function Followups() {
                             {formatDisplayDate(fu.lastFollowUpDate)}
                           </div>
                         </TableCell>
-                       <TableCell className="align-center">
-                            <div
-                              className="text-sm text-gray-900 truncate max-w-[100px]"
-                              title={fu.lastFollowUpBy || ""}
-                            >
-                              {fu.lastFollowUpBy || "-"}
-                            </div>
-                          </TableCell> 
+                        <TableCell className="align-center">
+                          <div
+                            className="text-sm text-gray-900 truncate max-w-[100px]"
+                            title={fu.lastFollowUpBy || ""}
+                          >
+                            {fu.lastFollowUpBy || "-"}
+                          </div>
+                        </TableCell>
                         <TableCell className="align-center">
                           <div className="text-sm text-gray-900">
                             {formatDisplayDate(fu.nextFollowupDate)}
@@ -1588,26 +1559,30 @@ export default function Followups() {
                             >
                               <Eye className="h-4 w-4" />
                             </Button> */}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                              title="Edit"
-                              onClick={() => handleEditClick(fu)}
-                              disabled={selectedItems.size > 0}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors"
-                              title="Delete"
-                              onClick={() => handleOpenDelete(fu)}
-                              disabled={selectedItems.size > 0}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {isAdmin && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                                  title="Edit"
+                                  onClick={() => handleEditClick(fu)}
+                                  disabled={selectedItems.size > 0}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors"
+                                  title="Delete"
+                                  onClick={() => handleOpenDelete(fu)}
+                                  disabled={selectedItems.size > 0}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                       </>
@@ -1670,13 +1645,13 @@ export default function Followups() {
                           </div>
                         </TableCell>
                         <TableCell className="align-center">
-                            <div
-                              className="text-sm text-gray-900 truncate max-w-[100px]"
-                              title={fu.lastFollowUpBy || ""}
-                            >
-                              {fu.lastFollowUpBy || "-"}
-                            </div>
-                          </TableCell>
+                          <div
+                            className="text-sm text-gray-900 truncate max-w-[100px]"
+                            title={fu.lastFollowUpBy || ""}
+                          >
+                            {fu.lastFollowUpBy || "-"}
+                          </div>
+                        </TableCell>
                         <TableCell className="align-center">
                           <div className="text-sm text-gray-900">
                             {formatDisplayDate(fu.nextFollowupDate)}
@@ -1734,7 +1709,7 @@ export default function Followups() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-100"
+                              className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
                               title="Delete"
                               onClick={() => handleOpenDelete(fu)}
                               disabled={selectedItems.size > 0}
@@ -1808,14 +1783,14 @@ export default function Followups() {
                             {formatDisplayDate(fu.lastFollowUpDate)}
                           </div>
                         </TableCell>
-                         <TableCell className="align-center">
-                            <div
-                              className="text-sm text-gray-900 truncate max-w-[100px]"
-                              title={fu.lastFollowUpBy || ""}
-                            >
-                              {fu.lastFollowUpBy || "-"}
-                            </div>
-                          </TableCell>
+                        <TableCell className="align-center">
+                          <div
+                            className="text-sm text-gray-900 truncate max-w-[100px]"
+                            title={fu.lastFollowUpBy || ""}
+                          >
+                            {fu.lastFollowUpBy || "-"}
+                          </div>
+                        </TableCell>
                         <TableCell className="align-center">
                           <div className="text-sm text-gray-900">
                             {formatDisplayDate(fu.nextFollowupDate)}
@@ -1873,7 +1848,7 @@ export default function Followups() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:text-red-400 disabled:bg-red-50/50 disabled:opacity-100"
+                              className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:text-red-400 disabled:bg-red-50/50 disabled:opacity-50"
                               title="Delete"
                               onClick={() => handleOpenDelete(fu)}
                               disabled={selectedItems.size > 0}
@@ -1896,7 +1871,7 @@ export default function Followups() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:text-red-400 disabled:bg-red-50/50 disabled:opacity-100"
+                              className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:text-red-400 disabled:bg-red-50/50 disabled:opacity-50"
                               title="Delete"
                               onClick={() => handleOpenDelete(fu)}
                               disabled={selectedItems.size > 0}

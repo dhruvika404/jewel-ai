@@ -123,8 +123,11 @@ export function NewOrderModal({
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.salesExecCode) newErrors.salesExecCode = "Sales Executive is required";
-    
+    if (!formData.salesExecCode)
+      newErrors.salesExecCode = "Sales Executive is required";
+    if (!formData.nextFollowUpDate)
+      newErrors.nextFollowUpDate = "Next follow-up date is required";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -135,14 +138,14 @@ export function NewOrderModal({
     if (!validate()) return;
 
     const filterEmptyFields = (data: Record<string, any>) => {
-      const cleanData: Record<string, any> = {}
+      const cleanData: Record<string, any> = {};
       Object.entries(data).forEach(([key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          cleanData[key] = value
+        if (value !== "" && value !== null && value !== undefined) {
+          cleanData[key] = value;
         }
-      })
-      return cleanData
-    }
+      });
+      return cleanData;
+    };
 
     setLoading(true);
     try {
@@ -151,7 +154,7 @@ export function NewOrderModal({
         response = await newOrderAPI.update(order.uuid || order.id, formData);
       } else {
         const { status, ...createPayload } = formData;
-        const payload = filterEmptyFields(createPayload)
+        const payload = filterEmptyFields(createPayload);
         response = await newOrderAPI.create(payload as any);
       }
 
@@ -163,7 +166,7 @@ export function NewOrderModal({
       toast.success(
         order
           ? "New order updated successfully"
-          : "New order created successfully"
+          : "New order created successfully",
       );
       onSuccess();
       resetForm();
@@ -192,23 +195,24 @@ export function NewOrderModal({
               label="Sales Executive"
               required
               options={salesPersons.map((sp) => ({
-                  value: sp.userCode,
-                  label: `${sp.name} (${sp.userCode})`,
+                value: sp.userCode,
+                label: sp.name ? `${sp.name} (${sp.userCode})` : sp.userCode,
               }))}
               value={formData.salesExecCode}
               onSelect={(val) => {
-                setFormData({ ...formData, salesExecCode: val })
-                if (errors.salesExecCode) setErrors({ ...errors, salesExecCode: "" })
+                setFormData({ ...formData, salesExecCode: val });
+                if (errors.salesExecCode)
+                  setErrors({ ...errors, salesExecCode: "" });
               }}
               placeholder="Select sales executive"
               searchPlaceholder="Search sales executive..."
               error={errors.salesExecCode}
             />
-            <Input 
-              id="clientCode" 
+            <Input
+              id="clientCode"
               label="Client Code"
-              value={formData.clientCode} 
-              disabled 
+              value={formData.clientCode}
+              disabled
             />
           </div>
 
@@ -252,14 +256,17 @@ export function NewOrderModal({
                 }
                 onBlur={(e) => {
                   const typedDate = e.target.value;
-                  const today = new Date().toISOString().split('T')[0];
+                  const today = new Date().toISOString().split("T")[0];
                   if (typedDate && typedDate > today) {
-                    setErrors({ ...errors, lastSaleDate: 'Cannot select a future date' });
+                    setErrors({
+                      ...errors,
+                      lastSaleDate: "Cannot select a future date",
+                    });
                     setFormData({ ...formData, lastSaleDate: "" });
                   }
                 }}
                 error={errors.lastSaleDate}
-                max={new Date().toISOString().split('T')[0]}
+                max={new Date().toISOString().split("T")[0]}
               />
             </div>
             <div className="space-y-2">
@@ -273,35 +280,46 @@ export function NewOrderModal({
                 }
                 onBlur={(e) => {
                   const typedDate = e.target.value;
-                  const today = new Date().toISOString().split('T')[0];
+                  const today = new Date().toISOString().split("T")[0];
                   if (typedDate && typedDate > today) {
-                    setErrors({ ...errors, lastOrderDate: 'Cannot select a future date' });
+                    setErrors({
+                      ...errors,
+                      lastOrderDate: "Cannot select a future date",
+                    });
                     setFormData({ ...formData, lastOrderDate: "" });
                   }
                 }}
                 error={errors.lastOrderDate}
-                max={new Date().toISOString().split('T')[0]}
+                max={new Date().toISOString().split("T")[0]}
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="nextFollowUpDate">Next Follow-up Date</Label>
               <Input
                 id="nextFollowUpDate"
+                label="Next Follow-up Date"
+                required
                 type="date"
-                min={new Date().toISOString().split('T')[0]}
+                min={new Date().toISOString().split("T")[0]}
                 value={formData.nextFollowUpDate}
                 onChange={(e) => {
-                  setFormData({ ...formData, nextFollowUpDate: e.target.value })
-                  if (errors.nextFollowUpDate) setErrors({ ...errors, nextFollowUpDate: "" })
+                  setFormData({
+                    ...formData,
+                    nextFollowUpDate: e.target.value,
+                  });
+                  if (errors.nextFollowUpDate)
+                    setErrors({ ...errors, nextFollowUpDate: "" });
                 }}
                 onBlur={(e) => {
                   const typedDate = e.target.value;
-                  const today = new Date().toISOString().split('T')[0];
+                  const today = new Date().toISOString().split("T")[0];
                   if (typedDate && typedDate < today) {
-                    setErrors({ ...errors, nextFollowUpDate: "Cannot select a past date" });
+                    setErrors({
+                      ...errors,
+                      nextFollowUpDate: "Cannot select a past date",
+                    });
                     setFormData({ ...formData, nextFollowUpDate: "" });
                   }
                 }}

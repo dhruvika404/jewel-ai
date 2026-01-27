@@ -32,23 +32,60 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
     salesExecCode: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  
+  const [spPage, setSpPage] = useState(1)
+  const [spLoading, setSpLoading] = useState(false)
+  const [spHasMore, setSpHasMore] = useState(true)
+  const PAGE_SIZE = 20
+
+  const loadSalesPersons = async (page: number, append: boolean = false) => {
+    try {
+      setSpLoading(true)
+      const response = await salesPersonAPI.getAll({ 
+        page, 
+        size: PAGE_SIZE, 
+        role: 'sales_executive' 
+      })
+      
+      if (response?.success && response?.data?.data) {
+        const newItems = response.data.data
+        if (append) {
+          setSalesPersons(prev => [...prev, ...newItems])
+        } else {
+          setSalesPersons(newItems)
+        }
+        
+        if (newItems.length < PAGE_SIZE) {
+          setSpHasMore(false)
+        } else {
+          setSpHasMore(true)
+        }
+      } else {
+        setSpHasMore(false)
+      }
+    } catch (error) {
+      console.error('Error loading sales persons:', error)
+      setSpHasMore(false)
+    } finally {
+      setSpLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const loadSalesPersons = async () => {
-      try {
-        const response = await salesPersonAPI.getAll({ page: 1, size: 1000, role: 'sales_executive' })
-        if (response?.success && response?.data?.data) {
-          setSalesPersons(response?.data?.data)
-        }
-      } catch (error) {
-        console.error('Error loading sales persons:', error)
-      }
-    }
-    
     if (isOpen) {
-      loadSalesPersons()
+      setSpPage(1)
+      setSpHasMore(true)
+      loadSalesPersons(1, false)
     }
   }, [isOpen])
+
+  const handleLoadMoreSp = () => {
+    if (!spLoading && spHasMore) {
+      const nextPage = spPage + 1
+      setSpPage(nextPage)
+      loadSalesPersons(nextPage, true)
+    }
+  }
 
   useEffect(() => {
     if (client) {
@@ -92,14 +129,18 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
     if (!formData?.userCode) newErrors.userCode = 'User Code is required'
     if (!formData?.name) newErrors.name = 'Client Name is required'
     
-    if (formData?.email && formData?.email.trim()) {
+   if (formData?.email.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData?.email)) {
         newErrors.email = "Please enter a valid email address";
       }
     }
 
-    if (!client && (!formData?.salesExecCode || formData?.salesExecCode === 'unassigned')) {
+    if (formData.phone && formData.phone.length < 10) {
+      newErrors.phone = 'Phone number must be at least 10 digits'
+    }
+
+    if (!formData?.salesExecCode || formData?.salesExecCode === 'unassigned') {
       newErrors.salesExecCode = 'Please select a Sales Executive'
     }
 
@@ -126,8 +167,8 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
         response = await clientAPI.create(apiData)
       }
 
-      if (response.success !== false) {
-        toast.success(client ? 'Client updated successfully' : 'Client added successfully')
+      if (response.success !== false && !response.message?.toLowerCase().includes("exist")) {
+        toast.success(response.message || (client ? 'Client updated successfully' : 'Client added successfully'))
         onSuccess()
         resetForm()
         onClose()
@@ -177,7 +218,6 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
           <Input
             id="email"
             label="Email"
-            type="email"
             placeholder="nakarani@yopmail.com"
             value={formData?.email}
             onChange={(e) => {
@@ -191,19 +231,25 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
             id="phone"
             label="Phone"
             placeholder="9898989898"
+            maxLength={10}
             value={formData?.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e?.target?.value })}
+            onChange={(e) => {
+              const value = e.target.value.replace(/[^0-9]/g, '')
+              setFormData({ ...formData, phone: value })
+              if (errors.phone) setErrors({ ...errors, phone: '' })
+            }}
+            error={errors.phone}
             autoComplete="off"
           />
           
           <Combobox
             label="Sales Executive"
-            required={!client}
+            required={true}
             options={[
-              { value: "unassigned", label: client ? "Select sales executive" : "No Assignment" },
+              { value: "unassigned", label: "Select sales executive" },
               ...salesPersons.map(sp => ({
                 value: sp.userCode,
-                label: `${sp.name} (${sp.userCode})`
+                label: sp.name ? `${sp.name} (${sp.userCode})` : sp.userCode
               }))
             ]}
             value={formData?.salesExecCode || "unassigned"}
@@ -214,6 +260,8 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
             placeholder="Select sales executive"
             searchPlaceholder="Search sales executive..."
             error={errors.salesExecCode}
+            onEndReached={handleLoadMoreSp}
+            loading={spLoading}
           />
           
           <DialogFooter className="pt-4">

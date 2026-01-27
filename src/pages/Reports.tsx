@@ -220,7 +220,7 @@ export default function Reports() {
 
               if (includeRecord) {
                 const client = clients.find(
-                  (c) => c.userCode === item.clientCode
+                  (c) => c.userCode === item.clientCode,
                 );
                 const salesExecCode =
                   item.salesExecCode || client?.salesExecCode || "";
@@ -300,7 +300,7 @@ export default function Reports() {
   const totalPages = Math.ceil(filteredFollowUps.length / pageSize);
   const paginatedFollowUps = filteredFollowUps.slice(
     (currentPage - 1) * pageSize,
-    currentPage * pageSize
+    currentPage * pageSize,
   );
 
   useEffect(() => {
@@ -323,7 +323,7 @@ export default function Reports() {
               { value: "all", label: "Select Sales Person" },
               ...salesPersons.map((sp) => ({
                 value: sp.userCode,
-                label: `${sp.name} (${sp.userCode})`,
+                label: sp.name ? `${sp.name} (${sp.userCode})` : sp.userCode,
               })),
             ]}
             value={salesPersonFilter}
@@ -337,7 +337,9 @@ export default function Reports() {
               { value: "all", label: "Select Client" },
               ...clients.map((client) => ({
                 value: client.userCode,
-                label: `${client.name} (${client.userCode})`,
+                label: client.name
+                  ? `${client.name} (${client.userCode})`
+                  : client.userCode,
               })),
             ]}
             value={clientFilter}
@@ -400,8 +402,8 @@ export default function Reports() {
       reportType === "todays-taken"
         ? "Todays_Taken_Followups"
         : reportType === "pending"
-        ? "Pending_Followups"
-        : "Overdue_Followups";
+          ? "Pending_Followups"
+          : "Overdue_Followups";
 
     const fileName = `${reportName}_${
       new Date().toISOString().split("T")[0]
@@ -525,8 +527,8 @@ export default function Reports() {
                             fu.type === "New Order"
                               ? "bg-blue-50 text-blue-700 border-blue-200"
                               : fu.type === "Pending Order"
-                              ? "bg-orange-50 text-orange-700 border-orange-200"
-                              : "bg-purple-50 text-purple-700 border-purple-200"
+                                ? "bg-orange-50 text-orange-700 border-orange-200"
+                                : "bg-purple-50 text-purple-700 border-purple-200"
                           }`}
                         >
                           {fu.type}
@@ -570,8 +572,8 @@ export default function Reports() {
                             fu.followUpStatus?.toLowerCase() === "completed"
                               ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                               : fu.followUpStatus?.toLowerCase() === "pending"
-                              ? "bg-amber-50 text-amber-700 border-amber-200"
-                              : "bg-gray-50 text-gray-700 border-gray-200"
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : "bg-gray-50 text-gray-700 border-gray-200"
                           }`}
                         >
                           {fu.followUpStatus || "Unknown"}

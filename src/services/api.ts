@@ -10,28 +10,25 @@ export const authAPI = {
     password: string;
     role?: string;
   }) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true",
+        },
+        body: JSON.stringify(filterEmptyValues(payload)),
+      },
+    );
 
-      const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true",
-          },
-          body: JSON.stringify(filterEmptyValues(payload)),
-        }
-      );
+    const data = await response.json();
 
-      const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || `HTTP error! status: ${response.status}`);
+    }
 
-      if (!response.ok) {
-        throw new Error(
-          data.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      return data;
+    return data;
   },
 
   // Set login password for sales person
@@ -43,14 +40,14 @@ export const authAPI = {
           method: "PUT",
           headers: getHeaders(),
           body: JSON.stringify(filterEmptyValues({ userCode, password })),
-        }
+        },
       );
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message || `HTTP error! status: ${response.status}`
+          data.message || `HTTP error! status: ${response.status}`,
         );
       }
 
@@ -64,21 +61,25 @@ export const authAPI = {
 // Dashboard APIs
 export const dashboardAPI = {
   // Get dashboard overview counts
-  getOverview: async () => {
+  getOverview: async (params?: { salesExecCode?: string }) => {
     try {
-      const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DASHBOARD.OVERVIEW}`,
-        {
-          method: "GET",
-          headers: getHeaders(),
-        }
+      const queryParams = new URLSearchParams(
+        filterEmptyValues(params || {}, true),
       );
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DASHBOARD.OVERVIEW}${
+        queryParams.toString() ? `?${queryParams}` : ""
+      }`;
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: getHeaders(),
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message || `HTTP error! status: ${response.status}`
+          data.message || `HTTP error! status: ${response.status}`,
         );
       }
 
@@ -98,13 +99,15 @@ export const salesPersonAPI = {
     search?: string;
     role?: string;
   }) => {
-    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
+    const queryParams = new URLSearchParams(
+      filterEmptyValues(params || {}, true),
+    );
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.LIST}?${queryParams}`,
       {
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -117,7 +120,7 @@ export const salesPersonAPI = {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify(filterEmptyValues(data)),
-      }
+      },
     );
     return response.json();
   },
@@ -130,7 +133,7 @@ export const salesPersonAPI = {
         method: "PUT",
         headers: getHeaders(),
         body: JSON.stringify(filterEmptyValues(data)),
-      }
+      },
     );
     return response.json();
   },
@@ -141,14 +144,13 @@ export const salesPersonAPI = {
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.DETAIL}/${id}`,
       {
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
 
   // Import sales person data
   import: async (file: File) => {
-
     const formData = new FormData();
     formData.append("file", file);
 
@@ -158,7 +160,7 @@ export const salesPersonAPI = {
         method: "POST",
         headers: getUploadHeaders(),
         body: formData,
-      }
+      },
     );
     return response.json();
   },
@@ -170,7 +172,7 @@ export const salesPersonAPI = {
       {
         method: "DELETE",
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -185,13 +187,15 @@ export const clientAPI = {
     role?: string;
     salesExecCode?: string;
   }) => {
-    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
+    const queryParams = new URLSearchParams(
+      filterEmptyValues(params || {}, true),
+    );
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.LIST}?${queryParams}`,
       {
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -202,7 +206,7 @@ export const clientAPI = {
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.DETAIL}/${id}`,
       {
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -221,7 +225,7 @@ export const clientAPI = {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify(filterEmptyValues(data)),
-      }
+      },
     );
     return response.json();
   },
@@ -235,7 +239,7 @@ export const clientAPI = {
       email: string;
       phone: string;
       salesExecCode?: string;
-    }
+    },
   ) => {
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.LIST}/${id}`,
@@ -243,7 +247,7 @@ export const clientAPI = {
         method: "PUT",
         headers: getHeaders(),
         body: JSON.stringify(data),
-      }
+      },
     );
     return response.json();
   },
@@ -289,16 +293,21 @@ export const clientAPI = {
         result = await response.json();
       } catch (parseError) {
         throw new Error(
-          `Server returned invalid JSON. Status: ${response.status}`
+          `Server returned invalid JSON. Status: ${response.status}`,
         );
       }
 
       if (!response.ok) {
-        let errorMessage = result.message || result.error || `HTTP error! status: ${response.status}`;
-        
-        if (typeof errorMessage === 'object') {
+        let errorMessage =
+          result.message ||
+          result.error ||
+          `HTTP error! status: ${response.status}`;
+
+        if (typeof errorMessage === "object") {
           const msg = errorMessage.message || JSON.stringify(errorMessage);
-          errorMessage = errorMessage.rowNo ? `Row ${errorMessage.rowNo}: ${msg}` : msg;
+          errorMessage = errorMessage.rowNo
+            ? `Row ${errorMessage.rowNo}: ${msg}`
+            : msg;
         }
 
         throw new Error(errorMessage);
@@ -317,7 +326,7 @@ export const clientAPI = {
       {
         method: "DELETE",
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -341,13 +350,15 @@ export const pendingOrderAPI = {
     todayCompletedFollowUp?: boolean;
     sevenDayPendingFollowUp?: boolean;
   }) => {
-    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
+    const queryParams = new URLSearchParams(
+      filterEmptyValues(params || {}, true),
+    );
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.LIST}?${queryParams}`,
       {
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -372,7 +383,7 @@ export const pendingOrderAPI = {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify(filterEmptyValues(data)),
-      }
+      },
     );
     return response.json();
   },
@@ -392,7 +403,7 @@ export const pendingOrderAPI = {
       nextFollowUpDate?: string;
       lastFollowUpMsg?: string;
       status?: string;
-    }
+    },
   ) => {
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.LIST}/${id}`,
@@ -400,7 +411,7 @@ export const pendingOrderAPI = {
         method: "PUT",
         headers: getHeaders(),
         body: JSON.stringify(data),
-      }
+      },
     );
     return response.json();
   },
@@ -413,13 +424,15 @@ export const pendingOrderAPI = {
     status?: string;
     sortBy?: string;
   }) => {
-    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
+    const queryParams = new URLSearchParams(
+      filterEmptyValues(params || {}, true),
+    );
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.FOLLOW_UP}?${queryParams}`,
       {
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -436,7 +449,7 @@ export const pendingOrderAPI = {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify(data),
-      }
+      },
     );
     return response.json();
   },
@@ -453,7 +466,7 @@ export const pendingOrderAPI = {
         method: "POST",
         headers: getUploadHeaders(),
         body: formData,
-      }
+      },
     );
     return response.json();
   },
@@ -465,7 +478,7 @@ export const pendingOrderAPI = {
       {
         method: "DELETE",
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -489,13 +502,15 @@ export const pendingMaterialAPI = {
     todayCompletedFollowUp?: boolean;
     sevenDayPendingFollowUp?: boolean;
   }) => {
-    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
+    const queryParams = new URLSearchParams(
+      filterEmptyValues(params || {}, true),
+    );
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.LIST}?${queryParams}`,
       {
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -521,7 +536,7 @@ export const pendingMaterialAPI = {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify(filterEmptyValues(data)),
-      }
+      },
     );
     return response.json();
   },
@@ -541,7 +556,7 @@ export const pendingMaterialAPI = {
       lastFollowUpMsg?: string;
       status?: string;
       remark?: string;
-    }
+    },
   ) => {
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.LIST}/${id}`,
@@ -549,7 +564,7 @@ export const pendingMaterialAPI = {
         method: "PUT",
         headers: getHeaders(),
         body: JSON.stringify(filterEmptyValues(data)),
-      }
+      },
     );
     return response.json();
   },
@@ -562,13 +577,15 @@ export const pendingMaterialAPI = {
     status?: string;
     sortBy?: string;
   }) => {
-    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
+    const queryParams = new URLSearchParams(
+      filterEmptyValues(params || {}, true),
+    );
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.FOLLOW_UP}?${queryParams}`,
       {
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -586,14 +603,13 @@ export const pendingMaterialAPI = {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify(filterEmptyValues(data)),
-      }
+      },
     );
     return response.json();
   },
 
   // Import pending material data
   import: async (file: File) => {
-
     const formData = new FormData();
     formData.append("file", file);
 
@@ -603,7 +619,7 @@ export const pendingMaterialAPI = {
         method: "POST",
         headers: getUploadHeaders(),
         body: formData,
-      }
+      },
     );
     return response.json();
   },
@@ -615,7 +631,7 @@ export const pendingMaterialAPI = {
       {
         method: "DELETE",
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -642,13 +658,15 @@ export const newOrderAPI = {
     todayCompletedFollowUp?: boolean;
     sevenDayPendingFollowUp?: boolean;
   }) => {
-    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
+    const queryParams = new URLSearchParams(
+      filterEmptyValues(params || {}, true),
+    );
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.LIST}?${queryParams}`,
       {
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -671,7 +689,7 @@ export const newOrderAPI = {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify(filterEmptyValues(data)),
-      }
+      },
     );
     return response.json();
   },
@@ -690,7 +708,7 @@ export const newOrderAPI = {
       status?: string;
       lastFollowUpMsg?: string;
       remark?: string;
-    }
+    },
   ) => {
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.LIST}/${id}`,
@@ -698,7 +716,7 @@ export const newOrderAPI = {
         method: "PUT",
         headers: getHeaders(),
         body: JSON.stringify(filterEmptyValues(data)),
-      }
+      },
     );
     return response.json();
   },
@@ -711,13 +729,15 @@ export const newOrderAPI = {
     status?: string;
     sortBy?: string;
   }) => {
-    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
+    const queryParams = new URLSearchParams(
+      filterEmptyValues(params || {}, true),
+    );
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.FOLLOW_UP}?${queryParams}`,
       {
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -735,7 +755,7 @@ export const newOrderAPI = {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify(filterEmptyValues(data)),
-      }
+      },
     );
     return response.json();
   },
@@ -751,7 +771,7 @@ export const newOrderAPI = {
         method: "POST",
         headers: getUploadHeaders(),
         body: formData,
-      }
+      },
     );
     return response.json();
   },
@@ -763,7 +783,7 @@ export const newOrderAPI = {
       {
         method: "DELETE",
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -784,11 +804,13 @@ export const cadOrderAPI = {
     endDate?: string;
     salesExecCode?: string;
   }) => {
-    const queryParams = new URLSearchParams(filterEmptyValues(params || {}, true));
+    const queryParams = new URLSearchParams(
+      filterEmptyValues(params || {}, true),
+    );
 
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CAD_ORDER.LIST}?${queryParams}`,
-      { headers: getHeaders() }
+      { headers: getHeaders() },
     );
     return response.json();
   },
@@ -804,7 +826,7 @@ export const cadOrderAPI = {
         method: "POST",
         headers: getUploadHeaders(),
         body: formData,
-      }
+      },
     );
     return response.json();
   },
@@ -822,7 +844,7 @@ export const cadOrderAPI = {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify(data),
-      }
+      },
     );
     return response.json();
   },
@@ -834,7 +856,7 @@ export const cadOrderAPI = {
       {
         method: "DELETE",
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -852,7 +874,7 @@ export const remarkAPI = {
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.REMARK.LIST}?${queryParams}`,
       {
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -861,7 +883,11 @@ export const remarkAPI = {
       remarkMsg: string;
       salesExecCode: string;
       clientCode: string;
-      entityType: "pendingOrders" | "pendingMaterials" | "newOrders" | "cadOrders";
+      entityType:
+        | "pendingOrders"
+        | "pendingMaterials"
+        | "newOrders"
+        | "cadOrders";
       entityId: string;
     }>;
   }) => {
@@ -871,7 +897,7 @@ export const remarkAPI = {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify(data),
-      }
+      },
     );
     return response.json();
   },
@@ -886,7 +912,7 @@ export const remarkAPI = {
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.REMARK.LIST}?${queryParams}`,
       {
         headers: getHeaders(),
-      }
+      },
     );
     return response.json();
   },
@@ -904,12 +930,16 @@ export const sharedAPI = {
         method: "PUT",
         headers: getHeaders(),
         body: JSON.stringify(data),
-      }
+      },
     );
     return response.json();
   },
   deleteMultiple: async (data: {
-    entityType: "pendingOrders" | "pendingMaterials" | "newOrders" | "cadOrders";
+    entityType:
+      | "pendingOrders"
+      | "pendingMaterials"
+      | "newOrders"
+      | "cadOrders";
     ids: string[];
   }) => {
     const response = await fetch(
@@ -918,7 +948,7 @@ export const sharedAPI = {
         method: "DELETE",
         headers: getHeaders(),
         body: JSON.stringify(data),
-      }
+      },
     );
     return response.json();
   },
@@ -932,7 +962,7 @@ export const sharedAPI = {
         method: "DELETE",
         headers: getHeaders(),
         body: JSON.stringify(data),
-      }
+      },
     );
     return response.json();
   },

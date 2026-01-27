@@ -89,7 +89,7 @@ interface UploadStatus {
 export default function ExcelUpload() {
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>({});
   const [selectedFiles, setSelectedFiles] = useState<{ [key: string]: File }>(
-    {}
+    {},
   );
   const [fileBlobs, setFileBlobs] = useState<{
     [key: string]: { blob: Blob; name: string; type: string };
@@ -142,6 +142,10 @@ export default function ExcelUpload() {
       setSelectedFiles((prev) => {
         const newFiles = { ...prev };
         delete newFiles[itemId];
+        const input = document.getElementById(
+          `file-${itemId}`,
+        ) as HTMLInputElement;
+        if (input) input.value = "";
         return newFiles;
       });
       setFileBlobs((prev) => {
@@ -259,7 +263,7 @@ export default function ExcelUpload() {
             <Card
               key={item.id}
               className={`transition-all duration-200 ${getStatusColor(
-                status?.status || "idle"
+                status?.status || "idle",
               )}`}
             >
               <CardHeader className="pb-3">
@@ -320,7 +324,7 @@ export default function ExcelUpload() {
                       onClick={() => {
                         handleFileSelect(item.id, null);
                         const input = document.getElementById(
-                          `file-${item.id}`
+                          `file-${item.id}`,
                         ) as HTMLInputElement;
                         if (input) input.value = "";
                       }}
@@ -348,8 +352,8 @@ export default function ExcelUpload() {
                       status.status === "success"
                         ? "text-green-600"
                         : status.status === "error"
-                        ? "text-red-600"
-                        : "text-gray-600"
+                          ? "text-red-600"
+                          : "text-gray-600"
                     }`}
                   >
                     {status.message}
@@ -365,8 +369,8 @@ export default function ExcelUpload() {
                   {status?.status === "uploading"
                     ? "Uploading..."
                     : status?.status === "success"
-                    ? "Upload Again"
-                    : "Upload"}
+                      ? "Upload Again"
+                      : "Upload"}
                 </Button>
               </CardContent>
             </Card>
