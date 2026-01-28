@@ -293,6 +293,7 @@ export default function Clients() {
       const result = await clientAPI.import(file);
       toast.success(result.message || "Import successful");
       loadData();
+      setShowUploadDialog(false);
     } catch (error: any) {
       toast.error(error.message || "Failed to import data");
     } finally {

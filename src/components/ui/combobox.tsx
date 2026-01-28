@@ -17,6 +17,12 @@ import {
 } from "@/components/ui/popover";
 
 import { Label } from "./label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ComboboxProps {
   options: { value: string; label: string }[];
@@ -76,70 +82,92 @@ export function Combobox({
   }, [loading, onEndReached, open]);
 
   return (
-    <div className={cn("space-y-2", width, className)}>
-      {label && <Label required={required}>{label}</Label>}
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className={cn(
-              "w-full h-9 justify-between font-normal px-3 py-2",
-              !value && "text-muted-foreground",
-              error && "border-red-500",
-            )}
-          >
-            <span className="truncate">{selectedLabel || placeholder}</span>
-            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]">
-          <Command>
-            <CommandInput placeholder={searchPlaceholder} />
-            <CommandList>
-              <CommandEmpty>{emptyText}</CommandEmpty>
-              <CommandGroup>
-                {options.map((option) => (
-                  <CommandItem
-                    key={option.value}
-                    value={option.label}
-                    onSelect={() => {
-                      onSelect(option.value === value ? "" : option.value);
-                      setOpen(false);
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === option.value ? "opacity-100" : "opacity-0",
-                      )}
-                    />
-                    {option.label}
-                  </CommandItem>
-                ))}
-                {onEndReached && (
-                  <div ref={observerTarget} className="h-1 w-full" />
+    <TooltipProvider>
+      <div className={cn("space-y-2", width, className)}>
+        {label && <Label required={required}>{label}</Label>}
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className={cn(
+                "w-full h-9 justify-between font-normal px-3 py-2",
+                !value && "text-muted-foreground",
+                error && "border-red-500",
+              )}
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="truncate mr-2">
+                    {selectedLabel || placeholder}
+                  </span>
+                </TooltipTrigger>
+                {selectedLabel && (
+                  <TooltipContent>
+                    <p>{selectedLabel}</p>
+                  </TooltipContent>
                 )}
+              </Tooltip>
+              <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]">
+            <Command>
+              <CommandInput placeholder={searchPlaceholder} />
+              <CommandList>
+                <CommandEmpty>{emptyText}</CommandEmpty>
+                <CommandGroup>
+                  {options.map((option) => (
+                    <CommandItem
+                      key={option.value}
+                      value={option.label}
+                      onSelect={() => {
+                        onSelect(option.value === value ? "" : option.value);
+                        setOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4 shrink-0",
+                          value === option.value ? "opacity-100" : "opacity-0",
+                        )}
+                      />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="truncate flex-1 text-left">
+                            {option.label}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                          <p>{option.label}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </CommandItem>
+                  ))}
+                  {onEndReached && (
+                    <div ref={observerTarget} className="h-1 w-full" />
+                  )}
 
-                {loading && (
-                  <div className="p-2 text-center text-xs text-muted-foreground">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                      Loading more...
+                  {loading && (
+                    <div className="p-2 text-center text-xs text-muted-foreground">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                        Loading more...
+                      </div>
                     </div>
-                  </div>
-                )}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-      {error && (
-        <p className="text-sm text-red-600 mt-1 flex items-center gap-2">
-          {error}
-        </p>
-      )}
-    </div>
+                  )}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        {error && (
+          <p className="text-sm text-red-600 mt-1 flex items-center gap-2">
+            {error}
+          </p>
+        )}
+      </div>
+    </TooltipProvider>
   );
 }
