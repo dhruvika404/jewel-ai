@@ -190,9 +190,10 @@ export function PendingOrderModal({
       }
 
       toast.success(
-        order
-          ? "Pending order updated successfully"
-          : "Pending order created successfully",
+        response?.message ||
+          (order
+            ? "Pending order updated successfully"
+            : "Pending order created successfully")
       );
       onSuccess();
       resetForm();

@@ -188,9 +188,10 @@ export function PendingMaterialModal({
       }
 
       toast.success(
-        material
-          ? "Pending material updated successfully"
-          : "Pending material created successfully",
+        response?.message ||
+          (material
+            ? "Pending material updated successfully"
+            : "Pending material created successfully")
       );
       onSuccess();
       resetForm();

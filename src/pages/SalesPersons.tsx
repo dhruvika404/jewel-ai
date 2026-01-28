@@ -250,7 +250,7 @@ export default function SalesPersons() {
         toast.error(res?.message || "Failed to delete sales person");
         return;
       }
-      toast.success("Sales person deleted successfully");
+      toast.success(res?.message || "Sales person deleted successfully");
       setDeleteModalOpen(false);
       setDeletingSalesPerson(null);
       loadData();
@@ -320,7 +320,7 @@ export default function SalesPersons() {
         }
       }
     } catch (error: any) {
-      toast.error("Operation failed: " + error.message);
+      toast.error(error.message || "Operation failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -348,8 +348,8 @@ export default function SalesPersons() {
     }
 
     try {
-      await authAPI.setPassword(selectedSalesPerson.userCode, newPassword);
-      toast.success("Password set successfully");
+      const response = await authAPI.setPassword(selectedSalesPerson.userCode, newPassword);
+      toast.success(response.message || "Password set successfully");
       handleClosePasswordDialog();
     } catch (error: any) {
       toast.error("Failed to set password: " + error.message);
@@ -370,7 +370,7 @@ export default function SalesPersons() {
     try {
       const response = await salesPersonAPI.import(file);
       if (response.success) {
-        toast.success("Sales persons imported successfully");
+        toast.success(response.message || "Sales persons imported successfully");
         setShowUploadDialog(false);
         loadData();
       } else {

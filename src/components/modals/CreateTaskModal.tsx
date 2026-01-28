@@ -199,7 +199,7 @@ export function CreateTaskModal({
       }
 
       if (response && response.success !== false) {
-        toast.success("Task created successfully");
+        toast.success(response.message || "Task created successfully");
         onSuccess?.();
         resetForm();
         onClose();

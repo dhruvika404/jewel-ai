@@ -119,7 +119,7 @@ export function FollowUpModal({
         return;
       }
 
-      toast.success("Follow-up updated successfully");
+      toast.success(response?.message || "Follow-up updated successfully");
       onSuccess();
       handleClose();
     } catch (error: any) {

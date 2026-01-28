@@ -176,7 +176,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
         toast.error(response.message || 'Something went wrong')
       }
     } catch (error: any) {
-      toast.error('Error: ' + error.message)
+      toast.error(error.message)
     } finally {
       setLoading(false)
     }

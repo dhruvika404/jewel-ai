@@ -164,9 +164,10 @@ export function NewOrderModal({
       }
 
       toast.success(
-        order
-          ? "New order updated successfully"
-          : "New order created successfully",
+        response?.message ||
+          (order
+            ? "New order updated successfully"
+            : "New order created successfully")
       );
       onSuccess();
       resetForm();

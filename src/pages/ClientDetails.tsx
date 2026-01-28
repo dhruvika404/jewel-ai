@@ -133,7 +133,7 @@ export default function ClientDetails() {
       }
     } catch (error: any) {
       if (!client) {
-        toast.error("Error loading client: " + error.message);
+        toast.error(error.message);
       }
     } finally {
       setLoading(false);
@@ -308,7 +308,7 @@ export default function ClientDetails() {
       setIsModalOpen(false);
       refreshData();
     } catch (e: any) {
-      toast.error("Failed to add follow-up: " + (e.message || "Unknown error"));
+      toast.error(e.message);
     } finally {
       setSubmitting(false);
     }

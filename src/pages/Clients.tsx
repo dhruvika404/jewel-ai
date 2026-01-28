@@ -87,11 +87,9 @@ export default function Clients() {
     startDate: "",
     endDate: "",
   });
-
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
-
   const isAdmin = user?.role !== "sales_executive";
 
   const toggleSelection = (id: string) => {
