@@ -190,7 +190,7 @@ export default function SalesPersons() {
         setTotalItems(currentTotalItems);
       }
     } catch (error: any) {
-      toast.error("Error loading data: " + error.message);
+      toast.error(error.message);
       setSalesPersons([]);
     } finally {
       setLoading(false);
@@ -352,7 +352,7 @@ export default function SalesPersons() {
       toast.success(response.message || "Password set successfully");
       handleClosePasswordDialog();
     } catch (error: any) {
-      toast.error("Failed to set password: " + error.message);
+      toast.error(error.message);
     }
   };
 
@@ -379,7 +379,7 @@ export default function SalesPersons() {
         toast.error(errorMsg);
       }
     } catch (error: any) {
-      toast.error("Upload failed: " + error.message);
+      toast.error(error.message);
     } finally {
       setIsUploading(false);
     }

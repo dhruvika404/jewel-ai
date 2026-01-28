@@ -14,6 +14,7 @@ import {
   Mail,
   Phone,
   Pencil,
+  Trash2,
 } from "lucide-react";
 import {
   clientAPI,
@@ -22,10 +23,10 @@ import {
   newOrderAPI,
 } from "@/services/api";
 import { toast } from "sonner";
-import { ClientModal } from "@/components/modals/ClientModal";
 import { PendingMaterialModal } from "@/components/modals/PendingMaterialModal";
 import { PendingOrderModal } from "@/components/modals/PendingOrderModal";
 import { NewOrderModal } from "@/components/modals/NewOrderModal";
+import { DeleteModal } from "@/components/modals/DeleteModal";
 import {
   Dialog,
   DialogContent,
@@ -98,14 +99,18 @@ export default function ClientDetails() {
     nextFollowUpDate: "",
     followUpStatus: "pending",
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showPMModal, setShowPMModal] = useState(false);
   const [showPOModal, setShowPOModal] = useState(false);
   const [showNOModal, setShowNOModal] = useState(false);
   const [editingPM, setEditingPM] = useState<any>(null);
   const [editingPO, setEditingPO] = useState<any>(null);
   const [editingNO, setEditingNO] = useState<any>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<any>(null);
+  const [deletingType, setDeletingType] = useState<TabType | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchClient = async () => {
     if (!id) return;
@@ -128,12 +133,12 @@ export default function ClientDetails() {
 
         setClient(clientData);
       } else if (!client) {
-        toast.error("Failed to load client details");
+        toast.error(response?.message || "Failed to load client details");
         navigate("/clients");
       }
     } catch (error: any) {
       if (!client) {
-        toast.error(error.message);
+        toast.error(error.message || "Failed to load client details");
       }
     } finally {
       setLoading(false);
@@ -148,6 +153,43 @@ export default function ClientDetails() {
     setHeader({ visible: false });
     return () => clearHeader();
   }, []);
+
+  const handleOpenDelete = (item: any, type: TabType) => {
+    setDeletingItem(item);
+    setDeletingType(type);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingItem || !deletingType) return;
+    setIsDeleting(true);
+    try {
+      let res: any;
+      const itemId = deletingItem.uuid || deletingItem.id;
+      if (deletingType === "pending-material") {
+        res = await pendingMaterialAPI.delete(itemId);
+      } else if (deletingType === "pending-order") {
+        res = await pendingOrderAPI.delete(itemId);
+      } else if (deletingType === "new-order") {
+        res = await newOrderAPI.delete(itemId);
+      }
+
+      if (res?.success === false) {
+        toast.error(res?.message || "Failed to delete record");
+        return;
+      }
+
+      toast.success(res?.message || "Record deleted successfully");
+      setDeleteModalOpen(false);
+      setDeletingItem(null);
+      setDeletingType(null);
+      refreshData();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to delete record");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const refreshData = () => {
     if (!client?.userCode) return;
@@ -239,6 +281,16 @@ export default function ClientDetails() {
     refreshData();
   }, [client]);
 
+  const clearModalState = () => {
+    setFormData({
+      followUpMsg: "",
+      nextFollowUpDate: "",
+      followUpStatus: "pending",
+    });
+    setErrors({});
+    setActiveTab(null);
+  };
+
   const handleOpenModal = (type: TabType) => {
     setActiveTab(type);
     setFormData({
@@ -246,7 +298,15 @@ export default function ClientDetails() {
       nextFollowUpDate: "",
       followUpStatus: "pending",
     });
+    setErrors({});
     setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    if (!submitting) {
+      setIsModalOpen(false);
+      clearModalState();
+    }
   };
 
   const onModalSubmit = async () => {
@@ -276,39 +336,53 @@ export default function ClientDetails() {
       return;
     }
 
-    if (!formData.followUpMsg || !formData.nextFollowUpDate) {
-      toast.error("Please fill all required fields");
+    const newErrors: Record<string, string> = {};
+    if (!formData.followUpMsg) newErrors.followUpMsg = "Remark is required";
+    if (!formData.nextFollowUpDate)
+      newErrors.nextFollowUpDate = "Next Date is required";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
     setSubmitting(true);
     try {
+      let response: any;
       if (activeTab === "pending-material") {
-        await pendingMaterialAPI.addFollowUp({
+        response = await pendingMaterialAPI.addFollowUp({
           pendingMaterialRecordId: recordId,
           followUpMsg: formData.followUpMsg,
           nextFollowUpDate: formData.nextFollowUpDate,
           status: formData.followUpStatus,
         });
       } else if (activeTab === "pending-order") {
-        await pendingOrderAPI.addFollowUp({
+        response = await pendingOrderAPI.addFollowUp({
           pendingOrderId: recordId,
           followUpMsg: formData.followUpMsg,
           nextFollowUpDate: formData.nextFollowUpDate,
+          status: formData.followUpStatus,
         });
       } else {
-        await newOrderAPI.addFollowUp({
+        response = await newOrderAPI.addFollowUp({
           newOrderRecordId: recordId as string,
           followUpMsg: formData.followUpMsg,
           nextFollowUpDate: formData.nextFollowUpDate,
           status: formData.followUpStatus,
         });
       }
-      toast.success("Follow-up added successfully");
+
+      if (response && response.success === false) {
+        toast.error(response.message || "Failed to add follow-up");
+        return;
+      }
+
+      toast.success(response?.message || "Follow-up added successfully");
       setIsModalOpen(false);
+      clearModalState();
       refreshData();
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(e.message || "Failed to add follow-up");
     } finally {
       setSubmitting(false);
     }
@@ -401,28 +475,39 @@ export default function ClientDetails() {
                     className="bg-gray-50 rounded border border-gray-200 p-3 relative group"
                   >
                     {isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-3 right-3 h-5 w-5 transition-opacity text-primary"
-                        onClick={() => {
-                          if (type === "pending-material") {
-                            setEditingPM(item);
-                            setShowPMModal(true);
-                          } else if (type === "pending-order") {
-                            setEditingPO(item);
-                            setShowPOModal(true);
-                          } else {
-                            setEditingNO(item);
-                            setShowNOModal(true);
-                          }
-                        }}
-                        title="Edit"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="absolute top-3 right-3 flex items-center transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-primary hover:bg-primary/10"
+                          onClick={() => {
+                            if (type === "pending-material") {
+                              setEditingPM(item);
+                              setShowPMModal(true);
+                            } else if (type === "pending-order") {
+                              setEditingPO(item);
+                              setShowPOModal(true);
+                            } else {
+                              setEditingNO(item);
+                              setShowNOModal(true);
+                            }
+                          }}
+                          title="Edit"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-red-500 hover:text-red-600 hover:bg-red-50"
+                          onClick={() => handleOpenDelete(item, type)}
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     )}
-                    <div className="flex justify-between items-start mb-3 pr-8">
+                    <div className="flex justify-between items-start mb-3 pr-14">
                       <div className="flex min-w-0 items-center gap-2 ">
                         <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
                           {type === "pending-material"
@@ -487,6 +572,14 @@ export default function ClientDetails() {
                               </p>
                               <p className="text-xs font-semibold text-gray-900">
                                 {formatDisplayDate(item.lastFollowUpDate)}
+                              </p>
+                            </div>
+                            <div className="space-y-0.5 text-center">
+                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+                                Sales Exec
+                              </p>
+                              <p className="text-xs font-bold text-gray-900">
+                                {item.salesExecCode || "-"}
                               </p>
                             </div>
                             <div className="space-y-0.5 text-right">
@@ -559,24 +652,8 @@ export default function ClientDetails() {
 
                       {type === "new-order" && (
                         <>
-                          <div className="grid grid-cols-3 gap-2.5">
+                          <div className="grid grid-cols-2 gap-2.5">
                             <div className="space-y-0.5">
-                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                                Category
-                              </p>
-                              <p className="text-xs font-semibold text-gray-900 truncate">
-                                {item.clientCategoryName || "-"}
-                              </p>
-                            </div>
-                            <div className="space-y-0.5 text-center">
-                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                                Sub Cat
-                              </p>
-                              <p className="text-xs font-semibold text-gray-900 truncate">
-                                {item.subCategory || "-"}
-                              </p>
-                            </div>
-                            <div className="space-y-0.5 text-right">
                               <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
                                 Last Sale
                               </p>
@@ -584,22 +661,22 @@ export default function ClientDetails() {
                                 {item.lastSaleDate || "-"}
                               </p>
                             </div>
+                            <div className="space-y-0.5 text-right">
+                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+                                Sales Exec
+                              </p>
+                              <p className="text-xs font-bold text-gray-900">
+                                {item.salesExecCode || "-"}
+                              </p>
+                            </div>
                           </div>
-                          <div className="grid grid-cols-3 gap-2.5">
+                          <div className="grid grid-cols-2 gap-2.5">
                             <div className="space-y-0.5">
                               <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
                                 Last Follow-up
                               </p>
                               <p className="text-xs font-semibold text-gray-900">
                                 {formatDisplayDate(item.lastFollowUpDate)}
-                              </p>
-                            </div>
-                            <div className="space-y-0.5 text-center">
-                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                                Sales Exec
-                              </p>
-                              <p className="text-xs font-bold text-gray-900">
-                                {item.salesExecCode || "-"}
                               </p>
                             </div>
                             <div className="space-y-0.5 text-right">
@@ -835,103 +912,106 @@ export default function ClientDetails() {
       </div>
 
       {/* Add Follow-up Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[450px]">
+      <Dialog 
+        open={isModalOpen} 
+        onOpenChange={(open) => {
+          if (!open && !submitting) {
+            handleCloseModal();
+          }
+        }}
+      >
+        <DialogContent 
+          className="max-w-md"
+          onPointerDownOutside={(e) => {
+            if (submitting) {
+              e.preventDefault();
+            }
+          }}
+          onEscapeKeyDown={(e) => {
+            if (submitting) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold">
-              Add Follow-up
-            </DialogTitle>
-            <DialogDescription className="text-xs text-gray-600">
-              Create a new follow-up entry for{" "}
+            <DialogTitle>
+              Add{" "}
               {activeTab
                 ?.replace("-", " ")
-                .replace(/\b\w/g, (l) => l.toUpperCase())}
+                .replace(/\b\w/g, (l) => l.toUpperCase())}{" "}
+              Follow-up
+            </DialogTitle>
+            <DialogDescription>
+              Enter new follow-up details
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label
-                htmlFor="message"
-                className="text-xs font-semibold text-gray-900"
-              >
-                Follow-up Message
-              </Label>
-              <Textarea
-                id="message"
-                value={formData.followUpMsg}
-                onChange={(e) =>
-                  setFormData({ ...formData, followUpMsg: e.target.value })
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Status</Label>
+              <Select
+                value={formData.followUpStatus}
+                onValueChange={(val) =>
+                  setFormData({ ...formData, followUpStatus: val })
                 }
-                placeholder="Enter follow-up notes..."
-                className="min-h-[80px] text-xs"
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Input
+                id="date"
+                type="date"
+                label="Next Follow-up Date"
+                required
+                min={new Date().toISOString().split("T")[0]}
+                value={formData.nextFollowUpDate}
+                onChange={(e) => {
+                  setFormData({
+                    ...formData,
+                    nextFollowUpDate: e.target.value,
+                  });
+                  if (errors.nextFollowUpDate)
+                    setErrors({ ...errors, nextFollowUpDate: "" });
+                }}
+                error={errors.nextFollowUpDate}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-2">
-                <Label
-                  htmlFor="date"
-                  className="text-xs font-semibold text-gray-900"
-                >
-                  Next Date
-                </Label>
-                <Input
-                  id="date"
-                  type="date"
-                  min={new Date().toISOString().split("T")[0]}
-                  value={formData.nextFollowUpDate}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      nextFollowUpDate: e.target.value,
-                    })
-                  }
-                  className="h-9 text-xs"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label
-                  htmlFor="status"
-                  className="text-xs font-semibold text-gray-900"
-                >
-                  Status
-                </Label>
-                <Select
-                  value={formData.followUpStatus}
-                  onValueChange={(val) =>
-                    setFormData({ ...formData, followUpStatus: val })
-                  }
-                >
-                  <SelectTrigger className="h-9 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending" className="text-xs">
-                      Pending
-                    </SelectItem>
-                    <SelectItem value="completed" className="text-xs">
-                      Completed
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+
+            <div className="space-y-2">
+              <Textarea
+                id="remark"
+                label="Remark"
+                required
+                value={formData.followUpMsg}
+                onChange={(e) => {
+                  setFormData({ ...formData, followUpMsg: e.target.value });
+                  if (errors.followUpMsg)
+                    setErrors({ ...errors, followUpMsg: "" });
+                }}
+                placeholder="Enter follow-up notes"
+                rows={3}
+                error={errors.followUpMsg}
+              />
             </div>
           </div>
-          <DialogFooter className="gap-2">
+          <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setIsModalOpen(false)}
+              onClick={handleCloseModal}
               disabled={submitting}
-              className="h-9 text-xs"
             >
               Cancel
             </Button>
-            <Button
-              onClick={onModalSubmit}
-              disabled={submitting}
-              className="h-9 text-xs"
-            >
+            <Button onClick={onModalSubmit} disabled={submitting}>
               {submitting && (
-                <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
               Save
             </Button>
@@ -970,6 +1050,25 @@ export default function ClientDetails() {
             onSuccess={refreshData}
             order={editingNO}
             clientCode={client.userCode}
+          />
+          <DeleteModal
+            isOpen={deleteModalOpen}
+            onClose={() => {
+              if (!isDeleting) {
+                setDeleteModalOpen(false);
+                setDeletingItem(null);
+                setDeletingType(null);
+              }
+            }}
+            onConfirm={handleConfirmDelete}
+            title="Delete Record?"
+            description="Are you sure you want to delete this record? This action cannot be undone."
+            itemName={
+              deletingItem
+                ? `${deletingItem.styleNo || deletingItem.orderNo || "Record"}`
+                : undefined
+            }
+            isLoading={isDeleting}
           />
         </>
       )}

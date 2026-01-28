@@ -442,13 +442,14 @@ export const pendingOrderAPI = {
     pendingOrderId: string;
     followUpMsg: string;
     nextFollowUpDate: string;
+    status?: string;
   }) => {
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.ADD_FOLLOW_UP}`,
       {
         method: "POST",
         headers: getHeaders(),
-        body: JSON.stringify(data),
+        body: JSON.stringify(filterEmptyValues(data)),
       },
     );
     return response.json();
@@ -843,7 +844,7 @@ export const cadOrderAPI = {
       {
         method: "POST",
         headers: getHeaders(),
-        body: JSON.stringify(data),
+        body: JSON.stringify(filterEmptyValues(data)),
       },
     );
     return response.json();

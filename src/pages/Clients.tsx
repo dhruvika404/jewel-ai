@@ -270,7 +270,7 @@ export default function Clients() {
         toast.error("Failed to load clients");
       }
     } catch (error: any) {
-      toast.error("Error loading data: " + error.message);
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -387,16 +387,12 @@ export default function Clients() {
           </Tooltip>
         </TooltipProvider>
         <div className="flex items-center gap-3 text-[11px] text-gray-500">
-          {data.lastFollowUpDate && (
             <span className="whitespace-nowrap">
               Last Follow up: {formatDisplayDate(data.lastFollowUpDate)}
             </span>
-          )}
-          {data.nextFollowUpDate && (
             <span className="whitespace-nowrap font-medium text-blue-600">
               Next Follow up: {formatDisplayDate(data.nextFollowUpDate)}
             </span>
-          )}
         </div>
       </div>
     );

@@ -60,10 +60,8 @@ export function CreateTaskModal({
     departmentName: "",
     totalNetWt: "",
     expectedDeliveryDate: "",
-    subCategory: "",
     lastSaleDate: "",
     lastOrderDate: "",
-    clientCategoryName: "",
     lastMovementDate: "",
   });
 
@@ -108,10 +106,8 @@ export function CreateTaskModal({
       departmentName: "",
       totalNetWt: "",
       expectedDeliveryDate: "",
-      subCategory: "",
       lastSaleDate: "",
       lastOrderDate: "",
-      clientCategoryName: "",
       lastMovementDate: "",
     });
     setErrors({});
@@ -128,9 +124,6 @@ export function CreateTaskModal({
       if (!formData?.orderNo) newErrors.orderNo = "Order No is required";
     } else if (formData?.taskType === "pending-order") {
       if (!formData?.orderNo) newErrors.orderNo = "Order No is required";
-      if (!formData?.orderDate) newErrors.orderDate = "Order Date is required";
-      if (!formData?.grossWtTotal)
-        newErrors.grossWtTotal = "Gross Weight is required";
     }
 
     setErrors(newErrors);
@@ -189,10 +182,8 @@ export function CreateTaskModal({
         const payload = filterEmptyFields({
           salesExecCode: formData?.salesExecCode,
           clientCode: formData?.clientCode,
-          subCategory: formData?.subCategory,
           lastSaleDate: formData?.lastSaleDate,
           lastOrderDate: formData?.lastOrderDate,
-          clientCategoryName: formData?.clientCategoryName,
           nextFollowUpDate: formData?.nextFollowUpDate,
         });
         response = await newOrderAPI.create(payload as any);
@@ -400,27 +391,6 @@ export function CreateTaskModal({
         return (
           <>
             <Input
-              id="clientCategoryName"
-              label="Client Category"
-              value={formData?.clientCategoryName}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  clientCategoryName: e?.target?.value,
-                })
-              }
-              placeholder="e.g. diamond"
-            />
-            <Input
-              id="subCategory"
-              label="Sub Category"
-              value={formData?.subCategory}
-              onChange={(e) =>
-                setFormData({ ...formData, subCategory: e?.target?.value })
-              }
-              placeholder="e.g. 67GBB"
-            />
-            <Input
               id="lastSaleDate"
               label="Last Sale Date"
               type="date"
@@ -597,15 +567,12 @@ export function CreateTaskModal({
           <Textarea
             id="taskDetails"
             label="Task Details"
-            required
             value={formData?.taskDetails}
             onChange={(e) => {
               setFormData({ ...formData, taskDetails: e?.target?.value });
-              if (errors.taskDetails) setErrors({ ...errors, taskDetails: "" });
             }}
             placeholder="Enter task details and follow-up notes..."
             rows={3}
-            error={errors.taskDetails}
           />
 
           <DialogFooter>

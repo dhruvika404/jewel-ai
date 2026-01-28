@@ -44,10 +44,8 @@ export function NewOrderModal({
   const [formData, setFormData] = useState({
     salesExecCode: "",
     clientCode: clientCode,
-    subCategory: "",
     lastSaleDate: "",
     lastOrderDate: "",
-    clientCategoryName: "",
     nextFollowUpDate: "",
     status: "pending",
     remark: "",
@@ -77,10 +75,8 @@ export function NewOrderModal({
       setFormData({
         salesExecCode: order.salesExecCode || "",
         clientCode: order.clientCode || clientCode,
-        subCategory: order.subCategory || "",
         lastSaleDate: formatDateForInput(order.lastSaleDate),
         lastOrderDate: formatDateForInput(order.lastOrderDate),
-        clientCategoryName: order.clientCategoryName || "",
         nextFollowUpDate: formatDateForInput(order.nextFollowUpDate),
         status: order.status || "pending",
         remark: order.remark || "",
@@ -89,10 +85,8 @@ export function NewOrderModal({
       setFormData({
         salesExecCode: "",
         clientCode: clientCode,
-        subCategory: "",
         lastSaleDate: "",
         lastOrderDate: "",
-        clientCategoryName: "",
         nextFollowUpDate: "",
         status: "pending",
         remark: "",
@@ -105,10 +99,8 @@ export function NewOrderModal({
     setFormData({
       salesExecCode: "",
       clientCode: clientCode,
-      subCategory: "",
       lastSaleDate: "",
       lastOrderDate: "",
-      clientCategoryName: "",
       nextFollowUpDate: "",
       status: "pending",
       remark: "",
@@ -217,83 +209,53 @@ export function NewOrderModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="clientCategoryName">Client Category Name</Label>
-              <Input
-                id="clientCategoryName"
-                value={formData.clientCategoryName}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    clientCategoryName: e.target.value,
-                  })
-                }
-                placeholder="e.g. diamond"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="subCategory">Sub Category</Label>
-              <Input
-                id="subCategory"
-                value={formData.subCategory}
-                onChange={(e) =>
-                  setFormData({ ...formData, subCategory: e.target.value })
-                }
-                placeholder="e.g. 67GBB"
-              />
-            </div>
-          </div>
+          {/* Category fields removed */}
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="lastSaleDate">Last Sale Date</Label>
-              <Input
-                id="lastSaleDate"
-                type="date"
-                value={formData.lastSaleDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, lastSaleDate: e.target.value })
+            <Input
+              id="lastSaleDate"
+              label="Last Sale Date"
+              type="date"
+              value={formData.lastSaleDate}
+              onChange={(e) =>
+                setFormData({ ...formData, lastSaleDate: e.target.value })
+              }
+              onBlur={(e) => {
+                const typedDate = e.target.value;
+                const today = new Date().toISOString().split("T")[0];
+                if (typedDate && typedDate > today) {
+                  setErrors({
+                    ...errors,
+                    lastSaleDate: "Cannot select a future date",
+                  });
+                  setFormData({ ...formData, lastSaleDate: "" });
                 }
-                onBlur={(e) => {
-                  const typedDate = e.target.value;
-                  const today = new Date().toISOString().split("T")[0];
-                  if (typedDate && typedDate > today) {
-                    setErrors({
-                      ...errors,
-                      lastSaleDate: "Cannot select a future date",
-                    });
-                    setFormData({ ...formData, lastSaleDate: "" });
-                  }
-                }}
-                error={errors.lastSaleDate}
-                max={new Date().toISOString().split("T")[0]}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastOrderDate">Last Order Date</Label>
-              <Input
-                id="lastOrderDate"
-                type="date"
-                value={formData.lastOrderDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, lastOrderDate: e.target.value })
+              }}
+              error={errors.lastSaleDate}
+              max={new Date().toISOString().split("T")[0]}
+            />
+            <Input
+              id="lastOrderDate"
+              label="Last Order Date"
+              type="date"
+              value={formData.lastOrderDate}
+              onChange={(e) =>
+                setFormData({ ...formData, lastOrderDate: e.target.value })
+              }
+              onBlur={(e) => {
+                const typedDate = e.target.value;
+                const today = new Date().toISOString().split("T")[0];
+                if (typedDate && typedDate > today) {
+                  setErrors({
+                    ...errors,
+                    lastOrderDate: "Cannot select a future date",
+                  });
+                  setFormData({ ...formData, lastOrderDate: "" });
                 }
-                onBlur={(e) => {
-                  const typedDate = e.target.value;
-                  const today = new Date().toISOString().split("T")[0];
-                  if (typedDate && typedDate > today) {
-                    setErrors({
-                      ...errors,
-                      lastOrderDate: "Cannot select a future date",
-                    });
-                    setFormData({ ...formData, lastOrderDate: "" });
-                  }
-                }}
-                error={errors.lastOrderDate}
-                max={new Date().toISOString().split("T")[0]}
-              />
-            </div>
+              }}
+              error={errors.lastOrderDate}
+              max={new Date().toISOString().split("T")[0]}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

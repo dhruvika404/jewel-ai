@@ -26,7 +26,7 @@ export default function ClientImportTest() {
       toast.success("Client import test successful!");
     } catch (error: any) {
       setResult({ success: false, error: error.message });
-      toast.error("Client import test failed: " + error.message);
+      toast.error(error.message);
     } finally {
       setTesting(false);
     }

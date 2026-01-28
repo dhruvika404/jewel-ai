@@ -984,7 +984,7 @@ export default function Followups() {
         );
       }
     } catch (error: any) {
-      toast.error("Upload failed: " + error.message);
+      toast.error(error.message);
     } finally {
       setIsUploading(false);
     }
