@@ -559,7 +559,9 @@ export function CreateTaskModal({
               }
               placeholder="Additional remarks"
               containerClassName={
-                formData?.taskType === "new-order" ? "col-span-2" : ""
+                !formData?.taskType || formData?.taskType === "new-order"
+                  ? "col-span-2"
+                  : ""
               }
             />
           </div>
