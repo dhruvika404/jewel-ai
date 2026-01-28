@@ -122,10 +122,18 @@ export function CreateTaskModal({
     if (formData?.taskType === "pending-material") {
       if (!formData?.styleNo) newErrors.styleNo = "Style No is required";
       if (!formData?.orderNo) newErrors.orderNo = "Order No is required";
+      if (!formData?.orderDate) newErrors.orderDate = "Order Date is required";
+      if (!formData?.expectedDeliveryDate)
+        newErrors.expectedDeliveryDate = "Expected delivery date is required";
+      if (!formData?.lastMovementDate)
+        newErrors.lastMovementDate = "Last movement date is required";
+      if (!formData?.departmentName)
+        newErrors.departmentName = "Department Name is required";
+      if (!formData?.totalNetWt)
+        newErrors.totalNetWt = "Total Net Wt is required";
     } else if (formData?.taskType === "pending-order") {
       if (!formData?.orderNo) newErrors.orderNo = "Order No is required";
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -242,18 +250,29 @@ export function CreateTaskModal({
               id="departmentName"
               label="Department"
               value={formData?.departmentName}
-              onChange={(e) =>
-                setFormData({ ...formData, departmentName: e?.target?.value })
-              }
+              required
+              onChange={(e) => {
+                setFormData({
+                  ...formData,
+                  departmentName: e?.target?.value,
+                });
+                if (errors.departmentName)
+                  setErrors({ ...errors, departmentName: "" });
+              }}
               placeholder="e.g. diamond"
             />
             <Input
               id="totalNetWt"
               label="Total Net Weight"
               value={formData?.totalNetWt}
-              onChange={(e) =>
-                setFormData({ ...formData, totalNetWt: e?.target?.value })
-              }
+              required
+              onChange={(e) => {
+                setFormData({
+                  ...formData,
+                  totalNetWt: e?.target?.value,
+                });
+                if (errors.totalNetWt) setErrors({ ...errors, totalNetWt: "" });
+              }}
               placeholder="e.g. 10.57"
             />
             <Input
@@ -262,6 +281,7 @@ export function CreateTaskModal({
               type="date"
               min={new Date().toISOString().split("T")[0]}
               value={formData?.expectedDeliveryDate}
+              required
               onChange={(e) => {
                 setFormData({
                   ...formData,
@@ -288,9 +308,11 @@ export function CreateTaskModal({
               label="Order Date"
               type="date"
               value={formData?.orderDate}
-              onChange={(e) =>
-                setFormData({ ...formData, orderDate: e?.target?.value })
-              }
+              required
+              onChange={(e) => {
+                setFormData({ ...formData, orderDate: e?.target?.value });
+                if (errors.orderDate) setErrors({ ...errors, orderDate: "" });
+              }}
               onBlur={(e) => {
                 const typedDate = e.target.value;
                 const today = new Date().toISOString().split("T")[0];
@@ -310,9 +332,15 @@ export function CreateTaskModal({
               label="Last Movement Date"
               type="date"
               value={formData?.lastMovementDate}
-              onChange={(e) =>
-                setFormData({ ...formData, lastMovementDate: e?.target?.value })
-              }
+              required
+              onChange={(e) => {
+                setFormData({
+                  ...formData,
+                  lastMovementDate: e?.target?.value,
+                });
+                if (errors.lastMovementDate)
+                  setErrors({ ...errors, lastMovementDate: "" });
+              }}
               onBlur={(e) => {
                 const typedDate = e.target.value;
                 const today = new Date().toISOString().split("T")[0];
@@ -372,17 +400,13 @@ export function CreateTaskModal({
             <Input
               id="grossWtTotal"
               label="Gross Weight Total"
-              required
               type="number"
               step="0.01"
               value={formData?.grossWtTotal}
               onChange={(e) => {
                 setFormData({ ...formData, grossWtTotal: e?.target?.value });
-                if (errors.grossWtTotal)
-                  setErrors({ ...errors, grossWtTotal: "" });
               }}
               placeholder="e.g. 125.75"
-              error={errors.grossWtTotal}
             />
           </>
         );
@@ -460,6 +484,7 @@ export function CreateTaskModal({
               <Select
                 value={formData?.taskType}
                 onValueChange={(val) => {
+                  resetForm();
                   setFormData({ ...formData, taskType: val });
                   if (errors.taskType) setErrors({ ...errors, taskType: "" });
                 }}
