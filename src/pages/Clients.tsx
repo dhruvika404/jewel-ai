@@ -336,7 +336,7 @@ export default function Clients() {
 
     const getFollowUpColor = () => {
       if (!data.nextFollowUpDate)
-        return "bg-gray-50 border-l-4 border-gray-300";
+        return "bg-purple-50 border-l-4 border-purple-300";
 
       const nextDate = new Date(data.nextFollowUpDate);
       const today = new Date();
