@@ -293,7 +293,7 @@ export default function Clients() {
       loadData();
       setShowUploadDialog(false);
     } catch (error: any) {
-      toast.error(error.message || "Failed to import data");
+      toast.error(error.message, { duration: Infinity });
     } finally {
       setIsUploading(false);
     }

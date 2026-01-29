@@ -77,3 +77,20 @@
 
 @layer utilities {
 }
+
+[data-close-button] {
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  right: 12px !important;
+  left: unset !important;
+  z-index: 10001 !important;
+}
+
+[data-sonner-toaster] {
+  z-index: 10000 !important;
+  pointer-events: auto !important;
+}
+
+[data-sonner-toast] {
+  pointer-events: auto !important;
+}

@@ -557,7 +557,7 @@ export default function Reports() {
                       </TableCell>
                       <TableCell className="align-center">
                         <div className="text-sm text-gray-900">
-                          {fu.salesExecName || fu.salesExecCode || "-"}
+                          {fu.salesExecName || "-"}
                         </div>
                       </TableCell>
                       <TableCell className="align-center">

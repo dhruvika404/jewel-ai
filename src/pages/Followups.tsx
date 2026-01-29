@@ -979,9 +979,9 @@ export default function Followups() {
         setShowUploadDialog(false);
         loadFollowupData();
       } else {
-        toast.error(
-          "Import failed: " + (response?.message || "Unknown error occurred"),
-        );
+        toast.error(response?.message, {
+          duration: Infinity,
+        });
       }
     } catch (error: any) {
       toast.error(error.message);

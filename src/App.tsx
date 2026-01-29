@@ -33,7 +33,7 @@ function App() {
               }
             />
           </Routes>
-          <Toaster />
+          <Toaster closeButton />
         </PageHeaderProvider>
       </AuthProvider>
     </BrowserRouter>

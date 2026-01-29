@@ -375,11 +375,11 @@ export default function SalesPersons() {
         loadData();
       } else {
         const errorMsg =
-          response.message?.message || response.message || "Import failed";
-        toast.error(errorMsg);
+          response.message?.message || response.message ;
+        toast.error(errorMsg, { duration: Infinity });
       }
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.message, { duration: Infinity });
     } finally {
       setIsUploading(false);
     }
