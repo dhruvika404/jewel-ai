@@ -80,6 +80,8 @@ export default function Clients() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
   const [selectedSalesPerson, setSelectedSalesPerson] = useState<string>("all");
+  const [spSearchQuery, setSpSearchQuery] = useState("");
+  const [isSpLoading, setIsSpLoading] = useState(false);
   const [dateRange] = useState<{
     startDate: string;
     endDate: string;
@@ -167,6 +169,8 @@ export default function Clients() {
                 ]}
                 value={selectedSalesPerson}
                 onSelect={setSelectedSalesPerson}
+                onSearchChange={setSpSearchQuery}
+                loading={isSpLoading}
                 placeholder="Select Sales Person"
                 searchPlaceholder="Search salesperson..."
                 width="w-[180px]"
@@ -211,12 +215,14 @@ export default function Clients() {
   ]);
 
   useEffect(() => {
-    const fetchSalesPersons = async () => {
+    const fetchSalesPersons = async (search?: string) => {
       try {
         if (isAdmin) {
+          setIsSpLoading(true);
           const response = await salesPersonAPI.getAll({
             size: 1000,
             role: "sales_executive",
+            search: search,
           });
           if (response.success && response.data?.data) {
             setSalesPersons(response.data.data);
@@ -224,11 +230,17 @@ export default function Clients() {
         }
       } catch (error) {
         console.error("Failed to fetch sales persons:", error);
+      } finally {
+        setIsSpLoading(false);
       }
     };
 
-    fetchSalesPersons();
-  }, [user, isAdmin]);
+    const timer = setTimeout(() => {
+      fetchSalesPersons(spSearchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [user, isAdmin, spSearchQuery]);
 
   const loadData = async () => {
     setLoading(true);

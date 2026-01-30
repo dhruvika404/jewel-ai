@@ -36,15 +36,17 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
   const [spPage, setSpPage] = useState(1)
   const [spLoading, setSpLoading] = useState(false)
   const [spHasMore, setSpHasMore] = useState(true)
+  const [spSearchQuery, setSpSearchQuery] = useState('')
   const PAGE_SIZE = 20
 
-  const loadSalesPersons = async (page: number, append: boolean = false) => {
+  const loadSalesPersons = async (page: number, append: boolean = false, search?: string) => {
     try {
       setSpLoading(true)
       const response = await salesPersonAPI.getAll({ 
         page, 
         size: PAGE_SIZE, 
-        role: 'sales_executive' 
+        role: 'sales_executive',
+        search: search
       })
       
       if (response?.success && response?.data?.data) {
@@ -73,11 +75,14 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
 
   useEffect(() => {
     if (isOpen) {
-      setSpPage(1)
-      setSpHasMore(true)
-      loadSalesPersons(1, false)
+      const timer = setTimeout(() => {
+        setSpPage(1)
+        setSpHasMore(true)
+        loadSalesPersons(1, false, spSearchQuery)
+      }, 500)
+      return () => clearTimeout(timer)
     }
-  }, [isOpen])
+  }, [isOpen, spSearchQuery])
 
   const handleLoadMoreSp = () => {
     if (!spLoading && spHasMore) {
@@ -257,6 +262,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
               setFormData({ ...formData, salesExecCode: val })
               if (errors.salesExecCode) setErrors({ ...errors, salesExecCode: '' })
             }}
+            onSearchChange={setSpSearchQuery}
             placeholder="Select sales executive"
             searchPlaceholder="Search sales executive..."
             error={errors.salesExecCode}

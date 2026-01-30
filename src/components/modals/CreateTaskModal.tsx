@@ -45,6 +45,10 @@ export function CreateTaskModal({
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [salesPersons, setSalesPersons] = useState<any[]>([]);
+  const [isSpLoading, setIsSpLoading] = useState(false);
+  const [spSearchQuery, setSpSearchQuery] = useState("");
+  const [isClientLoading, setIsClientLoading] = useState(false);
+  const [clientSearchQuery, setClientSearchQuery] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     taskType: "",
@@ -66,30 +70,58 @@ export function CreateTaskModal({
   });
 
   useEffect(() => {
-    if (isOpen) {
-      loadData();
-      setErrors({});
-    }
-  }, [isOpen]);
-
-  const loadData = async () => {
-    try {
-      const [clientRes, salesRes] = await Promise.all([
-        clientAPI.getAll({ page: 1, size: 1000, role: "client" }),
-        salesPersonAPI.getAll({ page: 1, size: 1000, role: "sales_executive" }),
-      ]);
-
-      if (clientRes?.success !== false) {
-        setClients(clientRes?.data?.data || clientRes?.data || []);
+    if (!isOpen) return;
+    const loadSalesPersons = async (search?: string) => {
+      try {
+        setIsSpLoading(true);
+        const res = await salesPersonAPI.getAll({
+          page: 1,
+          size: 1000,
+          role: "sales_executive",
+          search: search,
+        });
+        if (res?.success && res?.data?.data) {
+          setSalesPersons(res.data.data);
+        }
+      } catch (error) {
+        console.error("Error loading sales persons:", error);
+      } finally {
+        setIsSpLoading(false);
       }
+    };
 
-      if (salesRes?.success && salesRes?.data?.data) {
-        setSalesPersons(salesRes?.data?.data);
+    const timer = setTimeout(() => {
+      loadSalesPersons(spSearchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [isOpen, spSearchQuery]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const loadClients = async (search?: string) => {
+      try {
+        setIsClientLoading(true);
+        const res = await clientAPI.getAll({
+          page: 1,
+          size: 1000,
+          role: "client",
+          search: search,
+        });
+        if (res?.success !== false) {
+          setClients(res?.data?.data || res?.data || []);
+        }
+      } catch (error) {
+        console.error("Error loading clients:", error);
+      } finally {
+        setIsClientLoading(false);
       }
-    } catch (error) {
-      console.error("Error loading data:", error);
-    }
-  };
+    };
+
+    const timer = setTimeout(() => {
+      loadClients(clientSearchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [isOpen, clientSearchQuery]);
 
   const resetForm = () => {
     setFormData({
@@ -541,8 +573,8 @@ export function CreateTaskModal({
               required
               options={clients.map((client) => ({
                 value: client?.userCode,
-                label: client?.name
-                  ? `${client?.name} (${client?.userCode})`
+                label: client?.userCode
+                  ? `${client?.userCode} (${client?.name})`
                   : client?.userCode,
               }))}
               value={formData?.clientCode}
@@ -550,6 +582,8 @@ export function CreateTaskModal({
                 setFormData({ ...formData, clientCode: val });
                 if (errors.clientCode) setErrors({ ...errors, clientCode: "" });
               }}
+              onSearchChange={setClientSearchQuery}
+              loading={isClientLoading}
               placeholder="Select client"
               searchPlaceholder="Search client..."
               className="w-full"
@@ -567,6 +601,8 @@ export function CreateTaskModal({
                 onSelect={(val) =>
                   setFormData({ ...formData, salesExecCode: val })
                 }
+                onSearchChange={setSpSearchQuery}
+                loading={isSpLoading}
                 placeholder="Select sales executive"
                 searchPlaceholder="Search sales executive..."
                 className="w-full"

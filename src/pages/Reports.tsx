@@ -69,32 +69,62 @@ export default function Reports() {
   const [clients, setClients] = useState<Client[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [spSearchQuery, setSpSearchQuery] = useState("");
+  const [isSpLoading, setIsSpLoading] = useState(false);
+  const [clientSearchQuery, setClientSearchQuery] = useState("");
+  const [isClientLoading, setIsClientLoading] = useState(false);
 
   useEffect(() => {
-    const loadFilters = async () => {
+    const loadSalesPersons = async (search?: string) => {
       try {
-        const [spRes, clientRes] = await Promise.all([
-          salesPersonAPI.getAll({
-            page: 1,
-            size: 1000,
-            role: "sales_executive",
-          }),
-          clientAPI.getAll({ page: 1, size: 1000, role: "client" }),
-        ]);
-
+        setIsSpLoading(true);
+        const spRes = await salesPersonAPI.getAll({
+          page: 1,
+          size: 1000,
+          role: "sales_executive",
+          search: search,
+        });
         if (spRes.success && spRes.data?.data) {
           setSalesPersons(spRes.data.data);
         }
+      } catch (error) {
+        console.error("Error loading sales persons:", error);
+      } finally {
+        setIsSpLoading(false);
+      }
+    };
 
+    const timer = setTimeout(() => {
+      loadSalesPersons(spSearchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [spSearchQuery]);
+
+  useEffect(() => {
+    const loadClients = async (search?: string) => {
+      try {
+        setIsClientLoading(true);
+        const clientRes = await clientAPI.getAll({
+          page: 1,
+          size: 1000,
+          role: "client",
+          search: search,
+        });
         if (clientRes.success !== false) {
           setClients(clientRes.data?.data || clientRes.data || []);
         }
       } catch (error) {
-        console.error("Error loading filters:", error);
+        console.error("Error loading clients:", error);
+      } finally {
+        setIsClientLoading(false);
       }
     };
-    loadFilters();
-  }, []);
+
+    const timer = setTimeout(() => {
+      loadClients(clientSearchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [clientSearchQuery]);
 
   const getSalesPersonName = (code?: string) => {
     if (!code) return "";
@@ -247,11 +277,9 @@ export default function Reports() {
           }
         });
       };
-
       processApiResponse(newOrderRes, "New Order");
       processApiResponse(pendingOrderRes, "Pending Order");
       processApiResponse(pendingMaterialRes, "Pending Material");
-
       setFollowUps(allFollowUps);
     } catch (error: any) {
       console.error("Error loading report data:", error);
@@ -328,6 +356,8 @@ export default function Reports() {
             ]}
             value={salesPersonFilter}
             onSelect={setSalesPersonFilter}
+            onSearchChange={setSpSearchQuery}
+            loading={isSpLoading}
             placeholder="Sales Person"
             searchPlaceholder="Search salesperson..."
             width="w-[180px]"
@@ -337,13 +367,15 @@ export default function Reports() {
               { value: "all", label: "Select Client" },
               ...clients.map((client) => ({
                 value: client.userCode,
-                label: client.name
-                  ? `${client.name} (${client.userCode})`
+                label: client.userCode
+                  ? `${client.userCode} (${client.name})`
                   : client.userCode,
               })),
             ]}
             value={clientFilter}
             onSelect={setClientFilter}
+            onSearchChange={setClientSearchQuery}
+            loading={isClientLoading}
             placeholder="Client"
             searchPlaceholder="Search client..."
             width="w-[180px]"
@@ -483,7 +515,7 @@ export default function Reports() {
                       colSpan={7}
                       className="text-center py-8 text-muted-foreground"
                     >
-                      No records found for the selected criteria
+                      No records found
                     </TableCell>
                   </TableRow>
                 ) : (

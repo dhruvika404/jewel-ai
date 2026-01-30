@@ -198,6 +198,10 @@ export default function Followups() {
   const [totalItems, setTotalItems] = useState(0);
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC" | null>(null);
+  const [spSearchQuery, setSpSearchQuery] = useState("");
+  const [isSpLoading, setIsSpLoading] = useState(false);
+  const [clientSearchQuery, setClientSearchQuery] = useState("");
+  const [isClientLoading, setIsClientLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -402,30 +406,56 @@ export default function Followups() {
   }
 
   useEffect(() => {
-    const loadFilters = async () => {
+    const loadSalesPersons = async (search?: string) => {
       try {
-        const [spRes, clientRes] = await Promise.all([
-          salesPersonAPI.getAll({
-            page: 1,
-            size: 1000,
-            role: "sales_executive",
-          }),
-          clientAPI.getAll({ page: 1, size: 1000, role: "client" }),
-        ]);
-
+        setIsSpLoading(true);
+        const spRes = await salesPersonAPI.getAll({
+          page: 1,
+          size: 1000,
+          role: "sales_executive",
+          search: search,
+        });
         if (spRes.success && spRes.data?.data) {
           setSalesPersons(spRes.data.data);
         }
+      } catch (error) {
+        console.error("Error loading sales persons:", error);
+      } finally {
+        setIsSpLoading(false);
+      }
+    };
 
+    const timer = setTimeout(() => {
+      loadSalesPersons(spSearchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [spSearchQuery]);
+
+  useEffect(() => {
+    const loadClients = async (search?: string) => {
+      try {
+        setIsClientLoading(true);
+        const clientRes = await clientAPI.getAll({
+          page: 1,
+          size: 1000,
+          role: "client",
+          search: search,
+        });
         if (clientRes.success !== false) {
           setClients(clientRes.data?.data || clientRes.data || []);
         }
       } catch (error) {
-        console.error("Error loading filters:", error);
+        console.error("Error loading clients:", error);
+      } finally {
+        setIsClientLoading(false);
       }
     };
-    loadFilters();
-  }, []);
+
+    const timer = setTimeout(() => {
+      loadClients(clientSearchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [clientSearchQuery]);
 
   const processNewOrderData = (res: any): NewOrderFollowup[] => {
     let dataArray = [];
@@ -604,7 +634,7 @@ export default function Followups() {
 
       if (isManualSort) {
         params.page = 1;
-        params.size = 10000;
+        params.size = 1000;
       } else if (sortBy && sortOrder) {
         params.sortBy = sortBy;
         params.sortOrder = sortOrder;
@@ -1058,6 +1088,8 @@ export default function Followups() {
               ]}
               value={salesPersonFilter}
               onSelect={setSalesPersonFilter}
+              onSearchChange={setSpSearchQuery}
+              loading={isSpLoading}
               placeholder="Sales Person"
               searchPlaceholder="Search salesperson..."
               width="w-[180px]"
@@ -1069,13 +1101,15 @@ export default function Followups() {
               { value: "all", label: "Select Client" },
               ...clients.map((client) => ({
                 value: client.userCode,
-                label: client.name
-                  ? `${client.name} (${client.userCode})`
+                label: client.userCode
+                  ? `${client.userCode} (${client.name})`
                   : client.userCode,
               })),
             ]}
             value={clientFilter}
             onSelect={setClientFilter}
+            onSearchChange={setClientSearchQuery}
+            loading={isClientLoading}
             placeholder="Client"
             searchPlaceholder="Search client..."
             width="w-[220px]"
@@ -1241,7 +1275,7 @@ export default function Followups() {
                 )}
                 {followupType === "new-order" && (
                   <>
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 sticky right-[100px] z-30 bg-gray-50  w-[100px]">
                       Status
                     </TableHead>
                     <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50  w-[100px]">
@@ -1314,7 +1348,7 @@ export default function Followups() {
                     <TableHead className="font-medium text-gray-700">
                       Remark
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 sticky right-[100px] z-30 bg-gray-50  w-[100px]">
                       Status
                     </TableHead>
                     <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50  w-[100px]">
@@ -1381,7 +1415,7 @@ export default function Followups() {
                     <TableHead className="font-medium text-gray-700">
                       Remark
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 sticky right-[100px] z-30 bg-gray-50  w-[100px]">
                       Status
                     </TableHead>
                     <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50  w-[100px]">
@@ -1536,7 +1570,7 @@ export default function Followups() {
 
                     {fu.type === "new-order" && (
                       <>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px]">
                           <Badge
                             variant="outline"
                             className={
@@ -1673,7 +1707,7 @@ export default function Followups() {
                             {fu.remark || "-"}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px]">
                           <Badge
                             variant="outline"
                             className={
@@ -1812,7 +1846,7 @@ export default function Followups() {
                             {fu.remark || "-"}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px]">
                           <Badge
                             variant="outline"
                             className={

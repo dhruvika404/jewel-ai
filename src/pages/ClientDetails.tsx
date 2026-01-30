@@ -479,7 +479,7 @@ export default function ClientDetails() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 text-primary hover:bg-primary/10"
+                          className="h-6 w-6 hover:text-primary hover:bg-primary/10"
                           onClick={() => {
                             if (type === "pending-material") {
                               setEditingPM(item);
@@ -499,7 +499,7 @@ export default function ClientDetails() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 text-red-500 hover:text-red-600 hover:bg-red-50"
+                          className="h-6 w-6 hover:text-red-600 hover:bg-red-50"
                           onClick={() => handleOpenDelete(item, type)}
                           title="Delete"
                         >

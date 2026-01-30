@@ -45,25 +45,35 @@ export function PendingOrderModal({
     status: "pending",
   });
 
+  const [spSearchQuery, setSpSearchQuery] = useState("");
+  const [isSpLoading, setIsSpLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const loadSalesPersons = async () => {
+    const loadSalesPersons = async (search?: string) => {
       try {
+        setIsSpLoading(true);
         const response = await salesPersonAPI.getAll({
           page: 1,
           size: 1000,
           role: "sales_executive",
+          search: search,
         });
         if (response.success && response.data?.data) {
           setSalesPersons(response.data.data);
         }
       } catch (error) {
         console.error("Error loading sales persons:", error);
+      } finally {
+        setIsSpLoading(false);
       }
     };
-    loadSalesPersons();
-  }, []);
+
+    const timer = setTimeout(() => {
+      loadSalesPersons(spSearchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [spSearchQuery]);
 
   useEffect(() => {
     if (order) {
@@ -231,6 +241,8 @@ export function PendingOrderModal({
                 if (errors.salesExecCode)
                   setErrors({ ...errors, salesExecCode: "" });
               }}
+              onSearchChange={setSpSearchQuery}
+              loading={isSpLoading}
               placeholder="Select sales executive"
               searchPlaceholder="Search sales executive..."
               error={errors.salesExecCode}

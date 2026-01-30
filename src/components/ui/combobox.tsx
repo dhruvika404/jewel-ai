@@ -38,6 +38,7 @@ interface ComboboxProps {
   required?: boolean;
   onEndReached?: () => void;
   loading?: boolean;
+  onSearchChange?: (value: string) => void;
 }
 
 export function Combobox({
@@ -54,6 +55,7 @@ export function Combobox({
   width,
   onEndReached,
   loading,
+  onSearchChange,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const observerTarget = React.useRef(null);
@@ -113,8 +115,11 @@ export function Combobox({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]">
-            <Command>
-              <CommandInput placeholder={searchPlaceholder} />
+            <Command shouldFilter={!onSearchChange}>
+              <CommandInput
+                placeholder={searchPlaceholder}
+                onValueChange={onSearchChange}
+              />
               <CommandList>
                 <CommandEmpty>{emptyText}</CommandEmpty>
                 <CommandGroup>
