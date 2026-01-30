@@ -60,3 +60,20 @@ export function filterEmptyValues<T extends Record<string, any>>(
       .map(([k, v]) => [k, toString ? String(v) : v])
   )
 }
+/**
+ * Returns the name or userCode if name is invalid (null, "null", or empty).
+ * @param lastFollowUpBy The follower object or string
+ * @returns {string} The name or userCode
+ */
+export function getTakenByName(lastFollowUpBy: any): string {
+  if (lastFollowUpBy && typeof lastFollowUpBy === "object") {
+    const { name, userCode } = lastFollowUpBy;
+    const isNameInvalid =
+      !name || name.toLowerCase() === "null" || name.trim() === "";
+    
+    if (!isNameInvalid) return name;
+    if (userCode && userCode.trim() !== "" && userCode.toLowerCase() !== "null") return userCode;
+    return "-";
+  }
+  return (lastFollowUpBy && lastFollowUpBy !== "null") ? String(lastFollowUpBy) : "-";
+}

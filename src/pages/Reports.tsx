@@ -23,7 +23,7 @@ import {
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import * as XLSX from "xlsx";
 import { DateRange } from "react-day-picker";
-import { formatDisplayDate } from "@/lib/utils";
+import { formatDisplayDate, getTakenByName } from "@/lib/utils";
 import { Combobox } from "@/components/ui/combobox";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 
@@ -35,6 +35,7 @@ interface FollowUpRecord {
   clientName: string;
   salesExecCode?: string;
   salesExecName?: string;
+  lastFollowUpBy?: string | { name: string; userCode: string; uuid?: string };
   type: string;
   followUpMsg: string;
   nextFollowUpDate: string;
@@ -131,6 +132,7 @@ export default function Reports() {
     const sp = salesPersons.find((s) => s.userCode === code);
     return sp?.name || "";
   };
+
 
   const loadReportData = async (options?: {
     overrideDateRange?: DateRange | null;
@@ -265,6 +267,7 @@ export default function Reports() {
                     item.clientCode,
                   salesExecCode: salesExecCode,
                   salesExecName: getSalesPersonName(salesExecCode),
+                  lastFollowUpBy: fu.lastFollowUpTakenBy || fu.lastFollowUpBy || fu.lastFollowUpByData,
                   type: type,
                   followUpMsg: fu.followUpMsg || fu.lastFollowUpMsg || "",
                   nextFollowUpDate: fu.nextFollowUpDate,
@@ -588,8 +591,11 @@ export default function Reports() {
                         )}
                       </TableCell>
                       <TableCell className="align-center">
-                        <div className="text-sm text-gray-900">
-                          {fu.salesExecName || "-"}
+                        <div
+                          className="text-sm text-gray-900 truncate max-w-[150px]"
+                          title={getTakenByName(fu.lastFollowUpBy)}
+                        >
+                          {getTakenByName(fu.lastFollowUpBy)}
                         </div>
                       </TableCell>
                       <TableCell className="align-center">

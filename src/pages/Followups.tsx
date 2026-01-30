@@ -62,7 +62,7 @@ import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import * as XLSX from "xlsx";
 import { DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
-import { formatDisplayDate } from "@/lib/utils";
+import { formatDisplayDate, getTakenByName } from "@/lib/utils";
 import { DeleteModal } from "@/components/modals/DeleteModal";
 import { RemarkHistoryModal } from "@/components/modals/RemarkHistoryModal";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -85,7 +85,7 @@ interface NewOrderFollowup {
   status: string;
   nextFollowupDate?: string;
   lastFollowUpDate?: string | null;
-  lastFollowUpBy?: string;
+  lastFollowUpBy?: string | { name: string; userCode: string; uuid?: string };
   remark?: string;
   type: "new-order";
   originalData?: any;
@@ -104,7 +104,7 @@ interface PendingOrderFollowup {
   pendingSince: number;
   nextFollowupDate?: string;
   lastFollowUpDate?: string | null;
-  lastFollowUpBy?: string;
+  lastFollowUpBy?: string | { name: string; userCode: string; uuid?: string };
   remark?: string;
   status: string;
   originalData?: any;
@@ -125,7 +125,7 @@ interface PendingMaterialFollowup {
   departmentName: string;
   totalNetWt: string;
   lastFollowUpDate: string | null;
-  lastFollowUpBy?: string;
+  lastFollowUpBy?: string | { name: string; userCode: string; uuid?: string };
   lastFollowUpMsg: string;
   status: string;
   remark?: string;
@@ -484,7 +484,7 @@ export default function Followups() {
         nextFollowupDate:
           item.nextFollowUpDate || item.nextFollowupDate || null,
         lastFollowUpDate: item.lastFollowUpDate || null,
-        lastFollowUpBy: item.salesExecData?.name || "",
+        lastFollowUpBy: item.lastFollowUpBy || null,
         remark: item.remark || "",
         type: "new-order" as const,
         originalData: item,
@@ -524,7 +524,7 @@ export default function Followups() {
         nextFollowupDate:
           item.nextFollowUpDate || item.nextFollowupDate || null,
         lastFollowUpDate: item.lastFollowUpDate || null,
-        lastFollowUpBy: item.salesExecData?.name || "",
+        lastFollowUpBy: item.lastFollowUpBy || null,
         remark: item.remark || "",
         status: (item.status || "pending").toLowerCase(),
 
@@ -568,7 +568,7 @@ export default function Followups() {
         nextFollowupDate:
           item.nextFollowUpDate || item.nextFollowupDate || null,
         lastFollowUpDate: item.lastFollowUpDate || null,
-        lastFollowUpBy: item.salesExecData?.name || "",
+        lastFollowUpBy: item.lastFollowUpBy || null,
         originalData: item,
       };
     });
@@ -799,6 +799,7 @@ export default function Followups() {
     XLSX.writeFile(wb, fileName);
     toast.success(`Exported successfully as ${fileName}`);
   };
+
 
   useEffect(() => {
     loadFollowupData();
@@ -1194,7 +1195,7 @@ export default function Followups() {
           <Table containerClassName="max-h-[calc(100vh-247px)] overflow-auto">
             <TableHeader className="sticky top-0 z-20 bg-gray-50">
               <TableRow className="bg-gray-50">
-                <TableHead className="w-[50px] align-center sticky left-0 z-30 bg-gray-50">
+                <TableHead className="w-[50px] min-w-[50px] max-w-[50px] align-center sticky left-0 z-30 bg-gray-50 border-b border-gray-200 overflow-hidden">
                   <Checkbox
                     checked={
                       paginatedFollowups.length > 0 &&
@@ -1208,10 +1209,10 @@ export default function Followups() {
                 {followupType !== "pending-order" &&
                   followupType !== "pending-material" && (
                     <>
-                      <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 w-[100px]">
+                      <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                         Client Code
                       </TableHead>
-                      <TableHead className="font-medium text-gray-700 sticky left-[150px] z-30 bg-gray-50 w-[180px]">
+                      <TableHead className="font-medium text-gray-700 sticky left-[150px] z-30 bg-gray-50 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
                         Client Name
                       </TableHead>
                     </>
@@ -1220,7 +1221,7 @@ export default function Followups() {
                 {followupType === "new-order" && (
                   <>
                     <TableHead
-                      className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[140px] min-w-[140px] max-w-[140px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("lastOrderDate")}
                     >
                       <div className="flex items-center">
@@ -1229,7 +1230,7 @@ export default function Followups() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[140px] min-w-[140px] max-w-[140px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("noOrderSince")}
                     >
                       <div className="flex items-center">
@@ -1241,14 +1242,14 @@ export default function Followups() {
                 )}
                 {followupType !== "pending-order" &&
                   followupType !== "pending-material" && (
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
                       Sales Executive
                     </TableHead>
                   )}
                 {followupType === "new-order" && (
                   <>
                     <TableHead
-                      className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("lastFollowUpDate")}
                     >
                       <div className="flex items-center">
@@ -1256,11 +1257,11 @@ export default function Followups() {
                         {getSortIcon("lastFollowUpDate")}
                       </div>
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 whitespace-nowrap">
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px] whitespace-nowrap">
                       Taken By
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("nextFollowUpDate")}
                     >
                       <div className="flex items-center">
@@ -1268,37 +1269,37 @@ export default function Followups() {
                         {getSortIcon("nextFollowUpDate")}
                       </div>
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[180px] min-w-[180px] max-w-[180px]">
                       Remark
                     </TableHead>
                   </>
                 )}
                 {followupType === "new-order" && (
                   <>
-                    <TableHead className="font-medium text-gray-700 sticky right-[100px] z-30 bg-gray-50  w-[100px]">
+                    <TableHead className="font-medium text-gray-700 sticky right-[100px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                       Status
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50  w-[100px]">
+                    <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                       Actions
                     </TableHead>
                   </>
                 )}
                 {followupType === "pending-order" && (
                   <>
-                    <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 ">
+                    <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
                       Order No
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky left-[170px] z-30 bg-gray-50 w-[100px]">
+                    <TableHead className="font-medium text-gray-700 sticky left-[170px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                       Client Code
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky left-[270px] z-30 bg-gray-50 w-[180px] ">
+                    <TableHead className="font-medium text-gray-700 sticky left-[270px] z-30 bg-gray-50 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
                       Client Name
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
                       Sales Executive
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("orderDate")}
                     >
                       <div className="flex items-center">
@@ -1307,7 +1308,7 @@ export default function Followups() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("pendingSince")}
                     >
                       <div className="flex items-center">
@@ -1316,7 +1317,7 @@ export default function Followups() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("pendingPcs")}
                     >
                       <div className="flex items-center">
@@ -1325,7 +1326,7 @@ export default function Followups() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors whitespace-nowrap"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px] cursor-pointer hover:bg-gray-100 transition-colors whitespace-nowrap"
                       onClick={() => handleSort("lastFollowUpDate")}
                     >
                       <div className="flex items-center">
@@ -1333,11 +1334,11 @@ export default function Followups() {
                         {getSortIcon("lastFollowUpDate")}
                       </div>
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 whitespace-nowrap">
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px] whitespace-nowrap">
                       Taken By
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("nextFollowUpDate")}
                     >
                       <div className="flex items-center">
@@ -1345,33 +1346,33 @@ export default function Followups() {
                         {getSortIcon("nextFollowUpDate")}
                       </div>
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[200px] min-w-[200px] max-w-[200px]">
                       Remark
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky right-[100px] z-30 bg-gray-50  w-[100px]">
+                    <TableHead className="font-medium text-gray-700 sticky right-[100px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                       Status
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50  w-[100px]">
+                    <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                       Actions
                     </TableHead>
                   </>
                 )}
                 {followupType === "pending-material" && (
                   <>
-                    <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 w-[120px]">
+                    <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
                       Order No
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky left-[170px] z-30 bg-gray-50 w-[100px]">
+                    <TableHead className="font-medium text-gray-700 sticky left-[170px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                       Client Code
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky left-[270px] z-30 bg-gray-50 w-[180px] ">
+                    <TableHead className="font-medium text-gray-700 sticky left-[270px] z-30 bg-gray-50 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
                       Client Name
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
                       Sales Executive
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("orderDate")}
                     >
                       <div className="flex items-center">
@@ -1379,11 +1380,11 @@ export default function Followups() {
                         {getSortIcon("orderDate")}
                       </div>
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
                       Pending Dept
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("pendingSinceDays")}
                     >
                       <div className="flex items-center">
@@ -1392,7 +1393,7 @@ export default function Followups() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("lastFollowUpDate")}
                     >
                       <div className="flex items-center">
@@ -1400,11 +1401,11 @@ export default function Followups() {
                         {getSortIcon("lastFollowUpDate")}
                       </div>
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 whitespace-nowrap">
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px] whitespace-nowrap">
                       Taken By
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("nextFollowupDate")}
                     >
                       <div className="flex items-center">
@@ -1412,23 +1413,23 @@ export default function Followups() {
                         {getSortIcon("nextFollowupDate")}
                       </div>
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[200px] min-w-[200px] max-w-[200px]">
                       Remark
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky right-[100px] z-30 bg-gray-50  w-[100px]">
+                    <TableHead className="font-medium text-gray-700 sticky right-[100px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                       Status
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50  w-[100px]">
+                    <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                       Actions
                     </TableHead>
                   </>
                 )}
                 {followupType === "cad-order" && (
                   <>
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
                       Design No
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700">
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
                       Actions
                     </TableHead>
                   </>
@@ -1471,7 +1472,7 @@ export default function Followups() {
               ) : (
                 paginatedFollowups.map((fu) => (
                   <TableRow key={fu.id} className="hover:bg-gray-50 group">
-                    <TableCell className="align-center sticky left-0 z-10 bg-white group-hover:bg-gray-50">
+                    <TableCell className="align-center sticky left-0 z-10 bg-white group-hover:bg-gray-50 w-[50px] min-w-[50px] max-w-[50px] border-b border-gray-200 overflow-hidden">
                       <Checkbox
                         checked={selectedItems.has(fu.id)}
                         onCheckedChange={() => toggleSelection(fu.id)}
@@ -1480,10 +1481,12 @@ export default function Followups() {
                     {followupType !== "pending-order" &&
                       followupType !== "pending-material" && (
                         <>
-                          <TableCell className="font-medium text-gray-900 align-center sticky left-[50px] z-10 bg-white group-hover:bg-gray-50 w-[100px]">
-                            {fu.userCode}
+                          <TableCell className="font-medium text-gray-900 align-center sticky left-[50px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                            <div className="truncate max-w-[80px]" title={fu.userCode}>
+                              {fu.userCode}
+                            </div>
                           </TableCell>
-                          <TableCell className="align-center sticky left-[150px] z-10 bg-white group-hover:bg-gray-50 w-[180px]">
+                          <TableCell className="align-center sticky left-[150px] z-10 bg-white group-hover:bg-gray-50 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
                                 {fu.name?.charAt(0) ||
@@ -1491,7 +1494,7 @@ export default function Followups() {
                                   "C"}
                               </div>
                               <div
-                                className="font-medium text-gray-900 max-w-[150px] truncate"
+                                className="font-medium text-gray-900 max-w-[124px] truncate"
                                 title={fu.name || "N/A"}
                               >
                                 {fu.name || "N/A"}
@@ -1503,13 +1506,13 @@ export default function Followups() {
 
                     {fu.type === "new-order" && (
                       <>
-                        <TableCell className="align-center">
-                          <div className="text-sm text-gray-900">
+                        <TableCell className="align-center border-b border-gray-200 w-[140px] min-w-[140px] max-w-[140px]">
+                          <div className="text-sm text-gray-900 truncate">
                             {formatDisplayDate(fu.lastOrderDate)}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
-                          <div className="text-sm text-gray-900">
+                        <TableCell className="align-center border-b border-gray-200 w-[140px] min-w-[140px] max-w-[140px]">
+                          <div className="text-sm text-gray-900 truncate">
                             {fu.noOrderSince} Days
                           </div>
                         </TableCell>
@@ -1518,9 +1521,9 @@ export default function Followups() {
 
                     {followupType !== "pending-order" &&
                       followupType !== "pending-material" && (
-                        <TableCell className="align-center">
+                        <TableCell className="align-center border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
                           {fu.salesExecutive ? (
-                            <div className="text-sm text-gray-900">
+                            <div className="text-sm text-gray-900 truncate" title={fu.salesExecutive}>
                               {fu.salesExecutive}
                             </div>
                           ) : (
@@ -1531,27 +1534,28 @@ export default function Followups() {
 
                     {fu.type === "new-order" && (
                       <>
-                        <TableCell className="align-center">
-                          <div className="text-sm text-gray-900">
+                        <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
+                          <div className="text-sm text-gray-900 truncate">
                             {formatDisplayDate(fu.lastFollowUpDate)}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
                           <div
-                            className="text-sm text-gray-900 truncate max-w-[100px]"
-                            title={fu.lastFollowUpBy || ""}
+                            className="text-sm text-gray-900 truncate"
+                            title={getTakenByName(fu.lastFollowUpBy)}
                           >
-                            {fu.lastFollowUpBy || "-"}
+                            {getTakenByName(fu.lastFollowUpBy)}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
-                          <div className="text-sm text-gray-900">
+
+                        <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
+                          <div className="text-sm text-gray-900 truncate">
                             {formatDisplayDate(fu.nextFollowupDate)}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center border-b border-gray-200 w-[180px] min-w-[180px] max-w-[180px]">
                           <div
-                            className="text-sm text-gray-900 max-w-[200px] truncate cursor-pointer hover:text-primary hover:underline transition-colors"
+                            className="text-sm text-gray-900 truncate cursor-pointer hover:text-primary hover:underline transition-colors"
                             title={
                               fu.remark ? "Click to view remark history" : ""
                             }
@@ -1570,7 +1574,7 @@ export default function Followups() {
 
                     {fu.type === "new-order" && (
                       <>
-                        <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px]">
+                        <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <Badge
                             variant="outline"
                             className={
@@ -1582,17 +1586,8 @@ export default function Followups() {
                             {fu.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px]">
+                        <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <div className="flex items-center">
-                            {/* <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                              title="View Details"
-                              disabled={selectedItems.size > 0}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button> */}
                             {isAdmin && (
                               <>
                                 <Button
@@ -1623,18 +1618,20 @@ export default function Followups() {
                     )}
                     {fu.type === "pending-order" && (
                       <>
-                        <TableCell className="align-center sticky left-[50px] z-10 bg-white group-hover:bg-gray-50 w-[120px]">
+                        <TableCell className="align-center sticky left-[50px] z-10 bg-white group-hover:bg-gray-50 w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
                           <div
-                            className="text-sm font-medium text-gray-900 max-w-[100px] truncate"
+                            className="text-sm font-medium text-gray-900 truncate"
                             title={fu.orderNo}
                           >
                             {fu.orderNo}
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium text-gray-900 align-center sticky left-[170px] z-10 bg-white group-hover:bg-gray-50 w-[100px]">
-                          {fu.userCode}
+                        <TableCell className="font-medium text-gray-900 align-center sticky left-[170px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                          <div className="truncate max-w-[80px]" title={fu.userCode}>
+                            {fu.userCode}
+                          </div>
                         </TableCell>
-                        <TableCell className="align-center sticky left-[270px] z-10 bg-white group-hover:bg-gray-50 w-[180px] ">
+                        <TableCell className="align-center sticky left-[270px] z-10 bg-white group-hover:bg-gray-50 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
                               {fu.name?.charAt(0) ||
@@ -1642,58 +1639,59 @@ export default function Followups() {
                                 "C"}
                             </div>
                             <div
-                              className="font-medium text-gray-900 max-w-[150px] truncate"
+                              className="font-medium text-gray-900 max-w-[124px] truncate"
                               title={fu.name || "N/A"}
                             >
                               {fu.name || "N/A"}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
                           {fu.salesExecutive ? (
-                            <div className="text-sm text-gray-900">
+                            <div className="text-sm text-gray-900 truncate" title={fu.salesExecutive}>
                               {fu.salesExecutive}
                             </div>
                           ) : (
                             <span className="text-gray-400">-</span>
                           )}
                         </TableCell>
-                        <TableCell className="align-center">
-                          <div className="text-sm text-gray-900">
+                        <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
+                          <div className="text-sm text-gray-900 truncate">
                             {formatDisplayDate(fu.orderDate)}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
-                          <div className="text-sm text-gray-900 max-w-[200px] truncate">
+                        <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
+                          <div className="text-sm text-gray-900 truncate">
                             {fu.pendingSince} Days
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
-                          <div className="text-sm text-gray-900">
+                        <TableCell className="align-center border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
+                          <div className="text-sm text-gray-900 truncate">
                             {fu.pendingPcs}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
-                          <div className="text-sm text-gray-900">
+                        <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
+                          <div className="text-sm text-gray-900 truncate">
                             {formatDisplayDate(fu.lastFollowUpDate)}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
                           <div
-                            className="text-sm text-gray-900 truncate max-w-[100px]"
-                            title={fu.lastFollowUpBy || ""}
+                            className="text-sm text-gray-900 truncate"
+                            title={getTakenByName(fu.lastFollowUpBy)}
                           >
-                            {fu.lastFollowUpBy || "-"}
+                            {getTakenByName(fu.lastFollowUpBy)}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
-                          <div className="text-sm text-gray-900">
+
+                        <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
+                          <div className="text-sm text-gray-900 truncate">
                             {formatDisplayDate(fu.nextFollowupDate)}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center border-b border-gray-200 w-[200px] min-w-[200px] max-w-[200px]">
                           <div
-                            className="text-sm text-gray-900 max-w-[200px] truncate cursor-pointer hover:text-primary hover:underline transition-colors"
+                            className="text-sm text-gray-900 truncate cursor-pointer hover:text-primary hover:underline transition-colors"
                             title={
                               fu.remark ? "Click to view remark history" : ""
                             }
@@ -1707,7 +1705,7 @@ export default function Followups() {
                             {fu.remark || "-"}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px]">
+                        <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <Badge
                             variant="outline"
                             className={
@@ -1719,17 +1717,8 @@ export default function Followups() {
                             {fu.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px]">
+                        <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <div className="flex items-center">
-                            {/* <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
-                              title="View Details"
-                              disabled={selectedItems.size > 0}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button> */}
                             <Button
                               variant="ghost"
                               size="icon"
@@ -1756,18 +1745,20 @@ export default function Followups() {
                     )}
                     {fu.type === "pending-material" && (
                       <>
-                        <TableCell className="align-center sticky left-[50px] z-10 bg-white group-hover:bg-gray-50 w-[120px]">
+                        <TableCell className="align-center sticky left-[50px] z-10 bg-white group-hover:bg-gray-50 w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
                           <div
-                            className="text-sm text-gray-900 max-w-[100px] truncate"
+                            className="text-sm text-gray-900 truncate"
                             title={fu.orderNo}
                           >
                             {fu.orderNo}
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium text-gray-900 align-center sticky left-[170px] z-10 bg-white group-hover:bg-gray-50 w-[100px]">
-                          {fu.userCode}
+                        <TableCell className="font-medium text-gray-900 align-center sticky left-[170px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                          <div className="truncate max-w-[80px]" title={fu.userCode}>
+                            {fu.userCode}
+                          </div>
                         </TableCell>
-                        <TableCell className="align-center sticky left-[270px] z-10 bg-white group-hover:bg-gray-50 w-[180px] ">
+                        <TableCell className="align-center sticky left-[270px] z-10 bg-white group-hover:bg-gray-50 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
                               {fu.name?.charAt(0) ||
@@ -1775,64 +1766,65 @@ export default function Followups() {
                                 "C"}
                             </div>
                             <div
-                              className="font-medium text-gray-900 max-w-[150px] truncate"
+                              className="font-medium text-gray-900 max-w-[124px] truncate"
                               title={fu.name || "N/A"}
                             >
                               {fu.name || "N/A"}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
                           {fu.salesExecutive ? (
-                            <div className="text-sm text-gray-900">
+                            <div className="text-sm text-gray-900 truncate" title={fu.salesExecutive}>
                               {fu.salesExecutive}
                             </div>
                           ) : (
                             <span className="text-gray-400">-</span>
                           )}
                         </TableCell>
-                        <TableCell className="align-center">
-                          <div className="text-sm text-gray-900">
+                        <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
+                          <div className="text-sm text-gray-900 truncate">
                             {formatDisplayDate(fu.orderDate)}
                           </div>
                         </TableCell>
 
-                        <TableCell className="align-center">
+                        <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
                           <div
-                            className="text-sm text-gray-900 max-w-[150px] truncate"
+                            className="text-sm text-gray-900 truncate"
                             title={fu.departmentName}
                           >
                             {fu.departmentName}
                           </div>
                         </TableCell>
 
-                        <TableCell className="align-center">
-                          <div className="text-sm text-gray-900">
+                        <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
+                          <div className="text-sm text-gray-900 truncate">
                             {fu.pendingSinceDays}
                           </div>
                         </TableCell>
 
-                        <TableCell className="align-center">
-                          <div className="text-sm text-gray-900">
+                        <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
+                          <div className="text-sm text-gray-900 truncate">
                             {formatDisplayDate(fu.lastFollowUpDate)}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
                           <div
-                            className="text-sm text-gray-900 truncate max-w-[100px]"
-                            title={fu.lastFollowUpBy || ""}
+                            className="text-sm text-gray-900 truncate"
+                            title={getTakenByName(fu.lastFollowUpBy)}
                           >
-                            {fu.lastFollowUpBy || "-"}
+                            {getTakenByName(fu.lastFollowUpBy)}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
-                          <div className="text-sm text-gray-900">
+
+                        <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
+                          <div className="text-sm text-gray-900 truncate">
                             {formatDisplayDate(fu.nextFollowupDate)}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center border-b border-gray-200 w-[200px] min-w-[200px] max-w-[200px]">
                           <div
-                            className="text-sm text-gray-900 max-w-[200px] truncate cursor-pointer hover:text-primary hover:underline transition-colors"
+                            className="text-sm text-gray-900 truncate cursor-pointer hover:text-primary hover:underline transition-colors"
                             title={
                               fu.remark ? "Click to view remark history" : ""
                             }
@@ -1846,7 +1838,7 @@ export default function Followups() {
                             {fu.remark || "-"}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px]">
+                        <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <Badge
                             variant="outline"
                             className={
@@ -1858,17 +1850,8 @@ export default function Followups() {
                             {fu.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px]">
+                        <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <div className="flex items-center">
-                            {/* <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
-                              title="View Details"
-                              disabled={selectedItems.size > 0}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button> */}
                             <Button
                               variant="ghost"
                               size="icon"
@@ -1882,7 +1865,7 @@ export default function Followups() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:text-red-400 disabled:bg-red-50/50 disabled:opacity-50"
+                              className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
                               title="Delete"
                               onClick={() => handleOpenDelete(fu)}
                               disabled={selectedItems.size > 0}
@@ -1895,17 +1878,27 @@ export default function Followups() {
                     )}
                     {fu.type === "cad-order" && (
                       <>
-                        <TableCell className="align-center">
-                          <div className="text-sm font-medium text-gray-900">
+                        <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
+                          <div className="text-sm text-gray-900 truncate" title={fu.designNo}>
                             {fu.designNo}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center">
+                        <TableCell className="align-center border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
                           <div className="flex items-center">
+                             <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                              title="Edit"
+                              onClick={() => handleEditClick(fu)}
+                              disabled={selectedItems.size > 0}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:text-red-400 disabled:bg-red-50/50 disabled:opacity-50"
+                              className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
                               title="Delete"
                               onClick={() => handleOpenDelete(fu)}
                               disabled={selectedItems.size > 0}
