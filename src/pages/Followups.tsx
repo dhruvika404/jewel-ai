@@ -398,7 +398,7 @@ export default function Followups() {
     "cad-order",
   ];
   if (!validTypes.includes(followupType)) {
-    return <Navigate to="/admin/followups/new-order" replace />;
+    return <Navigate to="/followups/new-order" replace />;
   }
 
   useEffect(() => {
