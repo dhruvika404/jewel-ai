@@ -682,7 +682,7 @@ export default function Followups() {
     setStatusFilter("all");
     setSortBy(null);
     setSortOrder(null);
-    navigate(`/${isAdmin ? "admin" : "sales"}/followups/${followupType}`, {
+    navigate(`/followups/${followupType}`, {
       replace: true,
     });
     loadFollowupData({ overrideDateRange: null, skipAllFilters: true });
