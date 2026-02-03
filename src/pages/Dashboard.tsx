@@ -24,6 +24,7 @@ interface StatCardProps {
   icon: any;
   color: "blue" | "emerald" | "orange" | "purple" | "red";
   loading: boolean;
+  onClick?: () => void;
 }
 
 export default function Dashboard() {
@@ -110,6 +111,12 @@ export default function Dashboard() {
     navigate(`/followups/${endpoint}${params}`);
   };
 
+  const handleTodayTakenFollowUpsClick = () => {
+    const today = format(new Date(), "yyyy-MM-dd");
+    const params = `?page=1&todayTakenFollowUp=true&size=10&startDate=${today}&endDate=${today}`;
+    navigate(`/clients${params}`);
+  };
+
   return (
     <div className="p-6 space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -126,6 +133,7 @@ export default function Dashboard() {
           icon={CheckCircle}
           color="emerald"
           loading={loading}
+          onClick={handleTodayTakenFollowUpsClick}
         />
         <StatCard
           label="Pending Follow-ups (Last 7 Days)"
@@ -183,7 +191,7 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ label, value, icon: Icon, color, loading }: StatCardProps) {
+function StatCard({ label, value, icon: Icon, color, loading, onClick }: StatCardProps) {
   const colors: any = {
     blue: "bg-blue-100 text-blue-600",
     emerald: "bg-emerald-100 text-emerald-600",
@@ -193,7 +201,12 @@ function StatCard({ label, value, icon: Icon, color, loading }: StatCardProps) {
   };
 
   return (
-    <Card className="p-4 shadow-sm border-none ring-1 ring-black/[0.05] bg-white">
+    <Card 
+      className={`p-4 shadow-sm border-none ring-1 ring-black/[0.05] bg-white ${
+        onClick ? "cursor-pointer hover:shadow-md transition-shadow" : ""
+      }`}
+      onClick={onClick}
+    >
       <div className="flex items-center gap-3">
         <div
           className={`w-10 h-10 rounded-full flex items-center justify-center ${colors[color]}`}

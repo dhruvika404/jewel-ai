@@ -19,7 +19,7 @@ import {
 import TablePagination from "@/components/ui/table-pagination";
 import { Upload, Loader2, Eye, Plus, Pencil, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { clientAPI, salesPersonAPI, sharedAPI } from "@/services/api";
 import { ClientModal } from "@/components/modals/ClientModal";
@@ -93,6 +93,7 @@ export default function Clients() {
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const isAdmin = user?.role !== "sales_executive";
+  const [searchParams] = useSearchParams();
 
   const toggleSelection = (id: string) => {
     const newSelected = new Set(selectedItems);
@@ -264,6 +265,20 @@ export default function Clients() {
         params.salesExecCode = user.userCode;
       } else if (selectedSalesPerson && selectedSalesPerson !== "all") {
         params.salesExecCode = selectedSalesPerson;
+      }
+
+      const todayTakenFollowUp = searchParams.get("todayTakenFollowUp");
+      if (todayTakenFollowUp === "true") {
+        params.todayTakenFollowUp = true;
+      }
+
+      const urlStartDate = searchParams.get("startDate");
+      const urlEndDate = searchParams.get("endDate");
+      if (urlStartDate) {
+        params.startDate = urlStartDate;
+      }
+      if (urlEndDate) {
+        params.endDate = urlEndDate;
       }
 
       const response = await clientAPI.getAll(params);
