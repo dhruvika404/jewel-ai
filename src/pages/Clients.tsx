@@ -19,7 +19,7 @@ import {
 import TablePagination from "@/components/ui/table-pagination";
 import { Upload, Loader2, Eye, Plus, Pencil, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { clientAPI, salesPersonAPI, sharedAPI } from "@/services/api";
 import { ClientModal } from "@/components/modals/ClientModal";
@@ -94,6 +94,7 @@ export default function Clients() {
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const isAdmin = user?.role !== "sales_executive";
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const toggleSelection = (id: string) => {
     const newSelected = new Set(selectedItems);
@@ -145,6 +146,22 @@ export default function Clients() {
     }
   };
 
+  const getActiveFilterCount = () => {
+    let count = 0;
+    if (selectedSalesPerson && selectedSalesPerson !== "all") count++;
+    if (searchQuery) count++;
+    if (dateRange.startDate || dateRange.endDate) count++;
+    if (searchParams.get("startDate") || searchParams.get("todayTakenFollowUp"))
+      count++;
+    return count;
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedSalesPerson("all");
+    navigate("/clients");
+  };
+
   // Set header
   useEffect(() => {
     setHeader({
@@ -158,24 +175,6 @@ export default function Clients() {
         <>
           {isAdmin && (
             <>
-              <Combobox
-                options={[
-                  { value: "all", label: "Select Sales Person" },
-                  ...salesPersons.map((sp) => ({
-                    value: sp.userCode,
-                    label: sp.name
-                      ? `${sp.name} (${sp.userCode})`
-                      : sp.userCode,
-                  })),
-                ]}
-                value={selectedSalesPerson}
-                onSelect={setSelectedSalesPerson}
-                onSearchChange={setSpSearchQuery}
-                loading={isSpLoading}
-                placeholder="Select Sales Person"
-                searchPlaceholder="Search salesperson..."
-                width="w-[180px]"
-              />
               <Button
                 variant="outline"
                 onClick={() => setShowUploadDialog(true)}
@@ -184,23 +183,13 @@ export default function Clients() {
                 <Upload className="w-4 h-4" />
                 Import
               </Button>
-              {selectedItems.size > 0 ? (
-                <Button
-                  variant="destructive"
-                  onClick={() => setShowBulkDeleteConfirm(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Trash2 className="w-4 h-4" />({selectedItems.size})
-                </Button>
-              ) : (
-                <Button
-                  onClick={() => setShowAddModal(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Client
-                </Button>
-              )}
+              <Button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Client
+              </Button>
             </>
           )}
         </>
@@ -308,7 +297,14 @@ export default function Clients() {
       loadData();
     }, 500);
     return () => clearTimeout(timer);
-  }, [currentPage, pageSize, searchQuery, dateRange, selectedSalesPerson]);
+  }, [
+    currentPage,
+    pageSize,
+    searchQuery,
+    dateRange,
+    selectedSalesPerson,
+    searchParams,
+  ]);
 
   useEffect(() => {}, [searchQuery, selectedSalesPerson]);
 
@@ -414,12 +410,12 @@ export default function Clients() {
           </Tooltip>
         </TooltipProvider>
         <div className="flex items-center gap-3 text-[11px] text-gray-500">
-            <span className="whitespace-nowrap">
-              Last Follow up: {formatDisplayDate(data.lastFollowUpDate)}
-            </span>
-            <span className="whitespace-nowrap font-medium text-blue-600">
-              Next Follow up: {formatDisplayDate(data.nextFollowUpDate)}
-            </span>
+          <span className="whitespace-nowrap">
+            Last Follow up: {formatDisplayDate(data.lastFollowUpDate)}
+          </span>
+          <span className="whitespace-nowrap font-medium text-blue-600">
+            Next Follow up: {formatDisplayDate(data.nextFollowUpDate)}
+          </span>
         </div>
       </div>
     );
@@ -428,6 +424,53 @@ export default function Clients() {
   return (
     <div className="bg-gray-50">
       <div className="p-6 space-y-6">
+        <div className="flex items-center gap-3 overflow-x-auto p-1">
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              <Combobox
+                options={[
+                  { value: "all", label: "Select Sales Person" },
+                  ...salesPersons.map((sp) => ({
+                    value: sp.userCode,
+                    label: sp.name
+                      ? `${sp.name} (${sp.userCode})`
+                      : sp.userCode,
+                  })),
+                ]}
+                value={selectedSalesPerson}
+                onSelect={setSelectedSalesPerson}
+                onSearchChange={setSpSearchQuery}
+                loading={isSpLoading}
+                placeholder="Select Sales Person"
+                searchPlaceholder="Search salesperson..."
+                width="w-[200px]"
+                className="h-9 bg-white"
+              />
+            </div>
+          )}
+
+          {selectedItems.size > 0 && isAdmin && (
+            <Button
+              variant="destructive"
+              onClick={() => setShowBulkDeleteConfirm(true)}
+              className="flex items-center gap-2 h-9"
+            >
+              <Trash2 className="w-4 h-4" />({selectedItems.size})
+            </Button>
+          )}
+
+          {getActiveFilterCount() > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearFilters}
+              className="h-9 border-gray-300 text-gray-700 hover:bg-gray-100"
+            >
+              Clear All
+            </Button>
+          )}
+        </div>
+
         <Card className="overflow-hidden">
           <div className="p-4 border-b bg-white flex flex-wrap items-center gap-6 text-sm">
             <div className="flex items-center gap-2">
@@ -447,7 +490,7 @@ export default function Clients() {
               <span className="text-gray-600">5+ Days Overdue</span>
             </div>
           </div>
-          <Table containerClassName="max-h-[calc(100vh-236px)] overflow-auto">
+          <Table containerClassName="max-h-[calc(100vh-304px)] overflow-auto">
             <TableHeader className="sticky top-0 z-20 bg-gray-50">
               <TableRow className="bg-gray-50">
                 <TableHead className="w-[50px] align-center">
