@@ -965,12 +965,12 @@ export default function Followups() {
 
   const getSortIcon = (column: string) => {
     if (sortBy !== column) {
-      return <ArrowUpDown className="w-4 h-4 ml-1 inline" />;
+      return <ArrowUpDown className="w-4 h-4 ml-1 inline shrink-0" />;
     }
     return sortOrder === "ASC" ? (
-      <ArrowUp className="w-4 h-4 ml-1 inline" />
+      <ArrowUp className="w-4 h-4 ml-1 inline shrink-0" />
     ) : (
-      <ArrowDown className="w-4 h-4 ml-1 inline" />
+      <ArrowDown className="w-4 h-4 ml-1 inline shrink-0" />
     );
   };
 
@@ -1192,7 +1192,7 @@ export default function Followups() {
         />
 
         <Card className="overflow-hidden">
-          <Table containerClassName="max-h-[calc(100vh-247px)] overflow-auto">
+          <Table containerClassName="max-h-[calc(100vh-251px)] overflow-auto">
             <TableHeader className="sticky top-0 z-20 bg-gray-50">
               <TableRow className="bg-gray-50">
                 <TableHead className="w-[50px] min-w-[50px] max-w-[50px] align-center sticky left-0 z-30 bg-gray-50 border-b border-gray-200 overflow-hidden">
@@ -1308,7 +1308,7 @@ export default function Followups() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px] cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("pendingSince")}
                     >
                       <div className="flex items-center">
@@ -1317,7 +1317,7 @@ export default function Followups() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px] cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("pendingPcs")}
                     >
                       <div className="flex items-center">
@@ -1384,7 +1384,7 @@ export default function Followups() {
                       Pending Dept
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px] cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("pendingSinceDays")}
                     >
                       <div className="flex items-center">

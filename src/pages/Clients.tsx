@@ -354,10 +354,14 @@ export default function Clients() {
   const totalPages = Math.ceil(totalItems / pageSize);
 
   const FollowUpCell = ({ data }: { data?: FollowUpSummary }) => {
-    if (!data || data.status === "completed")
+    const isTodayTaken = searchParams.get("todayTakenFollowUp") === "true";
+    if (!data || (data.status === "completed" && !isTodayTaken))
       return <span className="text-gray-400 text-xs">-</span>;
 
     const getFollowUpColor = () => {
+      if (data.status === "completed")
+        return "bg-green-50 border-l-4 border-green-500";
+
       if (!data.nextFollowUpDate)
         return "bg-purple-50 border-l-4 border-purple-300";
 
