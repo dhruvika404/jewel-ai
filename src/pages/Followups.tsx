@@ -1261,7 +1261,7 @@ export default function Followups() {
                       Taken By
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px] cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[140px] min-w-[140px] max-w-[140px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("nextFollowUpDate")}
                     >
                       <div className="flex items-center">
