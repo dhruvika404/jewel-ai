@@ -1429,7 +1429,7 @@ export default function Followups() {
                     <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
                       Design No
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
                       Actions
                     </TableHead>
                   </>
@@ -1588,8 +1588,6 @@ export default function Followups() {
                         </TableCell>
                         <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <div className="flex items-center">
-                            {isAdmin && (
-                              <>
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -1600,18 +1598,18 @@ export default function Followups() {
                                 >
                                   <Pencil className="h-4 w-4" />
                                 </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors"
-                                  title="Delete"
-                                  onClick={() => handleOpenDelete(fu)}
-                                  disabled={selectedItems.size > 0}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
+                                {isAdmin && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors"
+                                    title="Delete"
+                                    onClick={() => handleOpenDelete(fu)}
+                                    disabled={selectedItems.size > 0}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
                           </div>
                         </TableCell>
                       </>
@@ -1729,16 +1727,18 @@ export default function Followups() {
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
-                              title="Delete"
-                              onClick={() => handleOpenDelete(fu)}
-                              disabled={selectedItems.size > 0}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {isAdmin && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                                title="Delete"
+                                onClick={() => handleOpenDelete(fu)}
+                                disabled={selectedItems.size > 0}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </>
@@ -1862,16 +1862,18 @@ export default function Followups() {
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
-                              title="Delete"
-                              onClick={() => handleOpenDelete(fu)}
-                              disabled={selectedItems.size > 0}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {isAdmin && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                                title="Delete"
+                                onClick={() => handleOpenDelete(fu)}
+                                disabled={selectedItems.size > 0}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </>
@@ -1883,7 +1885,7 @@ export default function Followups() {
                             {fu.designNo}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
+                        <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
                           <div className="flex items-center">
                              <Button
                               variant="ghost"
@@ -1895,16 +1897,18 @@ export default function Followups() {
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
-                              title="Delete"
-                              onClick={() => handleOpenDelete(fu)}
-                              disabled={selectedItems.size > 0}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {isAdmin && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                                title="Delete"
+                                onClick={() => handleOpenDelete(fu)}
+                                disabled={selectedItems.size > 0}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </>

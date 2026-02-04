@@ -474,7 +474,6 @@ export default function ClientDetails() {
                     key={idx}
                     className="bg-gray-50 rounded border border-gray-200 p-3 relative group"
                   >
-                    {isAdmin && (
                       <div className="absolute top-3 right-3 flex items-center transition-opacity">
                         <Button
                           variant="ghost"
@@ -496,17 +495,18 @@ export default function ClientDetails() {
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 hover:text-red-600 hover:bg-red-50"
-                          onClick={() => handleOpenDelete(item, type)}
-                          title="Delete"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 hover:text-red-600 hover:bg-red-50"
+                            onClick={() => handleOpenDelete(item, type)}
+                            title="Delete"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                       </div>
-                    )}
                     <div className="flex justify-between items-start mb-3 pr-14">
                       <div className="flex min-w-0 items-center gap-2 ">
                         <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">

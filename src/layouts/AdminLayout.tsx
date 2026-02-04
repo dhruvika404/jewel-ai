@@ -99,7 +99,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <h1 className="text-sm font-semibold text-foreground">
                   Jewel AI
                 </h1>
-                <p className="text-xs text-muted-foreground">{user?.email}</p>
+                <p className="text-xs text-muted-foreground">
+                  {user?.email || user?.name || user?.userCode}
+                </p>
               </div>
             </Link>
           </div>
