@@ -295,6 +295,8 @@ export default function Reports() {
     setSalesPersonFilter("all");
     setClientFilter("all");
     setSearchTerm("");
+    setSpSearchQuery("");
+    setClientSearchQuery("");
     setDateRange(undefined);
     loadReportData({ overrideDateRange: null, skipAllFilters: true });
   }, [reportType]);
@@ -360,6 +362,7 @@ export default function Reports() {
             value={salesPersonFilter}
             onSelect={setSalesPersonFilter}
             onSearchChange={setSpSearchQuery}
+            searchValue={spSearchQuery}
             loading={isSpLoading}
             placeholder="Sales Person"
             searchPlaceholder="Search salesperson..."
@@ -378,6 +381,7 @@ export default function Reports() {
             value={clientFilter}
             onSelect={setClientFilter}
             onSearchChange={setClientSearchQuery}
+            searchValue={clientSearchQuery}
             loading={isClientLoading}
             placeholder="Client"
             searchPlaceholder="Search client..."

@@ -712,6 +712,8 @@ export default function Followups() {
     setStatusFilter("all");
     setSortBy(null);
     setSortOrder(null);
+    setSpSearchQuery("");
+    setClientSearchQuery("");
     navigate(`/followups/${followupType}`, {
       replace: true,
     });
@@ -1090,6 +1092,7 @@ export default function Followups() {
               value={salesPersonFilter}
               onSelect={setSalesPersonFilter}
               onSearchChange={setSpSearchQuery}
+              searchValue={spSearchQuery}
               loading={isSpLoading}
               placeholder="Sales Person"
               searchPlaceholder="Search salesperson..."
@@ -1110,6 +1113,7 @@ export default function Followups() {
             value={clientFilter}
             onSelect={setClientFilter}
             onSearchChange={setClientSearchQuery}
+            searchValue={clientSearchQuery}
             loading={isClientLoading}
             placeholder="Client"
             searchPlaceholder="Search client..."

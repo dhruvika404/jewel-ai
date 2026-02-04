@@ -159,6 +159,7 @@ export default function Clients() {
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedSalesPerson("all");
+    setSpSearchQuery("");
     navigate("/clients");
   };
 
@@ -444,6 +445,7 @@ export default function Clients() {
                 value={selectedSalesPerson}
                 onSelect={setSelectedSalesPerson}
                 onSearchChange={setSpSearchQuery}
+                searchValue={spSearchQuery}
                 loading={isSpLoading}
                 placeholder="Select Sales Person"
                 searchPlaceholder="Search salesperson..."

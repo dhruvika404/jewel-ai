@@ -39,6 +39,7 @@ interface ComboboxProps {
   onEndReached?: () => void;
   loading?: boolean;
   onSearchChange?: (value: string) => void;
+  searchValue?: string;
 }
 
 export function Combobox({
@@ -56,6 +57,7 @@ export function Combobox({
   onEndReached,
   loading,
   onSearchChange,
+  searchValue,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const observerTarget = React.useRef(null);
@@ -119,6 +121,7 @@ export function Combobox({
               <CommandInput
                 placeholder={searchPlaceholder}
                 onValueChange={onSearchChange}
+                value={searchValue}
               />
               <CommandList>
                 <CommandEmpty>{emptyText}</CommandEmpty>
