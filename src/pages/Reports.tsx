@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -58,12 +60,16 @@ interface Client {
 }
 
 export default function Reports() {
+  const { user } = useAuth();
+  const isAdmin = user?.role !== "sales_executive";
   const { setHeader } = usePageHeader();
   const [reportType, setReportType] = useState<ReportType>("todays-taken");
+  const [appliedDateRange, setAppliedDateRange] = useState<DateRange | undefined>(undefined);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [salesPersonFilter, setSalesPersonFilter] = useState("all");
   const [clientFilter, setClientFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [loading, setLoading] = useState(false);
   const [followUps, setFollowUps] = useState<FollowUpRecord[]>([]);
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
@@ -75,9 +81,36 @@ export default function Reports() {
   const [clientSearchQuery, setClientSearchQuery] = useState("");
   const [isClientLoading, setIsClientLoading] = useState(false);
 
+  const clearFilters = () => {
+    setSearchTerm("");
+    setDateRange(undefined);
+    setAppliedDateRange(undefined);
+    setSalesPersonFilter("all");
+    setClientFilter("all");
+    setSpSearchQuery("");
+    setClientSearchQuery("");
+  };
+
+  const isFiltering =
+    searchTerm !== "" ||
+    appliedDateRange !== undefined ||
+    salesPersonFilter !== "all" ||
+    clientFilter !== "all";
+
+  const handleDateOpenChange = (open: boolean) => {
+    if (!open) {
+      if (!dateRange) {
+        setAppliedDateRange(undefined);
+      } else if (dateRange.from && dateRange.to) {
+        setAppliedDateRange(dateRange);
+      }
+    }
+  };
+
   useEffect(() => {
     const loadSalesPersons = async (search?: string) => {
       try {
+        if (!isAdmin) return;
         setIsSpLoading(true);
         const spRes = await salesPersonAPI.getAll({
           page: 1,
@@ -141,7 +174,7 @@ export default function Reports() {
     const activeDateRange =
       options?.overrideDateRange !== undefined
         ? options.overrideDateRange
-        : dateRange;
+        : appliedDateRange;
     const skipAllFilters = options?.skipAllFilters || false;
     setLoading(true);
     try {
@@ -297,15 +330,17 @@ export default function Reports() {
     setSearchTerm("");
     setSpSearchQuery("");
     setClientSearchQuery("");
+    setClientSearchQuery("");
     setDateRange(undefined);
+    setAppliedDateRange(undefined);
     loadReportData({ overrideDateRange: null, skipAllFilters: true });
   }, [reportType]);
 
   useEffect(() => {
-    if (clients.length > 0 && salesPersons.length > 0 && followUps.length > 0) {
+    if (clients.length > 0 && salesPersons.length > 0) {
       loadReportData();
     }
-  }, [clients, salesPersons]);
+  }, [clients, salesPersons, appliedDateRange]);
 
   const filteredFollowUps = followUps.filter((fu) => {
     if (salesPersonFilter !== "all" && fu.salesExecCode !== salesPersonFilter) {
@@ -316,8 +351,8 @@ export default function Reports() {
       return false;
     }
 
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
+    if (debouncedSearchTerm) {
+      const searchLower = debouncedSearchTerm.toLowerCase();
       return (
         fu.clientCode.toLowerCase().includes(searchLower) ||
         fu.clientName.toLowerCase().includes(searchLower) ||
@@ -338,7 +373,7 @@ export default function Reports() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [salesPersonFilter, clientFilter, reportType, searchTerm]);
+  }, [salesPersonFilter, clientFilter, reportType, debouncedSearchTerm]);
 
   useEffect(() => {
     setHeader({
@@ -350,63 +385,21 @@ export default function Reports() {
       },
       children: (
         <div className="flex items-center gap-2">
-          <DatePickerWithRange date={dateRange} setDate={setDateRange} />
-          <Combobox
-            options={[
-              { value: "all", label: "Select Sales Person" },
-              ...salesPersons.map((sp) => ({
-                value: sp.userCode,
-                label: sp.name ? `${sp.name} (${sp.userCode})` : sp.userCode,
-              })),
-            ]}
-            value={salesPersonFilter}
-            onSelect={setSalesPersonFilter}
-            onSearchChange={setSpSearchQuery}
-            searchValue={spSearchQuery}
-            loading={isSpLoading}
-            placeholder="Sales Person"
-            searchPlaceholder="Search salesperson..."
-            width="w-[180px]"
-          />
-          <Combobox
-            options={[
-              { value: "all", label: "Select Client" },
-              ...clients.map((client) => ({
-                value: client.userCode,
-                label: client.userCode
-                  ? `${client.userCode} (${client.name})`
-                  : client.userCode,
-              })),
-            ]}
-            value={clientFilter}
-            onSelect={setClientFilter}
-            onSearchChange={setClientSearchQuery}
-            searchValue={clientSearchQuery}
-            loading={isClientLoading}
-            placeholder="Client"
-            searchPlaceholder="Search client..."
-            width="w-[180px]"
-          />
-          <Button
-            variant="outline"
-            onClick={handleExport}
-            className="flex items-center gap-2"
-          >
-            <Download className="w-4 h-4" />
-            Export
-          </Button>
+          {isAdmin && (
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              className="flex items-center gap-2 h-9"
+              disabled={filteredFollowUps.length === 0}
+            >
+              <Download className="w-4 h-4" />
+              Export
+            </Button>
+          )}
         </div>
       ),
     });
-  }, [
-    filteredFollowUps.length,
-    searchTerm,
-    dateRange,
-    salesPersonFilter,
-    clientFilter,
-    salesPersons,
-    clients,
-  ]);
+  }, [searchTerm, filteredFollowUps.length]);
 
   const handleExport = () => {
     if (filteredFollowUps.length === 0) {
@@ -467,7 +460,66 @@ export default function Reports() {
 
   return (
     <div className="bg-gray-50 pb-6">
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-4">
+        <div className="flex flex-wrap items-center gap-3">
+          {isAdmin && (
+            <Combobox
+              options={[
+                { value: "all", label: "Select Sales Person" },
+                ...salesPersons.map((sp) => ({
+                  value: sp.userCode,
+                  label: sp.name ? `${sp.name} (${sp.userCode})` : sp.userCode,
+                })),
+              ]}
+              value={salesPersonFilter}
+              onSelect={setSalesPersonFilter}
+              onSearchChange={setSpSearchQuery}
+              searchValue={spSearchQuery}
+              loading={isSpLoading}
+              placeholder="Sales Person"
+              searchPlaceholder="Search salesperson..."
+              width="w-[180px]"
+              className="h-9 bg-white"
+            />
+          )}
+          <Combobox
+            options={[
+              { value: "all", label: "Select Client" },
+              ...clients.map((client) => ({
+                value: client.userCode,
+                label: client.userCode
+                  ? `${client.userCode} (${client.name})`
+                  : client.userCode,
+              })),
+            ]}
+            value={clientFilter}
+            onSelect={setClientFilter}
+            onSearchChange={setClientSearchQuery}
+            searchValue={clientSearchQuery}
+            loading={isClientLoading}
+            placeholder="Client"
+            searchPlaceholder="Search client..."
+            width="w-[180px]"
+            className="h-9 bg-white"
+          />
+          <DatePickerWithRange
+            date={dateRange}
+            setDate={setDateRange}
+            onOpenChange={handleDateOpenChange}
+            className="h-9"
+          />
+          {isFiltering && (
+            <Button
+              onClick={clearFilters}
+              variant="outline"
+              size="sm"
+              className="flex-shrink-0"
+            >
+              Clear All
+            </Button>
+          )}
+        </div>
+
         <Card className="overflow-hidden">
           <CardHeader className="bg-gray-50 border-b py-4 px-6">
             <div className="flex items-center justify-between">

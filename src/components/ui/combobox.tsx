@@ -107,8 +107,8 @@ export function Combobox({
                     {selectedLabel || placeholder}
                   </span>
                 </TooltipTrigger>
-                {selectedLabel && (
-                  <TooltipContent>
+                {selectedLabel && selectedLabel !== placeholder && !selectedLabel.toLowerCase().includes("select") && (
+                  <TooltipContent className="pointer-events-none">
                     <p>{selectedLabel}</p>
                   </TooltipContent>
                 )}
@@ -141,16 +141,22 @@ export function Combobox({
                           value === option.value ? "opacity-100" : "opacity-0",
                         )}
                       />
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="truncate flex-1 text-left">
-                            {option.label}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="right">
-                          <p>{option.label}</p>
-                        </TooltipContent>
-                      </Tooltip>
+                      {option.label !== placeholder && !option.label.toLowerCase().includes("select") ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="truncate flex-1 text-left">
+                              {option.label}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="pointer-events-none">
+                            <p>{option.label}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <span className="truncate flex-1 text-left">
+                          {option.label}
+                        </span>
+                      )}
                     </CommandItem>
                   ))}
                   {onEndReached && (

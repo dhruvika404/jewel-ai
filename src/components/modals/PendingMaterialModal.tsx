@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -38,10 +40,12 @@ export function PendingMaterialModal({
   clientCode,
   material,
 }: PendingMaterialModalProps) {
+  const { user } = useAuth();
+  const isAdmin = user?.role !== "sales_executive";
   const [loading, setLoading] = useState(false);
   const [salesPersons, setSalesPersons] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    salesExecCode: "",
+    salesExecCode: !material && user?.role === "sales_executive" ? user.userCode : "",
     clientCode: clientCode,
     styleNo: "",
     orderNo: "",
@@ -55,12 +59,14 @@ export function PendingMaterialModal({
     remark: "",
   });
   const [spSearchQuery, setSpSearchQuery] = useState("");
+  const debouncedSpSearchQuery = useDebounce(spSearchQuery, 500);
   const [isSpLoading, setIsSpLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const loadSalesPersons = async (search?: string) => {
       try {
+        if (!isAdmin) return;
         setIsSpLoading(true);
         const response = await salesPersonAPI.getAll({
           page: 1,
@@ -78,11 +84,8 @@ export function PendingMaterialModal({
       }
     };
 
-    const timer = setTimeout(() => {
-      loadSalesPersons(spSearchQuery);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [spSearchQuery]);
+    loadSalesPersons(debouncedSpSearchQuery);
+  }, [debouncedSpSearchQuery]);
 
   useEffect(() => {
     if (material) {

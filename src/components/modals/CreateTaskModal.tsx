@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   Dialog,
   DialogContent,
@@ -42,13 +43,16 @@ export function CreateTaskModal({
   onSuccess,
 }: CreateTaskModalProps) {
   const { user } = useAuth();
+  const isAdmin = user?.role !== "sales_executive";
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [salesPersons, setSalesPersons] = useState<any[]>([]);
   const [isSpLoading, setIsSpLoading] = useState(false);
   const [spSearchQuery, setSpSearchQuery] = useState("");
+  const debouncedSpSearchQuery = useDebounce(spSearchQuery, 500);
   const [isClientLoading, setIsClientLoading] = useState(false);
   const [clientSearchQuery, setClientSearchQuery] = useState("");
+  const debouncedClientSearchQuery = useDebounce(clientSearchQuery, 500);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     taskType: "",
@@ -73,6 +77,7 @@ export function CreateTaskModal({
     if (!isOpen) return;
     const loadSalesPersons = async (search?: string) => {
       try {
+        if (!isAdmin) return;
         setIsSpLoading(true);
         const res = await salesPersonAPI.getAll({
           page: 1,
@@ -90,11 +95,8 @@ export function CreateTaskModal({
       }
     };
 
-    const timer = setTimeout(() => {
-      loadSalesPersons(spSearchQuery);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [isOpen, spSearchQuery]);
+    loadSalesPersons(debouncedSpSearchQuery);
+  }, [isOpen, debouncedSpSearchQuery]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -117,11 +119,8 @@ export function CreateTaskModal({
       }
     };
 
-    const timer = setTimeout(() => {
-      loadClients(clientSearchQuery);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [isOpen, clientSearchQuery]);
+    loadClients(debouncedClientSearchQuery);
+  }, [isOpen, debouncedClientSearchQuery]);
 
   const resetForm = () => {
     setFormData({

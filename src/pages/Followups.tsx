@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useParams,
@@ -174,7 +175,8 @@ export default function Followups() {
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get("search") || "",
   );
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [appliedDateRange, setAppliedDateRange] = useState<DateRange | undefined>(() => {
     const from = searchParams.get("startDate");
     const to = searchParams.get("endDate");
     if (from) {
@@ -185,6 +187,7 @@ export default function Followups() {
     }
     return undefined;
   });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(appliedDateRange);
   const [dateRangeFilter, setDateRangeFilter] = useState("all");
   const [pendingRangeFilter, setPendingRangeFilter] = useState("all");
   const [daysFilter, setDaysFilter] = useState("all");
@@ -408,6 +411,7 @@ export default function Followups() {
   useEffect(() => {
     const loadSalesPersons = async (search?: string) => {
       try {
+        if (!isAdmin) return;
         setIsSpLoading(true);
         const spRes = await salesPersonAPI.getAll({
           page: 1,
@@ -581,7 +585,7 @@ export default function Followups() {
     const activeDateRange =
       options?.overrideDateRange !== undefined
         ? options.overrideDateRange
-        : dateRange;
+        : appliedDateRange;
     const skipAllFilters = options?.skipAllFilters || false;
     try {
       setLoading(true);
@@ -606,8 +610,8 @@ export default function Followups() {
         if (urlStartDate) params.startDate = urlStartDate;
         if (urlEndDate) params.endDate = urlEndDate;
       }
-      if (searchTerm) {
-        params.search = searchTerm;
+      if (debouncedSearchTerm) {
+        params.search = debouncedSearchTerm;
       }
 
       if (!skipAllFilters) {
@@ -624,6 +628,10 @@ export default function Followups() {
 
       if (salesPersonFilter !== "all") {
         params.salesExecCode = salesPersonFilter;
+      }
+
+      if (clientFilter !== "all") {
+        params.clientCode = clientFilter;
       }
 
       if (!isAdmin && user?.userCode) {
@@ -717,12 +725,17 @@ export default function Followups() {
     navigate(`/followups/${followupType}`, {
       replace: true,
     });
+    setAppliedDateRange(undefined);
     loadFollowupData({ overrideDateRange: null, skipAllFilters: true });
   };
 
   const handleDateOpenChange = (open: boolean) => {
-    if (!open && dateRange?.from && dateRange?.to) {
-      loadFollowupData();
+    if (!open) {
+      if (!dateRange) {
+        setAppliedDateRange(undefined);
+      } else if (dateRange.from && dateRange.to) {
+        setAppliedDateRange(dateRange);
+      }
     }
   };
 
@@ -814,24 +827,13 @@ export default function Followups() {
     pageSize,
     salesPersonFilter,
     clientFilter,
-    searchTerm,
-    dateRangeFilter,
     pendingRangeFilter,
     daysFilter,
+    debouncedSearchTerm,
+    appliedDateRange,
   ]);
 
   const filteredFollowups = followups.filter((fu) => {
-    if (
-      salesPersonFilter !== "all" &&
-      fu.salesExecutive !== salesPersonFilter
-    ) {
-      return false;
-    }
-
-    if (clientFilter !== "all" && fu.userCode !== clientFilter) {
-      return false;
-    }
-
     if (followupType === "new-order" && dateRangeFilter !== "all") {
       const daysSince = (fu as NewOrderFollowup).noOrderSince;
       if (dateRangeFilter === "30" && daysSince > 30) return false;
@@ -982,7 +984,7 @@ export default function Followups() {
     if (clientFilter !== "all") count++;
     if (searchTerm) count++;
     if (dateRangeFilter !== "all") count++;
-    if (dateRange) count++;
+    if (appliedDateRange) count++;
     if (pendingRangeFilter !== "all") count++;
     if (daysFilter !== "all") count++;
     if (statusFilter !== "all") count++;

@@ -1,5 +1,7 @@
 
 import { useState, useEffect } from 'react'
+import { useDebounce } from '@/hooks/useDebounce'
+import { useAuth } from '@/contexts/AuthContext'
 import {
   Dialog,
   DialogContent,
@@ -22,6 +24,8 @@ interface ClientModalProps {
 }
 
 export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalProps) {
+  const { user } = useAuth()
+  const isAdmin = user?.role !== 'sales_executive'
   const [loading, setLoading] = useState(false)
   const [salesPersons, setSalesPersons] = useState<any[]>([])
   const [formData, setFormData] = useState({
@@ -29,7 +33,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
     name: '',
     email: '',
     phone: '',
-    salesExecCode: '',
+    salesExecCode: !client && user?.role === 'sales_executive' ? user.userCode : '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   
@@ -37,10 +41,12 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
   const [spLoading, setSpLoading] = useState(false)
   const [spHasMore, setSpHasMore] = useState(true)
   const [spSearchQuery, setSpSearchQuery] = useState('')
+  const debouncedSpSearchQuery = useDebounce(spSearchQuery, 500)
   const PAGE_SIZE = 20
 
   const loadSalesPersons = async (page: number, append: boolean = false, search?: string) => {
     try {
+      if (!isAdmin) return
       setSpLoading(true)
       const response = await salesPersonAPI.getAll({ 
         page, 
@@ -75,14 +81,11 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
 
   useEffect(() => {
     if (isOpen) {
-      const timer = setTimeout(() => {
-        setSpPage(1)
-        setSpHasMore(true)
-        loadSalesPersons(1, false, spSearchQuery)
-      }, 500)
-      return () => clearTimeout(timer)
+      setSpPage(1)
+      setSpHasMore(true)
+      loadSalesPersons(1, false, debouncedSpSearchQuery)
     }
-  }, [isOpen, spSearchQuery])
+  }, [isOpen, debouncedSpSearchQuery])
 
   const handleLoadMoreSp = () => {
     if (!spLoading && spHasMore) {
