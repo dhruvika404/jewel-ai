@@ -31,6 +31,7 @@ interface PendingMaterialModalProps {
   onSuccess: () => void;
   clientCode: string;
   material?: any;
+  defaultSalesExecCode?: string;
 }
 
 export function PendingMaterialModal({
@@ -39,13 +40,14 @@ export function PendingMaterialModal({
   onSuccess,
   clientCode,
   material,
+  defaultSalesExecCode,
 }: PendingMaterialModalProps) {
   const { user } = useAuth();
   const isAdmin = user?.role !== "sales_executive";
   const [loading, setLoading] = useState(false);
   const [salesPersons, setSalesPersons] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    salesExecCode: !material && user?.role === "sales_executive" ? user.userCode : "",
+    salesExecCode: (!material && defaultSalesExecCode) || (!material && user?.role === "sales_executive") ? user?.userCode || "" : (material?.salesExecCode || ""),
     clientCode: clientCode,
     styleNo: "",
     orderNo: "",
@@ -105,7 +107,7 @@ export function PendingMaterialModal({
       });
     } else {
       setFormData({
-        salesExecCode: "",
+        salesExecCode: defaultSalesExecCode || "",
         clientCode: clientCode,
         styleNo: "",
         orderNo: "",
@@ -185,9 +187,10 @@ export function PendingMaterialModal({
     try {
       let response;
       if (material) {
+        const { clientCode, salesExecCode, ...updatePayload } = formData;
         response = await pendingMaterialAPI.update(
           material.uuid || material.id,
-          formData,
+          updatePayload,
         );
       } else {
         const { status, ...createPayload } = formData;
@@ -250,6 +253,7 @@ export function PendingMaterialModal({
               searchPlaceholder="Search sales executive..."
               error={errors.salesExecCode}
               className="!h-full"
+              disabled={!!material || !!defaultSalesExecCode}
             />
             <Input
               id="clientCode"

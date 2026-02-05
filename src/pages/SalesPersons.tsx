@@ -134,6 +134,18 @@ export default function SalesPersons() {
     }
   };
 
+  const getActiveFilterCount = () => {
+    let count = 0;
+    if (searchQuery) count++;
+    if (selectedItems.size > 0) count++;
+    return count;
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedItems(new Set());
+  };
+
   useEffect(() => {
     setHeader({
       title: "Sales Persons",
@@ -143,7 +155,7 @@ export default function SalesPersons() {
         onChange: (val) => setSearchQuery(val),
       },
       children: (
-        <>
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             onClick={() => setShowUploadDialog(true)}
@@ -166,7 +178,17 @@ export default function SalesPersons() {
               Add New
             </Button>
           )}
-        </>
+          {getActiveFilterCount() > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearFilters}
+              className="h-9 border-gray-300 text-gray-700 hover:bg-gray-100"
+            >
+              Clear All
+            </Button>
+          )}
+        </div>
       ),
     });
   }, [searchQuery, selectedItems.size]);
@@ -273,7 +295,9 @@ export default function SalesPersons() {
       }
     }
 
-    if (formData.phone && formData.phone.length < 10) {
+    if (!formData.phone) {
+      newErrors.phone = "Phone number is required";
+    } else if (formData.phone.length < 10) {
       newErrors.phone = "Phone number must be at least 10 digits";
     }
 
@@ -288,9 +312,10 @@ export default function SalesPersons() {
     setIsSubmitting(true);
     try {
       if (selectedSalesPerson) {
+        const { userCode, ...updateData } = formData;
         const response = await salesPersonAPI.update(
           selectedSalesPerson.uuid,
-          formData,
+          updateData,
         );
         if (
           response.success &&
@@ -592,6 +617,7 @@ export default function SalesPersons() {
             <Input
               id="phone"
               label="Phone"
+              required={true}
               placeholder="Contact number"
               value={formData.phone}
               maxLength={10}

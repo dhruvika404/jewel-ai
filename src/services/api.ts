@@ -61,13 +61,13 @@ export const authAPI = {
 // Dashboard APIs
 export const dashboardAPI = {
   // Get dashboard overview counts
-  getOverview: async (params?: { salesExecCode?: string }) => {
+  getOverview: async (params?: { salesExecCode?: string; startDate?: string; endDate?: string; sevenDayAgoDate?: string }) => {
     try {
       const queryParams = new URLSearchParams(
         filterEmptyValues(params || {}, true),
       );
       const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DASHBOARD.OVERVIEW}${
-        queryParams.toString() ? `?${queryParams}` : ""
+        queryParams.toString() ? `?${queryParams.toString().replace(/%3A/g, ":")}` : ""
       }`;
 
       const response = await fetch(url, {
@@ -104,7 +104,7 @@ export const salesPersonAPI = {
     );
 
     const response = await fetch(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.LIST}?${queryParams}`,
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.LIST}?${queryParams.toString().replace(/%3A/g, ":")}`,
       {
         headers: getHeaders(),
       },
@@ -192,7 +192,7 @@ export const clientAPI = {
     );
 
     const response = await fetch(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.LIST}?${queryParams}`,
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.LIST}?${queryParams.toString().replace(/%3A/g, ":")}`,
       {
         headers: getHeaders(),
       },
@@ -355,7 +355,7 @@ export const pendingOrderAPI = {
     );
 
     const response = await fetch(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.LIST}?${queryParams}`,
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.LIST}?${queryParams.toString().replace(/%3A/g, ":")}`,
       {
         headers: getHeaders(),
       },
@@ -423,13 +423,15 @@ export const pendingOrderAPI = {
     clientCode?: string;
     status?: string;
     sortBy?: string;
+    startDate?: string;
+    endDate?: string;
   }) => {
     const queryParams = new URLSearchParams(
       filterEmptyValues(params || {}, true),
     );
 
     const response = await fetch(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.FOLLOW_UP}?${queryParams}`,
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.FOLLOW_UP}?${queryParams.toString().replace(/%3A/g, ":")}`,
       {
         headers: getHeaders(),
       },
@@ -508,7 +510,7 @@ export const pendingMaterialAPI = {
     );
 
     const response = await fetch(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.LIST}?${queryParams}`,
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.LIST}?${queryParams.toString().replace(/%3A/g, ":")}`,
       {
         headers: getHeaders(),
       },
@@ -577,13 +579,15 @@ export const pendingMaterialAPI = {
     clientCode?: string;
     status?: string;
     sortBy?: string;
+    startDate?: string;
+    endDate?: string;
   }) => {
     const queryParams = new URLSearchParams(
       filterEmptyValues(params || {}, true),
     );
 
     const response = await fetch(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.FOLLOW_UP}?${queryParams}`,
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.FOLLOW_UP}?${queryParams.toString().replace(/%3A/g, ":")}`,
       {
         headers: getHeaders(),
       },
@@ -664,7 +668,7 @@ export const newOrderAPI = {
     );
 
     const response = await fetch(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.LIST}?${queryParams}`,
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.LIST}?${queryParams.toString().replace(/%3A/g, ":")}`,
       {
         headers: getHeaders(),
       },
@@ -729,13 +733,15 @@ export const newOrderAPI = {
     clientCode?: string;
     status?: string;
     sortBy?: string;
+    startDate?: string;
+    endDate?: string;
   }) => {
     const queryParams = new URLSearchParams(
       filterEmptyValues(params || {}, true),
     );
 
     const response = await fetch(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.FOLLOW_UP}?${queryParams}`,
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.FOLLOW_UP}?${queryParams.toString().replace(/%3A/g, ":")}`,
       {
         headers: getHeaders(),
       },

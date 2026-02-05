@@ -17,7 +17,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import TablePagination from "@/components/ui/table-pagination";
-import { Upload, Loader2, Eye, Plus, Pencil, Trash2 } from "lucide-react";
+import { Upload, Loader2, Eye, Plus, Pencil, Trash2, CalendarDays } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -28,6 +28,15 @@ import { formatDisplayDate } from "@/lib/utils";
 import { DeleteModal } from "@/components/modals/DeleteModal";
 import { Combobox } from "@/components/ui/combobox";
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
+import { getUTCISOString } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { subDays } from "date-fns";
 
 interface Client {
   uuid: string;
@@ -92,6 +101,7 @@ export default function Clients() {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [followUpFilter, setFollowUpFilter] = useState<string>("all");
   const isAdmin = user?.role !== "sales_executive";
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -153,6 +163,8 @@ export default function Clients() {
     if (dateRange.startDate || dateRange.endDate) count++;
     if (searchParams.get("startDate") || searchParams.get("todayTakenFollowUp"))
       count++;
+    if (followUpFilter !== "all") count++;
+    if (selectedItems.size > 0) count++;
     return count;
   };
 
@@ -160,6 +172,8 @@ export default function Clients() {
     setSearchQuery("");
     setSelectedSalesPerson("all");
     setSpSearchQuery("");
+    setFollowUpFilter("all");
+    setSelectedItems(new Set());
     navigate("/clients");
   };
 
@@ -265,10 +279,21 @@ export default function Clients() {
       const urlStartDate = searchParams.get("startDate");
       const urlEndDate = searchParams.get("endDate");
       if (urlStartDate) {
-        params.startDate = urlStartDate;
+        params.startDate = getUTCISOString(urlStartDate, 'start');
       }
       if (urlEndDate) {
-        params.endDate = urlEndDate;
+        params.endDate = getUTCISOString(urlEndDate, 'end');
+      }
+
+      if (followUpFilter === "today") {
+        params.startDate = getUTCISOString(new Date(), 'start');
+        params.endDate = getUTCISOString(new Date(), 'end');
+        params.todayTakenFollowUp = true;
+      } else if (followUpFilter === "yesterday") {
+        const yesterday = subDays(new Date(), 1);
+        params.startDate = getUTCISOString(yesterday, 'start');
+        params.endDate = getUTCISOString(yesterday, 'end');
+        params.todayTakenFollowUp = true;
       }
 
       const response = await clientAPI.getAll(params);
@@ -305,9 +330,12 @@ export default function Clients() {
     dateRange,
     selectedSalesPerson,
     searchParams,
+    followUpFilter,
   ]);
 
-  useEffect(() => {}, [searchQuery, selectedSalesPerson]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedSalesPerson, dateRange]);
 
   const handleImport = async (file: File) => {
     setIsUploading(true);
@@ -385,18 +413,18 @@ export default function Clients() {
 
     return (
       <div
-        className={`flex flex-col gap-1 min-w-[200px] p-2 rounded ${getFollowUpColor()}`}
+        className={`flex flex-col gap-1 w-[300px] p-2 rounded ${getFollowUpColor()}`}
       >
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="text-sm font-medium text-gray-700 line-clamp-1 cursor-default">
-                {data.lastFollowUpMsg}
+                Follow-up Msg: <span className="text-gray-800 font-normal">{data.lastFollowUpMsg}</span>
               </span>
             </TooltipTrigger>
             <TooltipContent>
               <p className="max-w-[300px] break-words">
-                {data.lastFollowUpMsg}
+                Follow-up Msg: {data.lastFollowUpMsg}
               </p>
             </TooltipContent>
           </Tooltip>
@@ -406,7 +434,7 @@ export default function Clients() {
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="text-sm font-medium text-gray-700 line-clamp-1 cursor-default">
-                Remark: {data.remark}
+                Remark: <span className="text-gray-800 font-normal">{data.remark}</span>
               </span>
             </TooltipTrigger>
             <TooltipContent>
@@ -434,7 +462,7 @@ export default function Clients() {
             <div className="flex items-center gap-2">
               <Combobox
                 options={[
-                  { value: "all", label: "Select Sales Person" },
+                  { value: "all", label: "Select Sales Person", disabled: selectedSalesPerson === "all" },
                   ...salesPersons.map((sp) => ({
                     value: sp.userCode,
                     label: sp.name
@@ -454,6 +482,22 @@ export default function Clients() {
               />
             </div>
           )}
+
+          <Select value={followUpFilter} onValueChange={setFollowUpFilter}>
+            <SelectTrigger className="w-[200px] h-9 bg-white">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="w-4 h-4 text-gray-400" />
+                <SelectValue placeholder="Follow-up Filter" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Taken Follow-ups</SelectItem>
+              <SelectItem value="today">Today's Taken</SelectItem>
+              <SelectItem value="yesterday">
+                Yesterday's Taken
+              </SelectItem>
+            </SelectContent>
+          </Select>
 
           {selectedItems.size > 0 && isAdmin && (
             <Button

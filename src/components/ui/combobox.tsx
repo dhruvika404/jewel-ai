@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/tooltip";
 
 interface ComboboxProps {
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; disabled?: boolean }[];
   value?: string;
   onSelect: (value: string) => void;
   placeholder?: string;
@@ -40,6 +40,7 @@ interface ComboboxProps {
   loading?: boolean;
   onSearchChange?: (value: string) => void;
   searchValue?: string;
+  disabled?: boolean;
 }
 
 export function Combobox({
@@ -58,6 +59,7 @@ export function Combobox({
   loading,
   onSearchChange,
   searchValue,
+  disabled,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const observerTarget = React.useRef(null);
@@ -95,6 +97,7 @@ export function Combobox({
               variant="outline"
               role="combobox"
               aria-expanded={open}
+              disabled={disabled}
               className={cn(
                 "w-full h-9 justify-between font-normal px-3 py-2",
                 !value && "text-muted-foreground",
@@ -130,7 +133,9 @@ export function Combobox({
                     <CommandItem
                       key={option.value}
                       value={option.label}
+                      disabled={option.disabled}
                       onSelect={() => {
+                        if (option.disabled) return;
                         onSelect(option.value === value ? "" : option.value);
                         setOpen(false);
                       }}

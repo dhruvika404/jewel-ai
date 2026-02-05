@@ -578,7 +578,12 @@ export function CreateTaskModal({
               }))}
               value={formData?.clientCode}
               onSelect={(val) => {
-                setFormData({ ...formData, clientCode: val });
+                const selectedClient = clients.find(c => c.userCode === val);
+                setFormData({ 
+                  ...formData, 
+                  clientCode: val,
+                  salesExecCode: selectedClient?.salesExecCode || formData.salesExecCode
+                });
                 if (errors.clientCode) setErrors({ ...errors, clientCode: "" });
               }}
               onSearchChange={setClientSearchQuery}
@@ -605,6 +610,7 @@ export function CreateTaskModal({
                 placeholder="Select sales executive"
                 searchPlaceholder="Search sales executive..."
                 className="w-full"
+                disabled={!!formData.clientCode && !!clients.find(c => c.userCode === formData.clientCode)?.salesExecCode}
               />
             )}
 

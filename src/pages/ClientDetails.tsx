@@ -986,8 +986,8 @@ export default function ClientDetails() {
 
             <div className="space-y-2">
               <Textarea
-                id="remark"
-                label="Remark"
+                id="followUpMsg"
+                label="Follow-up Message"
                 required
                 value={formData.followUpMsg}
                 onChange={(e) => {
@@ -1028,8 +1028,9 @@ export default function ClientDetails() {
               setEditingPM(null);
             }}
             onSuccess={refreshData}
+            clientCode={client?.userCode || ""}
             material={editingPM}
-            clientCode={client.userCode}
+            defaultSalesExecCode={client?.salesExecCode}
           />
           <PendingOrderModal
             isOpen={showPOModal}
@@ -1038,8 +1039,9 @@ export default function ClientDetails() {
               setEditingPO(null);
             }}
             onSuccess={refreshData}
+            clientCode={client?.userCode || ""}
             order={editingPO}
-            clientCode={client.userCode}
+            defaultSalesExecCode={client?.salesExecCode}
           />
           <NewOrderModal
             isOpen={showNOModal}
@@ -1048,8 +1050,9 @@ export default function ClientDetails() {
               setEditingNO(null);
             }}
             onSuccess={refreshData}
+            clientCode={client?.userCode || ""}
             order={editingNO}
-            clientCode={client.userCode}
+            defaultSalesExecCode={client?.salesExecCode}
           />
           <DeleteModal
             isOpen={deleteModalOpen}

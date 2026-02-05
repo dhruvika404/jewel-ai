@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useAuth } from "@/contexts/AuthContext";
+import { getUTCISOString } from "@/lib/utils";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +28,6 @@ import * as XLSX from "xlsx";
 import { DateRange } from "react-day-picker";
 import { formatDisplayDate, getTakenByName } from "@/lib/utils";
 import { Combobox } from "@/components/ui/combobox";
-import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 
 type ReportType = "todays-taken" | "pending" | "overdue";
 
@@ -63,9 +63,8 @@ export default function Reports() {
   const { user } = useAuth();
   const isAdmin = user?.role !== "sales_executive";
   const { setHeader } = usePageHeader();
-  const [reportType, setReportType] = useState<ReportType>("todays-taken");
+  const [reportType] = useState<ReportType>("todays-taken");
   const [appliedDateRange, setAppliedDateRange] = useState<DateRange | undefined>(undefined);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [salesPersonFilter, setSalesPersonFilter] = useState("all");
   const [clientFilter, setClientFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -83,7 +82,6 @@ export default function Reports() {
 
   const clearFilters = () => {
     setSearchTerm("");
-    setDateRange(undefined);
     setAppliedDateRange(undefined);
     setSalesPersonFilter("all");
     setClientFilter("all");
@@ -97,15 +95,6 @@ export default function Reports() {
     salesPersonFilter !== "all" ||
     clientFilter !== "all";
 
-  const handleDateOpenChange = (open: boolean) => {
-    if (!open) {
-      if (!dateRange) {
-        setAppliedDateRange(undefined);
-      } else if (dateRange.from && dateRange.to) {
-        setAppliedDateRange(dateRange);
-      }
-    }
-  };
 
   useEffect(() => {
     const loadSalesPersons = async (search?: string) => {
@@ -178,22 +167,27 @@ export default function Reports() {
     const skipAllFilters = options?.skipAllFilters || false;
     setLoading(true);
     try {
+      const params: any = { page: 1, size: 10 };
+      if (activeDateRange?.from && !skipAllFilters) {
+        params.startDate = getUTCISOString(activeDateRange.from, 'start');
+
+        if (activeDateRange.to) {
+          params.endDate = getUTCISOString(activeDateRange.to, 'end');
+        } else {
+          params.endDate = getUTCISOString(activeDateRange.from, 'end');
+        }
+      }
+
       const [newOrderRes, pendingOrderRes, pendingMaterialRes] =
         await Promise.all([
-          newOrderAPI.getFollowUpsByClientCode({ page: 1, size: 10 }),
-          pendingOrderAPI.getFollowUpsByClientCode({
-            page: 1,
-            size: 10,
-          }),
-          pendingMaterialAPI.getFollowUpsByClientCode({
-            page: 1,
-            size: 10,
-          }),
+          newOrderAPI.getFollowUpsByClientCode(params),
+          pendingOrderAPI.getFollowUpsByClientCode(params),
+          pendingMaterialAPI.getFollowUpsByClientCode(params),
         ]);
 
       const allFollowUps: FollowUpRecord[] = [];
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      today.setUTCHours(0, 0, 0, 0);
 
       const processApiResponse = (res: any, type: string) => {
         let dataArray = [];
@@ -215,8 +209,7 @@ export default function Reports() {
         dataArray.forEach((item: any) => {
           if (item.followUps && Array.isArray(item.followUps)) {
             item.followUps.forEach((fu: any) => {
-              const fuDate = new Date(fu.nextFollowUpDate);
-              fuDate.setHours(0, 0, 0, 0);
+              const fuDate = new Date(getUTCISOString(fu.nextFollowUpDate, 'start'));
 
               let includeRecord = false;
 
@@ -225,20 +218,19 @@ export default function Reports() {
                   ? new Date(fu.createdAt)
                   : null;
                 if (createdDate) {
-                  createdDate.setHours(0, 0, 0, 0);
+                  const createdDateStart = new Date(getUTCISOString(fu.createdAt, 'start'));
                   if (activeDateRange?.from && !skipAllFilters) {
-                    const from = new Date(activeDateRange.from);
-                    from.setHours(0, 0, 0, 0);
+                    const from = new Date(getUTCISOString(activeDateRange.from, 'start'));
                     const to = activeDateRange.to
-                      ? new Date(activeDateRange.to)
-                      : new Date(from);
-                    to.setHours(23, 59, 59, 999);
-
+                      ? new Date(getUTCISOString(activeDateRange.to, 'end'))
+                      : new Date(getUTCISOString(activeDateRange.from, 'end'));
+                    
                     includeRecord =
-                      createdDate >= from &&
-                      createdDate <= to &&
+                      createdDateStart >= from &&
+                      createdDateStart <= to &&
                       fu.followUpStatus?.toLowerCase() === "completed";
-                  } else if (!activeDateRange || skipAllFilters) {
+                  }
+ else if (!activeDateRange || skipAllFilters) {
                     includeRecord =
                       createdDate.getTime() === today.getTime() &&
                       fu.followUpStatus?.toLowerCase() === "completed";
@@ -331,7 +323,6 @@ export default function Reports() {
     setSpSearchQuery("");
     setClientSearchQuery("");
     setClientSearchQuery("");
-    setDateRange(undefined);
     setAppliedDateRange(undefined);
     loadReportData({ overrideDateRange: null, skipAllFilters: true });
   }, [reportType]);
@@ -373,7 +364,7 @@ export default function Reports() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [salesPersonFilter, clientFilter, reportType, debouncedSearchTerm]);
+  }, [salesPersonFilter, clientFilter, reportType, debouncedSearchTerm, appliedDateRange]);
 
   useEffect(() => {
     setHeader({
@@ -465,7 +456,7 @@ export default function Reports() {
           {isAdmin && (
             <Combobox
               options={[
-                { value: "all", label: "Select Sales Person" },
+                { value: "all", label: "Select Sales Person", disabled: salesPersonFilter === "all" },
                 ...salesPersons.map((sp) => ({
                   value: sp.userCode,
                   label: sp.name ? `${sp.name} (${sp.userCode})` : sp.userCode,
@@ -484,7 +475,7 @@ export default function Reports() {
           )}
           <Combobox
             options={[
-              { value: "all", label: "Select Client" },
+              { value: "all", label: "Select Client", disabled: clientFilter === "all" },
               ...clients.map((client) => ({
                 value: client.userCode,
                 label: client.userCode
@@ -501,12 +492,6 @@ export default function Reports() {
             searchPlaceholder="Search client..."
             width="w-[180px]"
             className="h-9 bg-white"
-          />
-          <DatePickerWithRange
-            date={dateRange}
-            setDate={setDateRange}
-            onOpenChange={handleDateOpenChange}
-            className="h-9"
           />
           {isFiltering && (
             <Button

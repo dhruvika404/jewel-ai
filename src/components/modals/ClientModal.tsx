@@ -110,11 +110,11 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
         name: '',
         email: '',
         phone: '',
-        salesExecCode: '',
+        salesExecCode: user?.role === 'sales_executive' ? user.userCode : '',
       })
     }
     setErrors({})
-  }, [client, isOpen])
+  }, [client, isOpen, user])
 
   const resetForm = () => {
     setFormData({
@@ -144,7 +144,9 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
       }
     }
 
-    if (formData.phone && formData.phone.length < 10) {
+    if (!formData.phone) {
+      newErrors.phone = 'Phone number is required'
+    } else if (formData.phone.length < 10) {
       newErrors.phone = 'Phone number must be at least 10 digits'
     }
 
@@ -170,7 +172,8 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
 
       let response
       if (client?.uuid) {
-        response = await clientAPI.update(client?.uuid, apiData)
+        const { userCode, salesExecCode, ...updateData } = apiData
+        response = await clientAPI.update(client?.uuid, updateData as any)
       } else {
         response = await clientAPI.create(apiData)
       }
@@ -209,6 +212,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
             required
             error={errors.userCode}
             autoComplete="off"
+            disabled={!!client}
           />
           <Input
             id="name"
@@ -240,6 +244,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
             label="Phone"
             placeholder="9898989898"
             maxLength={10}
+            required={true}
             value={formData?.phone}
             onChange={(e) => {
               const value = e.target.value.replace(/[^0-9]/g, '')
@@ -254,11 +259,17 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
             label="Sales Executive"
             required={true}
             options={[
-              { value: "unassigned", label: "Select sales executive" },
+              { value: "unassigned", label: "Select sales executive", disabled: formData?.salesExecCode === "unassigned" || !formData?.salesExecCode },
               ...salesPersons.map(sp => ({
                 value: sp.userCode,
                 label: sp.name ? `${sp.name} (${sp.userCode})` : sp.userCode
-              }))
+              })),
+              ...(formData.salesExecCode && formData.salesExecCode !== 'unassigned' && !salesPersons.find(sp => sp.userCode === formData.salesExecCode) 
+                ? [{ 
+                    value: formData.salesExecCode, 
+                    label: client?.salesExecName ? `${client.salesExecName} (${formData.salesExecCode})` : formData.salesExecCode 
+                  }] 
+                : [])
             ]}
             value={formData?.salesExecCode || "unassigned"}
             onSelect={(val) => {
@@ -271,6 +282,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
             error={errors.salesExecCode}
             onEndReached={handleLoadMoreSp}
             loading={spLoading}
+            disabled={(!!client) || (!isAdmin && !client)}
           />
           
           <DialogFooter className="pt-4">

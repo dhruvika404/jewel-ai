@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useAuth } from "@/contexts/AuthContext";
+import { getUTCISOString } from "@/lib/utils";
 import {
   useParams,
   Navigate,
   useSearchParams,
   useNavigate,
 } from "react-router-dom";
-import { format } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -140,7 +140,13 @@ interface CADOrderFollowup {
   name: string;
   designNo: string;
   salesExecutive: string;
+  status: string;
+  nextFollowupDate?: string;
+  lastFollowUpDate?: string | null;
+  lastFollowUpBy?: string | { name: string; userCode: string; uuid?: string };
+  remark?: string;
   type: "cad-order";
+  originalData?: any;
 }
 
 type FollowupRecord =
@@ -176,7 +182,7 @@ export default function Followups() {
     searchParams.get("search") || "",
   );
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
-  const [appliedDateRange, setAppliedDateRange] = useState<DateRange | undefined>(() => {
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
     const from = searchParams.get("startDate");
     const to = searchParams.get("endDate");
     if (from) {
@@ -187,7 +193,6 @@ export default function Followups() {
     }
     return undefined;
   });
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(appliedDateRange);
   const [dateRangeFilter, setDateRangeFilter] = useState("all");
   const [pendingRangeFilter, setPendingRangeFilter] = useState("all");
   const [daysFilter, setDaysFilter] = useState("all");
@@ -461,6 +466,32 @@ export default function Followups() {
     return () => clearTimeout(timer);
   }, [clientSearchQuery]);
 
+  const processCADOrderData = (res: any): CADOrderFollowup[] => {
+    let dataArray = [];
+    if (Array.isArray(res)) dataArray = res;
+    else if (res.data?.data) dataArray = res.data.data;
+    else if (res.data) dataArray = res.data;
+
+    return dataArray.map((item: any) => {
+      return {
+        id: item.uuid || item._id || item.id || Math.random().toString(),
+        userCode: item.clientCode || item.clientData?.userCode || item.userCode,
+        name: item.clientData?.name || item.name || item.userCode,
+        designNo: item.designNo || "",
+        salesExecutive:
+          item.salesExecData?.userCode || item.salesExecCode || "",
+        status: (item.status || "pending").toLowerCase(),
+        nextFollowupDate:
+          item.nextFollowUpDate || item.nextFollowupDate || null,
+        lastFollowUpDate: item.lastFollowUpDate || null,
+        lastFollowUpBy: item.lastFollowUpBy || null,
+        remark: item.remark || "",
+        type: "cad-order" as const,
+        originalData: item,
+      };
+    });
+  };
+
   const processNewOrderData = (res: any): NewOrderFollowup[] => {
     let dataArray = [];
     if (Array.isArray(res)) dataArray = res;
@@ -579,13 +610,9 @@ export default function Followups() {
   };
 
   const loadFollowupData = async (options?: {
-    overrideDateRange?: DateRange | null;
     skipAllFilters?: boolean;
   }) => {
-    const activeDateRange =
-      options?.overrideDateRange !== undefined
-        ? options.overrideDateRange
-        : appliedDateRange;
+    const activeDateRange = dateRange;
     const skipAllFilters = options?.skipAllFilters || false;
     try {
       setLoading(true);
@@ -597,18 +624,23 @@ export default function Followups() {
       };
 
       if (activeDateRange?.from && !skipAllFilters) {
-        params.startDate = format(activeDateRange.from, "yyyy-MM-dd");
+        params.startDate = getUTCISOString(activeDateRange.from, 'start');
+
         if (activeDateRange.to) {
-          params.endDate = format(activeDateRange.to, "yyyy-MM-dd");
+          params.endDate = getUTCISOString(activeDateRange.to, 'end');
         } else {
-          params.endDate = format(activeDateRange.from, "yyyy-MM-dd");
+          params.endDate = getUTCISOString(activeDateRange.from, 'end');
         }
       }
       if (!activeDateRange && !skipAllFilters) {
         const urlStartDate = searchParams.get("startDate");
         const urlEndDate = searchParams.get("endDate");
-        if (urlStartDate) params.startDate = urlStartDate;
-        if (urlEndDate) params.endDate = urlEndDate;
+        if (urlStartDate) {
+          params.startDate = getUTCISOString(urlStartDate, 'start');
+        }
+        if (urlEndDate) {
+          params.endDate = getUTCISOString(urlEndDate, 'end');
+        }
       }
       if (debouncedSearchTerm) {
         params.search = debouncedSearchTerm;
@@ -668,9 +700,10 @@ export default function Followups() {
         setTotalPages(res.data?.totalPages || 1);
         setTotalItems(res.data?.totalItems || 0);
       } else if (followupType === "cad-order") {
-        data = [];
-        setTotalPages(1);
-        setTotalItems(0);
+        const res = await cadOrderAPI.getAll(params);
+        data = processCADOrderData(res);
+        setTotalPages(res.data?.totalPages || 1);
+        setTotalItems(res.data?.totalItems || 0);
       }
       setFollowups(data);
 
@@ -722,21 +755,11 @@ export default function Followups() {
     setSortOrder(null);
     setSpSearchQuery("");
     setClientSearchQuery("");
+    setSelectedItems(new Set());
     navigate(`/followups/${followupType}`, {
       replace: true,
     });
-    setAppliedDateRange(undefined);
-    loadFollowupData({ overrideDateRange: null, skipAllFilters: true });
-  };
-
-  const handleDateOpenChange = (open: boolean) => {
-    if (!open) {
-      if (!dateRange) {
-        setAppliedDateRange(undefined);
-      } else if (dateRange.from && dateRange.to) {
-        setAppliedDateRange(dateRange);
-      }
-    }
+    loadFollowupData({ skipAllFilters: true });
   };
 
   const handleExport = () => {
@@ -830,7 +853,19 @@ export default function Followups() {
     pendingRangeFilter,
     daysFilter,
     debouncedSearchTerm,
-    appliedDateRange,
+    dateRange,
+  ]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    salesPersonFilter,
+    clientFilter,
+    pendingRangeFilter,
+    daysFilter,
+    debouncedSearchTerm,
+    dateRange,
+    statusFilter,
   ]);
 
   const filteredFollowups = followups.filter((fu) => {
@@ -919,7 +954,7 @@ export default function Followups() {
     setSelectedItems(new Set());
     setBulkRemarkText("");
     setBulkStatusValue("completed");
-    loadFollowupData({ overrideDateRange: null, skipAllFilters: true });
+    loadFollowupData({ skipAllFilters: true });
   }, [followupType]);
 
   useEffect(() => {
@@ -984,11 +1019,12 @@ export default function Followups() {
     if (clientFilter !== "all") count++;
     if (searchTerm) count++;
     if (dateRangeFilter !== "all") count++;
-    if (appliedDateRange) count++;
+    if (dateRange) count++;
     if (pendingRangeFilter !== "all") count++;
     if (daysFilter !== "all") count++;
     if (statusFilter !== "all") count++;
     if (sortBy) count++;
+    if (selectedItems.size > 0) count++;
     return count;
   };
 
@@ -1085,7 +1121,7 @@ export default function Followups() {
           {isAdmin && (
             <Combobox
               options={[
-                { value: "all", label: "Select Sales Person" },
+                { value: "all", label: "Select Sales Person", disabled: salesPersonFilter === "all" },
                 ...salesPersons.map((sp) => ({
                   value: sp.userCode,
                   label: sp.name ? `${sp.name} (${sp.userCode})` : sp.userCode,
@@ -1104,7 +1140,7 @@ export default function Followups() {
           )}
           <Combobox
             options={[
-              { value: "all", label: "Select Client" },
+              { value: "all", label: "Select Client", disabled: clientFilter === "all" },
               ...clients.map((client) => ({
                 value: client.userCode,
                 label: client.userCode
@@ -1131,7 +1167,7 @@ export default function Followups() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Select Status</SelectItem>
+                <SelectItem value="all" disabled={statusFilter === "all"}>Select Status</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
@@ -1142,7 +1178,6 @@ export default function Followups() {
             <DatePickerWithRange
               date={dateRange}
               setDate={setDateRange}
-              onOpenChange={handleDateOpenChange}
               className="h-9"
             />
           </div>

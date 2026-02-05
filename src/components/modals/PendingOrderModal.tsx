@@ -23,6 +23,7 @@ interface PendingOrderModalProps {
   onSuccess: () => void;
   clientCode: string;
   order?: any;
+  defaultSalesExecCode?: string;
 }
 
 export function PendingOrderModal({
@@ -31,13 +32,14 @@ export function PendingOrderModal({
   onSuccess,
   clientCode,
   order,
+  defaultSalesExecCode,
 }: PendingOrderModalProps) {
   const { user } = useAuth();
   const isAdmin = user?.role !== "sales_executive";
   const [loading, setLoading] = useState(false);
   const [salesPersons, setSalesPersons] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    salesExecCode: !order && user?.role === "sales_executive" ? user.userCode : "",
+    salesExecCode: (!order && defaultSalesExecCode) || (!order && user?.role === "sales_executive") ? user?.userCode || "" : (order?.salesExecCode || ""),
     clientCode: clientCode,
     orderNo: "",
     orderDate: "",
@@ -94,7 +96,7 @@ export function PendingOrderModal({
       });
     } else {
       setFormData({
-        salesExecCode: "",
+        salesExecCode: defaultSalesExecCode || "",
         clientCode: clientCode,
         orderNo: "",
         orderDate: "",
@@ -189,9 +191,10 @@ export function PendingOrderModal({
 
       let response;
       if (order) {
+        const { clientCode, salesExecCode, ...updatePayload } = payload;
         response = await pendingOrderAPI.update(
           order.uuid || order.id,
-          payload,
+          updatePayload,
         );
       } else {
         response = await pendingOrderAPI.create(payload as any);
@@ -249,6 +252,7 @@ export function PendingOrderModal({
               placeholder="Select sales executive"
               searchPlaceholder="Search sales executive..."
               error={errors.salesExecCode}
+              disabled={!!order || !!defaultSalesExecCode}
             />
             <Input
               id="clientCode"

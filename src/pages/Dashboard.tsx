@@ -11,12 +11,13 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { format, subDays } from "date-fns";
+import { subDays } from "date-fns";
 import { dashboardAPI } from "@/services/api";
 import { toast } from "sonner";
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import { CreateTaskModal } from "@/components/modals/CreateTaskModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { getUTCISOString } from "@/lib/utils";
 
 interface StatCardProps {
   label: string;
@@ -71,6 +72,11 @@ export default function Dashboard() {
       if (!isAdmin && user?.userCode) {
         params.salesExecCode = user.userCode;
       }
+      params.startDate = getUTCISOString(new Date(), 'start');
+      params.endDate = getUTCISOString(new Date(), 'end');
+
+      params.sevenDayAgoDate = getUTCISOString(subDays(new Date(), 7), 'start');
+
       const statsRes = await dashboardAPI.getOverview(params);
       if (statsRes?.data) {
         setSystemStats(statsRes.data);
@@ -97,25 +103,18 @@ export default function Dashboard() {
       endpoint = "pending-material";
     else if (type === "New Order Follow-ups") endpoint = "new-order";
 
-    const today = format(new Date(), "yyyy-MM-dd");
-    let params = `?startDate=${today}&endDate=${today}`;
+    let params = `?startDate=${getUTCISOString(new Date(), 'start')}&endDate=${getUTCISOString(new Date(), 'end')}`;
 
     if (filterType === "due") {
       params += `&todayDueFollowUp=true`;
     } else if (filterType === "completed") {
       params += `&todayCompletedFollowUp=true`;
     } else if (filterType === "pending7") {
-      const sevenDaysAgo = format(subDays(new Date(), 7), "yyyy-MM-dd");
-      params = `?startDate=${sevenDaysAgo}&endDate=${today}&sevenDayPendingFollowUp=true`;
+      params = `?startDate=${getUTCISOString(subDays(new Date(), 7), 'start')}&endDate=${getUTCISOString(new Date(), 'end')}&sevenDayPendingFollowUp=true`;
     }
     navigate(`/followups/${endpoint}${params}`);
   };
 
-  const handleTodayTakenFollowUpsClick = () => {
-    const today = format(new Date(), "yyyy-MM-dd");
-    const params = `?page=1&todayTakenFollowUp=true&size=10&startDate=${today}&endDate=${today}`;
-    navigate(`/clients${params}`);
-  };
 
   return (
     <div className="p-6 space-y-8">
@@ -133,7 +132,6 @@ export default function Dashboard() {
           icon={CheckCircle}
           color="emerald"
           loading={loading}
-          onClick={handleTodayTakenFollowUpsClick}
         />
         <StatCard
           label="Pending Follow-ups (Last 7 Days)"

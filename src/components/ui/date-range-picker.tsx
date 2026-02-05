@@ -15,18 +15,46 @@ interface DatePickerWithRangeProps
   extends React.HTMLAttributes<HTMLDivElement> {
   date: DateRange | undefined;
   setDate: (date: DateRange | undefined) => void;
-  onOpenChange?: (open: boolean) => void;
 }
 
 export function DatePickerWithRange({
   className,
   date,
   setDate,
-  onOpenChange,
 }: DatePickerWithRangeProps) {
+  const [open, setOpen] = React.useState(false);
+  const [tempDate, setTempDate] = React.useState<DateRange | undefined>(date);
+  const [month, setMonth] = React.useState<Date | undefined>(date?.from);
+
+  React.useEffect(() => {
+    setTempDate(date);
+    if (date?.from) {
+      setMonth(date.from);
+    }
+  }, [date]);
+
+  const handleApply = () => {
+    setDate(tempDate);
+    setOpen(false);
+  };
+
+  const handleClear = () => {
+    setTempDate(undefined);
+    setDate(undefined);
+  };
+
+  const handleToday = () => {
+    const today = new Date();
+    setTempDate({
+      from: today,
+      to: today,
+    });
+    setMonth(today);
+  };
+
   return (
     <div className={cn("grid gap-2", className)}>
-      <Popover onOpenChange={onOpenChange}>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             id="date"
@@ -55,9 +83,11 @@ export function DatePickerWithRange({
           <Calendar
             initialFocus
             mode="range"
-            defaultMonth={date?.from}
-            selected={date}
-            onSelect={setDate}
+            defaultMonth={tempDate?.from}
+            selected={tempDate}
+            onSelect={setTempDate}
+            month={month}
+            onMonthChange={setMonth}
             numberOfMonths={1}
             classNames={{
               selected:
@@ -72,6 +102,31 @@ export function DatePickerWithRange({
                 "bg-primary text-primary-foreground rounded-r-md hover:bg-primary/90 hover:text-primary-foreground focus:bg-primary/90 focus:text-primary-foreground",
             }}
           />
+          <div className="flex items-center justify-between p-3 border-t bg-gray-50 rounded-b-md gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs flex-1"
+              onClick={handleClear}
+            >
+              Clear
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs flex-1"
+              onClick={handleToday}
+            >
+              Today
+            </Button>
+            <Button
+              size="sm"
+              className="h-8 text-xs flex-1"
+              onClick={handleApply}
+            >
+              Submit
+            </Button>
+          </div>
         </PopoverContent>
       </Popover>
     </div>

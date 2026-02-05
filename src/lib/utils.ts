@@ -77,3 +77,19 @@ export function getTakenByName(lastFollowUpBy: any): string {
   }
   return (lastFollowUpBy && lastFollowUpBy !== "null") ? String(lastFollowUpBy) : "-";
 }
+
+/**
+ * Formats a date to ISO string with UTC hours set to start (00:00:00) or end (23:59:59.999) of day.
+ * @param date The date to format
+ * @param position 'start' or 'end' of day
+ * @returns {string} ISO date string
+ */
+export function getUTCISOString(date: Date | string | number, position: 'start' | 'end'): string {
+  const d = new Date(date);
+  if (position === 'start') {
+    d.setUTCHours(0, 0, 0, 0);
+  } else {
+    d.setUTCHours(23, 59, 59, 999);
+  }
+  return d.toISOString();
+}

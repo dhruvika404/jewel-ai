@@ -32,6 +32,7 @@ interface NewOrderModalProps {
   onSuccess: () => void;
   clientCode: string;
   order?: any;
+  defaultSalesExecCode?: string;
 }
 
 export function NewOrderModal({
@@ -40,13 +41,14 @@ export function NewOrderModal({
   onSuccess,
   clientCode,
   order,
+  defaultSalesExecCode,
 }: NewOrderModalProps) {
   const { user } = useAuth();
   const isAdmin = user?.role !== "sales_executive";
   const [loading, setLoading] = useState(false);
   const [salesPersons, setSalesPersons] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    salesExecCode: !order && user?.role === "sales_executive" ? user.userCode : "",
+    salesExecCode: (!order && defaultSalesExecCode) || (!order && user?.role === "sales_executive") ? user?.userCode || "" : (order?.salesExecCode || ""),
     clientCode: clientCode,
     lastSaleDate: "",
     lastOrderDate: "",
@@ -96,7 +98,7 @@ export function NewOrderModal({
       });
     } else {
       setFormData({
-        salesExecCode: "",
+        salesExecCode: defaultSalesExecCode || "",
         clientCode: clientCode,
         lastSaleDate: "",
         lastOrderDate: "",
@@ -156,7 +158,8 @@ export function NewOrderModal({
     try {
       let response;
       if (order) {
-        response = await newOrderAPI.update(order.uuid || order.id, formData);
+        const { clientCode, salesExecCode, ...updatePayload } = formData;
+        response = await newOrderAPI.update(order.uuid || order.id, updatePayload);
       } else {
         const { status, ...createPayload } = formData;
         const payload = filterEmptyFields(createPayload);
@@ -215,6 +218,7 @@ export function NewOrderModal({
               placeholder="Select sales executive"
               searchPlaceholder="Search sales executive..."
               error={errors.salesExecCode}
+              disabled={!!order || !!defaultSalesExecCode}
             />
             <Input
               id="clientCode"
