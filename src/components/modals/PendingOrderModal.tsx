@@ -315,6 +315,9 @@ export function PendingOrderModal({
               }}
               placeholder="e.g. 100"
               error={errors.totalOrderPcs}
+              preventNegative
+              maxDecimals={3}
+              maxIntegerDigits={10}
             />
             <Input
               id="pendingPcs"
@@ -328,6 +331,9 @@ export function PendingOrderModal({
               }}
               placeholder="e.g. 50"
               error={errors.pendingPcs}
+              preventNegative
+              maxDecimals={3}
+              maxIntegerDigits={10}
             />
             <Input
               id="nextFollowUpDate"
@@ -368,6 +374,9 @@ export function PendingOrderModal({
               }}
               placeholder="e.g. 125.75"
               error={errors.grossWtTotal}
+              preventNegative
+              maxDecimals={3}
+              maxIntegerDigits={10}
             />
             <Input
               id="remark"

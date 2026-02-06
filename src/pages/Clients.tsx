@@ -543,15 +543,17 @@ export default function Clients() {
           <Table containerClassName="max-h-[calc(100vh-304px)] overflow-auto">
             <TableHeader className="sticky top-0 z-20 bg-gray-50">
               <TableRow className="bg-gray-50">
-                <TableHead className="w-[50px] align-center">
-                  <Checkbox
-                    checked={
-                      clients.length > 0 &&
-                      clients.every((client) => selectedItems.has(client.uuid))
-                    }
-                    onCheckedChange={() => toggleAllSelection(clients)}
-                  />
-                </TableHead>
+                {isAdmin && (
+                  <TableHead className="w-[50px] align-center">
+                    <Checkbox
+                      checked={
+                        clients.length > 0 &&
+                        clients.every((client) => selectedItems.has(client.uuid))
+                      }
+                      onCheckedChange={() => toggleAllSelection(clients)}
+                    />
+                  </TableHead>
+                )}
                 <TableHead className="font-medium text-gray-700 w-[200px]">
                   Client Name
                 </TableHead>
@@ -599,12 +601,14 @@ export default function Clients() {
               ) : (
                 clients.map((client) => (
                   <TableRow key={client.uuid} className="hover:bg-gray-50">
-                    <TableCell className="align-center">
-                      <Checkbox
-                        checked={selectedItems.has(client.uuid)}
-                        onCheckedChange={() => toggleSelection(client.uuid)}
-                      />
-                    </TableCell>
+                    {isAdmin && (
+                      <TableCell className="align-center">
+                        <Checkbox
+                          checked={selectedItems.has(client.uuid)}
+                          onCheckedChange={() => toggleSelection(client.uuid)}
+                        />
+                      </TableCell>
+                    )}
                     <TableCell className="align-center">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">

@@ -214,6 +214,7 @@ export function FollowUpModal({
               }
               placeholder="Enter follow-up notes"
               rows={3}
+              maxLength={255}
             />
           </div>
           <DialogFooter>

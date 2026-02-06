@@ -4,14 +4,16 @@ import { Button } from "./button";
 import { Eye, EyeOff } from "lucide-react";
 import { Label } from "./label";
 
-export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   rightIcon?: React.ReactNode;
   rightAddon?: string;
   label?: string;
   required?: boolean;
   error?: string;
   containerClassName?: string;
+  preventNegative?: boolean;
+  maxDecimals?: number;
+  maxIntegerDigits?: number;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
@@ -26,11 +28,52 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       error,
       id,
       containerClassName,
+      preventNegative,
+      maxDecimals,
+      maxIntegerDigits,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [showPassword, setShowPassword] = React.useState(false);
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (
+        type === "number" &&
+        preventNegative &&
+        ["-", "e", "E"].includes(e.key)
+      ) {
+        e.preventDefault();
+      }
+      props.onKeyDown?.(e);
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      let value = e.target.value;
+
+      if (type === "number") {
+        if (preventNegative && parseFloat(value) < 0) {
+          return;
+        }
+
+        if (maxDecimals !== undefined && value.includes(".")) {
+          const [, decimal] = value.split(".");
+          if (decimal && decimal.length > maxDecimals) {
+            return;
+          }
+        }
+
+        if (maxIntegerDigits !== undefined) {
+          const [integer] = value.split(".");
+          if (integer.length > maxIntegerDigits) {
+            return;
+          }
+        }
+      }
+
+      props.onChange?.(e);
+    };
+
     return (
       <div className={cn("space-y-2", containerClassName)}>
         {label && (
@@ -51,10 +94,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               className={cn(
                 "flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
                 rightIcon && "pl-10",
-                className
+                className,
               )}
               ref={ref}
               {...props}
+              onKeyDown={handleKeyDown}
+              onChange={handleChange}
             />
             {
               <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground text-sm">
@@ -86,7 +131,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         </div>
       </div>
     );
-  }
+  },
 );
 Input.displayName = "Input";
 

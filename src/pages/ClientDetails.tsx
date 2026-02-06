@@ -100,7 +100,6 @@ export default function ClientDetails() {
     followUpStatus: "pending",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-
   const [showPMModal, setShowPMModal] = useState(false);
   const [showPOModal, setShowPOModal] = useState(false);
   const [showNOModal, setShowNOModal] = useState(false);
@@ -475,26 +474,28 @@ export default function ClientDetails() {
                     className="bg-gray-50 rounded border border-gray-200 p-3 relative group"
                   >
                       <div className="absolute top-3 right-3 flex items-center transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 hover:text-primary hover:bg-primary/10"
-                          onClick={() => {
-                            if (type === "pending-material") {
-                              setEditingPM(item);
-                              setShowPMModal(true);
-                            } else if (type === "pending-order") {
-                              setEditingPO(item);
-                              setShowPOModal(true);
-                            } else {
-                              setEditingNO(item);
-                              setShowNOModal(true);
-                            }
-                          }}
-                          title="Edit"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 hover:text-primary hover:bg-primary/10"
+                            onClick={() => {
+                              if (type === "pending-material") {
+                                setEditingPM(item);
+                                setShowPMModal(true);
+                              } else if (type === "pending-order") {
+                                setEditingPO(item);
+                                setShowPOModal(true);
+                              } else {
+                                setEditingNO(item);
+                                setShowNOModal(true);
+                              }
+                            }}
+                            title="Edit"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                         {isAdmin && (
                           <Button
                             variant="ghost"
@@ -507,7 +508,7 @@ export default function ClientDetails() {
                           </Button>
                         )}
                       </div>
-                    <div className="flex justify-between items-start mb-3 pr-14">
+                    <div className={`flex justify-between items-start mb-3 ${isAdmin ? 'pr-14' : ''}`}>
                       <div className="flex min-w-0 items-center gap-2 ">
                         <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
                           {type === "pending-material"

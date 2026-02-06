@@ -607,10 +607,12 @@ export default function SalesPersons() {
               placeholder="e.g. SE001"
               value={formData.userCode}
               onChange={(e) => {
-                setFormData({ ...formData, userCode: e.target.value });
+                const value = e.target.value.replace(/[^a-zA-Z0-9]/g, "");
+                setFormData({ ...formData, userCode: value });
                 if (errors.userCode) setErrors({ ...errors, userCode: "" });
               }}
               disabled={!!selectedSalesPerson}
+              maxLength={20}
               autoComplete="off"
               error={errors.userCode}
             />
@@ -637,10 +639,12 @@ export default function SalesPersons() {
               placeholder="Staff name"
               value={formData.name}
               onChange={(e) => {
-                setFormData({ ...formData, name: e.target.value });
+                const value = e.target.value.replace(/[^a-zA-Z ]/g, "");
+                setFormData({ ...formData, name: value });
                 if (errors.name) setErrors({ ...errors, name: "" });
               }}
               autoComplete="off"
+              maxLength={50}
               error={errors.name}
             />
 
@@ -654,6 +658,7 @@ export default function SalesPersons() {
                   if (errors.email) setErrors({ ...errors, email: "" });
               }}
               autoComplete="off"
+              maxLength={50}
                error={errors.email}
             />
 

@@ -91,7 +91,15 @@ export function Combobox({
     <TooltipProvider>
       <div className={cn("space-y-2", width, className)}>
         {label && <Label required={required}>{label}</Label>}
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover 
+          open={open} 
+          onOpenChange={(newOpen) => {
+            setOpen(newOpen);
+            if (!newOpen && onSearchChange) {
+              onSearchChange("");
+            }
+          }}
+        >
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -137,6 +145,9 @@ export function Combobox({
                       onSelect={() => {
                         if (option.disabled) return;
                         onSelect(option.value === value ? "" : option.value);
+                        if (onSearchChange) {
+                          onSearchChange("");
+                        }
                         setOpen(false);
                       }}
                     >

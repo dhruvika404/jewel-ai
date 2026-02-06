@@ -337,6 +337,7 @@ export function NewOrderModal({
               }
               placeholder="Enter any remarks or notes"
               rows={3}
+              maxLength={255}
             />
           </div>
 

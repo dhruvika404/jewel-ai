@@ -71,6 +71,8 @@ export function CreateTaskModal({
     lastSaleDate: "",
     lastOrderDate: "",
     lastMovementDate: "",
+    totalOrderPcs: "",
+    pendingPcs: "",
   });
 
   useEffect(() => {
@@ -140,8 +142,12 @@ export function CreateTaskModal({
       lastSaleDate: "",
       lastOrderDate: "",
       lastMovementDate: "",
+      totalOrderPcs: "",
+      pendingPcs: "",
     });
     setErrors({});
+    setSpSearchQuery("");
+    setClientSearchQuery("");
   };
 
   const validate = () => {
@@ -164,6 +170,17 @@ export function CreateTaskModal({
         newErrors.totalNetWt = "Total Net Wt is required";
     } else if (formData?.taskType === "pending-order") {
       if (!formData?.orderNo) newErrors.orderNo = "Order No is required";
+      if (!formData?.totalOrderPcs)
+        newErrors.totalOrderPcs = "Total Order Pcs is required";
+      if (!formData?.pendingPcs) newErrors.pendingPcs = "Pending Pcs is required";
+
+      if (formData.totalOrderPcs && formData.pendingPcs) {
+        const totalPcs = Number(formData.totalOrderPcs);
+        const pendingPcs = Number(formData.pendingPcs);
+        if (pendingPcs > totalPcs) {
+          newErrors.pendingPcs = "Pending Pcs cannot exceed Total Order Pcs";
+        }
+      }
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -213,8 +230,8 @@ export function CreateTaskModal({
             ? `${formData?.remarks} | ${formData?.taskDetails}`
             : formData?.taskDetails,
           nextFollowUpDate: formData?.nextFollowUpDate,
-          totalOrderPcs: 0,
-          pendingPcs: 0,
+          totalOrderPcs: Number(formData?.totalOrderPcs),
+          pendingPcs: Number(formData?.pendingPcs),
         });
         response = await pendingOrderAPI.create(payload as any);
       } else if (formData?.taskType === "new-order") {
@@ -264,6 +281,7 @@ export function CreateTaskModal({
               }}
               placeholder="e.g. 67GBB"
               error={errors.styleNo}
+              maxLength={50}
             />
             <Input
               id="orderNo"
@@ -276,6 +294,7 @@ export function CreateTaskModal({
               }}
               placeholder="e.g. ORD-1001"
               error={errors.orderNo}
+              maxLength={50}
             />
             <Input
               id="departmentName"
@@ -291,11 +310,13 @@ export function CreateTaskModal({
                   setErrors({ ...errors, departmentName: "" });
               }}
               placeholder="e.g. diamond"
+              maxLength={50}
             />
             <Input
               id="totalNetWt"
               label="Total Net Weight"
               value={formData?.totalNetWt}
+              type="number"
               required
               onChange={(e) => {
                 setFormData({
@@ -305,6 +326,9 @@ export function CreateTaskModal({
                 if (errors.totalNetWt) setErrors({ ...errors, totalNetWt: "" });
               }}
               placeholder="e.g. 10.57"
+              preventNegative
+              maxDecimals={3}
+              maxIntegerDigits={10}
             />
             <Input
               id="expectedDeliveryDate"
@@ -403,6 +427,7 @@ export function CreateTaskModal({
               }}
               placeholder="e.g. ORD-1001"
               error={errors.orderNo}
+              maxLength={50}
             />
             <Input
               id="orderDate"
@@ -429,6 +454,39 @@ export function CreateTaskModal({
               max={new Date().toISOString().split("T")[0]}
             />
             <Input
+              id="totalOrderPcs"
+              label="Total Order Pcs"
+              required
+              type="number"
+              value={formData?.totalOrderPcs}
+              onChange={(e) => {
+                setFormData({ ...formData, totalOrderPcs: e?.target?.value });
+                if (errors.totalOrderPcs)
+                  setErrors({ ...errors, totalOrderPcs: "" });
+              }}
+              placeholder="e.g. 100"
+              error={errors.totalOrderPcs}
+              preventNegative
+              maxDecimals={3}
+              maxIntegerDigits={10}
+            />
+            <Input
+              id="pendingPcs"
+              label="Pending Pcs"
+              required
+              type="number"
+              value={formData?.pendingPcs}
+              onChange={(e) => {
+                setFormData({ ...formData, pendingPcs: e?.target?.value });
+                if (errors.pendingPcs) setErrors({ ...errors, pendingPcs: "" });
+              }}
+              placeholder="e.g. 50"
+              error={errors.pendingPcs}
+              preventNegative
+              maxDecimals={3}
+              maxIntegerDigits={10}
+            />
+            <Input
               id="grossWtTotal"
               label="Gross Weight Total"
               type="number"
@@ -438,6 +496,9 @@ export function CreateTaskModal({
                 setFormData({ ...formData, grossWtTotal: e?.target?.value });
               }}
               placeholder="e.g. 125.75"
+              preventNegative
+              maxDecimals={3}
+              maxIntegerDigits={10}
             />
           </>
         );
@@ -587,6 +648,7 @@ export function CreateTaskModal({
                 if (errors.clientCode) setErrors({ ...errors, clientCode: "" });
               }}
               onSearchChange={setClientSearchQuery}
+              searchValue={clientSearchQuery}
               loading={isClientLoading}
               placeholder="Select client"
               searchPlaceholder="Search client..."
@@ -606,6 +668,7 @@ export function CreateTaskModal({
                   setFormData({ ...formData, salesExecCode: val })
                 }
                 onSearchChange={setSpSearchQuery}
+                searchValue={spSearchQuery}
                 loading={isSpLoading}
                 placeholder="Select sales executive"
                 searchPlaceholder="Search sales executive..."
@@ -629,6 +692,7 @@ export function CreateTaskModal({
                   ? "col-span-2"
                   : ""
               }
+              maxLength={255}
             />
           </div>
 
@@ -641,6 +705,7 @@ export function CreateTaskModal({
             }}
             placeholder="Enter task details and follow-up notes..."
             rows={3}
+            maxLength={255}
           />
 
           <DialogFooter>

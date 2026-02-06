@@ -206,12 +206,14 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
             placeholder="e.g. C0909"
             value={formData?.userCode}
             onChange={(e) => {
-              setFormData({ ...formData, userCode: e?.target?.value })
+              const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '')
+              setFormData({ ...formData, userCode: value })
               if (errors.userCode) setErrors({ ...errors, userCode: '' })
             }}
             required
             error={errors.userCode}
             autoComplete="off"
+            maxLength={20}
             disabled={!!client}
           />
           <Input
@@ -220,10 +222,12 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
             placeholder="e.g. Nakarani jewelers"
             value={formData?.name}
             onChange={(e) => {
-              setFormData({ ...formData, name: e?.target?.value })
+              const value = e.target.value.replace(/[^a-zA-Z ]/g, '')
+              setFormData({ ...formData, name: value })
               if (errors.name) setErrors({ ...errors, name: '' })
             }}
             required
+            maxLength={50}
             error={errors.name}
             autoComplete="off"
           />
@@ -237,6 +241,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
               if (errors.email) setErrors({ ...errors, email: '' })
             }}
             error={errors.email}
+            maxLength={50}
             autoComplete="off"
           />
           <Input

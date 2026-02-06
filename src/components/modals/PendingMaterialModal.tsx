@@ -369,6 +369,9 @@ export function PendingMaterialModal({
               }}
               placeholder="e.g. 10.57"
               error={errors.totalNetWt}
+              preventNegative
+              maxDecimals={3}
+              maxIntegerDigits={10}
             />
           </div>
 
