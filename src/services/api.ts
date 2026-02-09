@@ -445,6 +445,7 @@ export const pendingOrderAPI = {
     followUpMsg: string;
     nextFollowUpDate: string;
     status?: string;
+    remark?: string;
   }) => {
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.ADD_FOLLOW_UP}`,
@@ -601,6 +602,7 @@ export const pendingMaterialAPI = {
     followUpMsg: string;
     nextFollowUpDate: string;
     status: string;
+    remark?: string;
   }) => {
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.ADD_FOLLOW_UP}`,
@@ -755,6 +757,7 @@ export const newOrderAPI = {
     followUpMsg: string;
     nextFollowUpDate: string;
     status: string;
+    remark?: string;
   }) => {
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.ADD_FOLLOW_UP}`,

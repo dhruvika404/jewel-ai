@@ -58,7 +58,6 @@ export function PendingMaterialModal({
     totalNetWt: "",
     nextFollowUpDate: "",
     status: "pending",
-    remark: "",
   });
   const [spSearchQuery, setSpSearchQuery] = useState("");
   const debouncedSpSearchQuery = useDebounce(spSearchQuery, 500);
@@ -103,7 +102,6 @@ export function PendingMaterialModal({
         totalNetWt: material.totalNetWt || "",
         nextFollowUpDate: formatDateForInput(material.nextFollowUpDate),
         status: material.status || "pending",
-        remark: material.remark || "",
       });
     } else {
       setFormData({
@@ -118,7 +116,6 @@ export function PendingMaterialModal({
         totalNetWt: "",
         nextFollowUpDate: "",
         status: "pending",
-        remark: "",
       });
     }
     setErrors({});
@@ -137,7 +134,6 @@ export function PendingMaterialModal({
       totalNetWt: "",
       nextFollowUpDate: "",
       status: "pending",
-      remark: "",
     });
     setErrors({});
   };
@@ -428,35 +424,26 @@ export function PendingMaterialModal({
                 }
               }}
               error={errors.nextFollowUpDate}
+              disabled={!!material}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(val) =>
-                  setFormData({ ...formData, status: val })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Input
-              id="remark"
-              label="Remark"
-              value={formData.remark}
-              onChange={(e) =>
-                setFormData({ ...formData, remark: e.target.value })
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(val) =>
+                setFormData({ ...formData, status: val })
               }
-              placeholder="Enter remark"
-            />
+              disabled={!!material}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <DialogFooter>

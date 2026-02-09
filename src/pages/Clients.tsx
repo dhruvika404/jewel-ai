@@ -55,7 +55,9 @@ interface Client {
   newOrder?: FollowUpSummary;
   status?: string;
 }
-
+interface Remark {
+  remarkMsg: string;
+}
 interface FollowUpSummary {
   uuid: string;
   clientCode: string;
@@ -63,7 +65,7 @@ interface FollowUpSummary {
   nextFollowUpDate: string;
   lastFollowUpDate: string;
   lastFollowUpMsg: string;
-  remark?: string;
+  remarks?: Remark[]; 
 }
 interface SalesPerson {
   userCode: string;
@@ -383,6 +385,7 @@ export default function Clients() {
   const totalPages = Math.ceil(totalItems / pageSize);
 
   const FollowUpCell = ({ data }: { data?: FollowUpSummary }) => {
+    const remarkText = data?.remarks?.[0]?.remarkMsg || "-";
     const isTodayTaken = searchParams.get("todayTakenFollowUp") === "true";
     if (!data || (data.status === "completed" && !isTodayTaken))
       return <span className="text-gray-400 text-xs">-</span>;
@@ -434,11 +437,11 @@ export default function Clients() {
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="text-sm font-medium text-gray-700 line-clamp-1 cursor-default">
-                Remark: <span className="text-gray-800 font-normal">{data.remark}</span>
+                Remark: <span className="text-gray-800 font-normal">{remarkText}</span>
               </span>
             </TooltipTrigger>
             <TooltipContent>
-              <p className="max-w-[300px] break-words">Remark: {data.remark}</p>
+              <p className="max-w-[300px] break-words">Remark: {remarkText}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

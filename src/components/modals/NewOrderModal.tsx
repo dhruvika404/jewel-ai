@@ -23,7 +23,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
-import { Textarea } from "@/components/ui/textarea";
 import { formatDateForInput } from "@/lib/utils";
 
 interface NewOrderModalProps {
@@ -54,7 +53,6 @@ export function NewOrderModal({
     lastOrderDate: "",
     nextFollowUpDate: "",
     status: "pending",
-    remark: "",
   });
   const [spSearchQuery, setSpSearchQuery] = useState("");
   const debouncedSpSearchQuery = useDebounce(spSearchQuery, 500);
@@ -94,7 +92,6 @@ export function NewOrderModal({
         lastOrderDate: formatDateForInput(order.lastOrderDate),
         nextFollowUpDate: formatDateForInput(order.nextFollowUpDate),
         status: order.status || "pending",
-        remark: order.remark || "",
       });
     } else {
       setFormData({
@@ -103,8 +100,7 @@ export function NewOrderModal({
         lastSaleDate: "",
         lastOrderDate: "",
         nextFollowUpDate: "",
-        status: "pending",
-        remark: "",
+        status: "pending"
       });
     }
     setErrors({});
@@ -118,7 +114,6 @@ export function NewOrderModal({
       lastOrderDate: "",
       nextFollowUpDate: "",
       status: "pending",
-      remark: "",
     });
     setErrors({});
   };
@@ -306,6 +301,7 @@ export function NewOrderModal({
                   }
                 }}
                 error={errors.nextFollowUpDate}
+                disabled={!!order}
               />
             </div>
             <div className="space-y-2">
@@ -315,6 +311,7 @@ export function NewOrderModal({
                 onValueChange={(val) =>
                   setFormData({ ...formData, status: val })
                 }
+                disabled={!!order}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
@@ -325,20 +322,6 @@ export function NewOrderModal({
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="remark">Remark</Label>
-            <Textarea
-              id="remark"
-              value={formData.remark}
-              onChange={(e) =>
-                setFormData({ ...formData, remark: e.target.value })
-              }
-              placeholder="Enter any remarks or notes"
-              rows={3}
-              maxLength={255}
-            />
           </div>
 
           <DialogFooter>

@@ -36,13 +36,13 @@ import {
 } from "@/components/ui/table";
 import TablePagination from "@/components/ui/table-pagination";
 import { Badge } from "@/components/ui/badge";
-import { FollowUpModal } from "@/components/modals/FollowUpModal";
+import { AddFollowUpModal } from "@/components/modals/AddFollowUpModal";
 import { ImportModal } from "@/components/modals/ImportModal";
 import {
   Download,
   Loader2,
   Upload,
-  Pencil,
+  Plus,
   Trash2,
   ArrowUpDown,
   ArrowUp,
@@ -213,9 +213,8 @@ export default function Followups() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
-  const [editingType, setEditingType] = useState<FollowupType>("new-order");
+  const [showAddFollowUpModal, setShowAddFollowUpModal] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<FollowupRecord | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingItem, setDeletingItem] = useState<FollowupRecord | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -231,6 +230,7 @@ export default function Followups() {
   const [remarkHistoryOpen, setRemarkHistoryOpen] = useState(false);
   const [selectedRemarkItem, setSelectedRemarkItem] =
     useState<FollowupRecord | null>(null);
+  const [remarkRecord, setRemarkRecord] = useState<FollowupRecord | null>(null);
 
   const toggleSelection = (id: string) => {
     const newSelected = new Set(selectedItems);
@@ -298,7 +298,8 @@ export default function Followups() {
   };
 
   const handleBulkRemark = async () => {
-    if (selectedItems.size === 0 || !bulkRemarkText.trim()) return;
+    if ((selectedItems.size === 0 && !remarkRecord) || !bulkRemarkText.trim())
+      return;
     setIsBulkProcessing(true);
     try {
       const entityTypeMap: Record<
@@ -311,9 +312,17 @@ export default function Followups() {
         "cad-order": "cadOrders",
       };
 
-      const remarks = Array.from(selectedItems)
-        .map((id) => {
-          const item = followups.find((f) => f.id === id);
+      const itemsToProcess =
+        selectedItems.size > 0
+          ? Array.from(selectedItems)
+              .map((id) => followups.find((f) => f.id === id))
+              .filter((item): item is FollowupRecord => !!item)
+          : remarkRecord
+            ? [remarkRecord]
+            : [];
+
+      const remarks = itemsToProcess
+        .map((item) => {
           if (!item) return null;
 
           const originalData = (item as any).originalData || item;
@@ -327,25 +336,28 @@ export default function Followups() {
             remarkMsg: bulkRemarkText,
             salesExecCode: salesExecCode as string,
             clientCode,
-            entityType: entityTypeMap[followupType],
+            entityType: entityTypeMap[item.type],
             entityId: item.id,
           };
         })
-        .filter(
-          (remark): remark is NonNullable<typeof remark> => remark !== null,
-        );
+        .filter(Boolean);
 
-      const response = await remarkAPI.createBulk({ remarks });
+      const response = await remarkAPI.createBulk({ remarks: remarks as any });
 
       if (response.success || response.data) {
-        toast.success(`Remarks added successfully to ${remarks.length} items`);
+        toast.success(
+          `Remark added successfully to ${itemsToProcess.length} record${itemsToProcess.length !== 1 ? "s" : ""}`,
+        );
         setBulkRemarkModalOpen(false);
         setBulkRemarkText("");
         setSelectedItems(new Set());
+        setRemarkRecord(null);
         loadFollowupData();
       }
     } catch (e: any) {
-      toast.error(e.message || "Failed to add remarks to selected items");
+      toast.error(
+        e.message || "Failed to add remark to selected records"
+      );
     } finally {
       setIsBulkProcessing(false);
     }
@@ -397,6 +409,8 @@ export default function Followups() {
       setIsBulkProcessing(false);
     }
   };
+
+
   const MANUAL_SORT_COLUMNS = [
     "noOrderSince",
     "pendingSince",
@@ -921,22 +935,23 @@ export default function Followups() {
       )
     : filteredFollowups;
 
-  const isInitialMount = useRef(true);
-
   useEffect(() => {
+    const urlStartDate = searchParams.get("startDate");
+    const urlEndDate = searchParams.get("endDate");
     const hasUrlParams =
-      searchParams.get("startDate") ||
+      urlStartDate ||
       searchParams.get("todayDueFollowUp") ||
       searchParams.get("todayCompletedFollowUp") ||
       searchParams.get("sevenDayPendingFollowUp");
 
-    if (hasUrlParams && isInitialMount.current) {
-      isInitialMount.current = false;
+    if (hasUrlParams) {
+      if (urlStartDate) {
+        setDateRange({
+          from: new Date(urlStartDate),
+          to: urlEndDate ? new Date(urlEndDate) : new Date(urlStartDate),
+        });
+      }
       return;
-    }
-
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
     }
 
     setSalesPersonFilter("all");
@@ -955,7 +970,7 @@ export default function Followups() {
     setBulkRemarkText("");
     setBulkStatusValue("completed");
     loadFollowupData({ skipAllFilters: true });
-  }, [followupType]);
+  }, [followupType, searchParams.toString()]);
 
   useEffect(() => {
     setHeader({
@@ -1061,15 +1076,18 @@ export default function Followups() {
     }
   };
 
-  const handleEditClick = (followup: FollowupRecord) => {
-    setEditingItem(
-      followup.type !== "cad-order" ? (followup as any).originalData : null,
-    );
+  const handleOpenAddFollowUp = (record: FollowupRecord) => {
+    setSelectedRecord(record);
+    setShowAddFollowUpModal(true);
+  };
 
-    if (followup.type !== "cad-order") {
-      setEditingType(followup.type);
-      setShowFollowUpModal(true);
-    }
+  const handleCloseAddFollowUp = () => {
+    setShowAddFollowUpModal(false);
+    setSelectedRecord(null);
+  };
+
+  const handleSubmitFollowUp = () => {
+    loadFollowupData();
   };
 
   const handleOpenDelete = (followup: FollowupRecord) => {
@@ -1108,11 +1126,7 @@ export default function Followups() {
     }
   };
 
-  const handleModalSuccess = () => {
-    loadFollowupData();
-    setShowFollowUpModal(false);
-    setEditingItem(null);
-  };
+
 
   return (
     <div className="bg-gray-50">
@@ -1253,7 +1267,7 @@ export default function Followups() {
                       <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                         Client Code
                       </TableHead>
-                      <TableHead className="font-medium text-gray-700 sticky left-[150px] z-30 bg-gray-50 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
+                      <TableHead className="font-medium text-gray-700 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
                         Client Name
                       </TableHead>
                     </>
@@ -1310,7 +1324,7 @@ export default function Followups() {
                         {getSortIcon("nextFollowUpDate")}
                       </div>
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[180px] min-w-[180px] max-w-[180px]">
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
                       Remark
                     </TableHead>
                   </>
@@ -1327,14 +1341,14 @@ export default function Followups() {
                 )}
                 {followupType === "pending-order" && (
                   <>
-                    <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
-                      Order No
-                    </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky left-[170px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                    <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                       Client Code
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky left-[270px] z-30 bg-gray-50 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
+                    <TableHead className="font-medium text-gray-700 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
                       Client Name
+                    </TableHead>
+                    <TableHead className="font-medium text-gray-700 w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
+                      Order No
                     </TableHead>
                     <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
                       Sales Executive
@@ -1387,7 +1401,7 @@ export default function Followups() {
                         {getSortIcon("nextFollowUpDate")}
                       </div>
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[200px] min-w-[200px] max-w-[200px]">
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
                       Remark
                     </TableHead>
                     <TableHead className="font-medium text-gray-700 sticky right-[100px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
@@ -1400,14 +1414,14 @@ export default function Followups() {
                 )}
                 {followupType === "pending-material" && (
                   <>
-                    <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
-                      Order No
-                    </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky left-[170px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                    <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                       Client Code
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky left-[270px] z-30 bg-gray-50 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
+                    <TableHead className="font-medium text-gray-700 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
                       Client Name
+                    </TableHead>
+                    <TableHead className="font-medium text-gray-700 w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
+                      Order No
                     </TableHead>
                     <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
                       Sales Executive
@@ -1454,7 +1468,7 @@ export default function Followups() {
                         {getSortIcon("nextFollowupDate")}
                       </div>
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[200px] min-w-[200px] max-w-[200px]">
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
                       Remark
                     </TableHead>
                     <TableHead className="font-medium text-gray-700 sticky right-[100px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
@@ -1527,7 +1541,7 @@ export default function Followups() {
                               {fu.userCode}
                             </div>
                           </TableCell>
-                          <TableCell className="align-center sticky left-[150px] z-10 bg-white group-hover:bg-gray-50 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
+                          <TableCell className="align-center w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
                                 {fu.name?.charAt(0) ||
@@ -1594,21 +1608,19 @@ export default function Followups() {
                             {formatDisplayDate(fu.nextFollowupDate)}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center border-b border-gray-200 w-[180px] min-w-[180px] max-w-[180px]">
-                          <div
-                            className="text-sm text-gray-900 truncate cursor-pointer hover:text-primary hover:underline transition-colors"
-                            title={
-                              fu.remark ? "Click to view remark history" : ""
-                            }
-                            onClick={() => {
-                              if (fu.remark) {
+                        <TableCell className="align-center border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary"
+                              onClick={() => {
                                 setSelectedRemarkItem(fu);
                                 setRemarkHistoryOpen(true);
-                              }
-                            }}
-                          >
-                            {fu.remark || "-"}
-                          </div>
+                              }}
+                            >
+                              View
+                            </Button>
+                       
                         </TableCell>
                       </>
                     )}
@@ -1628,16 +1640,16 @@ export default function Followups() {
                           </Badge>
                         </TableCell>
                         <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
-                          <div className="flex items-center">
+                          <div className="flex items-center gap-2">
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                                  title="Edit"
-                                  onClick={() => handleEditClick(fu)}
+                                  className="h-6 w-6 border border-border hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                                  title="Add Follow-up"
+                                  onClick={() => handleOpenAddFollowUp(fu)}
                                   disabled={selectedItems.size > 0}
                                 >
-                                  <Pencil className="h-4 w-4" />
+                                  <Plus className="h-4 w-4" />
                                 </Button>
                                 {isAdmin && (
                                   <Button
@@ -1657,20 +1669,12 @@ export default function Followups() {
                     )}
                     {fu.type === "pending-order" && (
                       <>
-                        <TableCell className="align-center sticky left-[50px] z-10 bg-white group-hover:bg-gray-50 w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
-                          <div
-                            className="text-sm font-medium text-gray-900 truncate"
-                            title={fu.orderNo}
-                          >
-                            {fu.orderNo}
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium text-gray-900 align-center sticky left-[170px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                        <TableCell className="font-medium text-gray-900 align-center sticky left-[50px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <div className="truncate max-w-[80px]" title={fu.userCode}>
                             {fu.userCode}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center sticky left-[270px] z-10 bg-white group-hover:bg-gray-50 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
+                        <TableCell className="align-center w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
                               {fu.name?.charAt(0) ||
@@ -1683,6 +1687,14 @@ export default function Followups() {
                             >
                               {fu.name || "N/A"}
                             </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="align-center w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
+                          <div
+                            className="text-sm font-medium text-gray-900 truncate"
+                            title={fu.orderNo}
+                          >
+                            {fu.orderNo}
                           </div>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
@@ -1728,21 +1740,19 @@ export default function Followups() {
                             {formatDisplayDate(fu.nextFollowupDate)}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center border-b border-gray-200 w-[200px] min-w-[200px] max-w-[200px]">
-                          <div
-                            className="text-sm text-gray-900 truncate cursor-pointer hover:text-primary hover:underline transition-colors"
-                            title={
-                              fu.remark ? "Click to view remark history" : ""
-                            }
-                            onClick={() => {
-                              if (fu.remark) {
+                        <TableCell className="align-center border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary"
+                              onClick={() => {
                                 setSelectedRemarkItem(fu);
                                 setRemarkHistoryOpen(true);
-                              }
-                            }}
-                          >
-                            {fu.remark || "-"}
-                          </div>
+                              }}
+                            >
+                              View
+                            </Button>
+                         
                         </TableCell>
                         <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <Badge
@@ -1757,16 +1767,16 @@ export default function Followups() {
                           </Badge>
                         </TableCell>
                         <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
-                          <div className="flex items-center">
+                          <div className="flex items-center gap-2">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
-                              title="Edit"
-                              onClick={() => handleEditClick(fu)}
+                              className="h-6 w-6 border border-border hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                              title="Add Follow-up"
+                              onClick={() => handleOpenAddFollowUp(fu)}
                               disabled={selectedItems.size > 0}
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Plus className="h-4 w-4" />
                             </Button>
                             {isAdmin && (
                               <Button
@@ -1786,20 +1796,12 @@ export default function Followups() {
                     )}
                     {fu.type === "pending-material" && (
                       <>
-                        <TableCell className="align-center sticky left-[50px] z-10 bg-white group-hover:bg-gray-50 w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
-                          <div
-                            className="text-sm text-gray-900 truncate"
-                            title={fu.orderNo}
-                          >
-                            {fu.orderNo}
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium text-gray-900 align-center sticky left-[170px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                        <TableCell className="font-medium text-gray-900 align-center sticky left-[50px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <div className="truncate max-w-[80px]" title={fu.userCode}>
                             {fu.userCode}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center sticky left-[270px] z-10 bg-white group-hover:bg-gray-50 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
+                        <TableCell className="align-center w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
                               {fu.name?.charAt(0) ||
@@ -1812,6 +1814,14 @@ export default function Followups() {
                             >
                               {fu.name || "N/A"}
                             </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="align-center w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
+                          <div
+                            className="text-sm text-gray-900 truncate"
+                            title={fu.orderNo}
+                          >
+                            {fu.orderNo}
                           </div>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
@@ -1863,21 +1873,19 @@ export default function Followups() {
                             {formatDisplayDate(fu.nextFollowupDate)}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center border-b border-gray-200 w-[200px] min-w-[200px] max-w-[200px]">
-                          <div
-                            className="text-sm text-gray-900 truncate cursor-pointer hover:text-primary hover:underline transition-colors"
-                            title={
-                              fu.remark ? "Click to view remark history" : ""
-                            }
-                            onClick={() => {
-                              if (fu.remark) {
+                        <TableCell className="align-center border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary"
+                              onClick={() => {
                                 setSelectedRemarkItem(fu);
                                 setRemarkHistoryOpen(true);
-                              }
-                            }}
-                          >
-                            {fu.remark || "-"}
-                          </div>
+                              }}
+                            >
+                              View
+                            </Button>
+                        
                         </TableCell>
                         <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <Badge
@@ -1892,16 +1900,16 @@ export default function Followups() {
                           </Badge>
                         </TableCell>
                         <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
-                          <div className="flex items-center">
+                          <div className="flex items-center gap-2">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
-                              title="Edit"
-                              onClick={() => handleEditClick(fu)}
+                              className="h-6 w-6 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                              title="Add Follow-up"
+                              onClick={() => handleOpenAddFollowUp(fu)}
                               disabled={selectedItems.size > 0}
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Plus className="h-4 w-4" />
                             </Button>
                             {isAdmin && (
                               <Button
@@ -1931,12 +1939,12 @@ export default function Followups() {
                              <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
-                              title="Edit"
-                              onClick={() => handleEditClick(fu)}
+                              className="h-6 w-6 border border-border hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                              title="Add Follow-up"
+                              onClick={() => handleOpenAddFollowUp(fu)}
                               disabled={selectedItems.size > 0}
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Plus className="h-4 w-4" />
                             </Button>
                             {isAdmin && (
                               <Button
@@ -1977,16 +1985,16 @@ export default function Followups() {
           </div>
         </Card>
 
-        <FollowUpModal
-          isOpen={showFollowUpModal}
-          onClose={() => {
-            setShowFollowUpModal(false);
-            setEditingItem(null);
-          }}
-          onSuccess={handleModalSuccess}
-          type={editingType as any}
-          data={editingItem}
-        />
+        {selectedRecord && selectedRecord.type !== "cad-order" && (
+          <AddFollowUpModal
+            isOpen={showAddFollowUpModal}
+            onClose={handleCloseAddFollowUp}
+            recordType={selectedRecord.type}
+            recordId={selectedRecord.id}
+            clientName={selectedRecord.name}
+            onSuccess={handleSubmitFollowUp}
+          />
+        )}
 
         <DeleteModal
           isOpen={deleteModalOpen || showBulkDeleteConfirm}

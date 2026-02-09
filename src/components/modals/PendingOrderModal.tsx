@@ -46,7 +46,6 @@ export function PendingOrderModal({
     grossWtTotal: "",
     totalOrderPcs: "",
     pendingPcs: "",
-    remark: "",
     nextFollowUpDate: "",
     status: "pending",
   });
@@ -90,7 +89,6 @@ export function PendingOrderModal({
         grossWtTotal: order.grossWtTotal?.toString() || "",
         totalOrderPcs: order.totalOrderPcs?.toString() || "",
         pendingPcs: order.pendingPcs?.toString() || "",
-        remark: order.remark || "",
         nextFollowUpDate: formatDateForInput(order.nextFollowUpDate),
         status: order.status || "pending",
       });
@@ -103,7 +101,6 @@ export function PendingOrderModal({
         grossWtTotal: "",
         totalOrderPcs: "",
         pendingPcs: "",
-        remark: "",
         nextFollowUpDate: "",
         status: "pending",
       });
@@ -120,7 +117,6 @@ export function PendingOrderModal({
       grossWtTotal: "",
       totalOrderPcs: "",
       pendingPcs: "",
-      remark: "",
       nextFollowUpDate: "",
       status: "pending",
     });
@@ -183,7 +179,6 @@ export function PendingOrderModal({
         grossWtTotal: formData.grossWtTotal,
         totalOrderPcs: Number(formData.totalOrderPcs),
         pendingPcs: Number(formData.pendingPcs),
-        remark: formData.remark,
         nextFollowUpDate: formData.nextFollowUpDate,
       };
 
@@ -359,6 +354,7 @@ export function PendingOrderModal({
                 }
               }}
               error={errors.nextFollowUpDate}
+              disabled={!!order}
             />
             <Input
               id="grossWtTotal"
@@ -377,15 +373,6 @@ export function PendingOrderModal({
               preventNegative
               maxDecimals={3}
               maxIntegerDigits={10}
-            />
-            <Input
-              id="remark"
-              label="Remark"
-              value={formData.remark}
-              onChange={(e) =>
-                setFormData({ ...formData, remark: e.target.value })
-              }
-              placeholder="Enter any remarks or notes"
             />
           </div>
 
