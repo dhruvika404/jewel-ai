@@ -86,10 +86,17 @@ export function getTakenByName(lastFollowUpBy: any): string {
  */
 export function getUTCISOString(date: Date | string | number, position: 'start' | 'end'): string {
   const d = new Date(date);
+  
+  const year = d.getFullYear();
+  const month = d.getMonth();
+  const day = d.getDate();
+  
+  const utcDate = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+  
   if (position === 'start') {
-    d.setUTCHours(0, 0, 0, 0);
+    utcDate.setUTCHours(0, 0, 0, 0);
   } else {
-    d.setUTCHours(23, 59, 59, 999);
+    utcDate.setUTCHours(23, 59, 59, 999);
   }
-  return d.toISOString();
+  return utcDate.toISOString();
 }

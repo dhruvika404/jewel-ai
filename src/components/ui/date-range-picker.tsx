@@ -40,16 +40,19 @@ export function DatePickerWithRange({
 
   const handleClear = () => {
     setTempDate(undefined);
-    setDate(undefined);
+    setMonth(new Date());
   };
 
   const handleToday = () => {
     const today = new Date();
+    // Normalize to midnight local time
+    today.setHours(0, 0, 0, 0);
+    const normalizedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     setTempDate({
-      from: today,
-      to: today,
+      from: normalizedToday,
+      to: normalizedToday,
     });
-    setMonth(today);
+    setMonth(normalizedToday);
   };
 
   return (

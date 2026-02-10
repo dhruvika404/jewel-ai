@@ -186,9 +186,23 @@ export default function Followups() {
     const from = searchParams.get("startDate");
     const to = searchParams.get("endDate");
     if (from) {
+      const fromDate = new Date(from);
+      const toDate = to ? new Date(to) : fromDate;
+      
+      const normalizedFrom = new Date(
+        fromDate.getUTCFullYear(),
+        fromDate.getUTCMonth(),
+        fromDate.getUTCDate()
+      );
+      const normalizedTo = new Date(
+        toDate.getUTCFullYear(),
+        toDate.getUTCMonth(),
+        toDate.getUTCDate()
+      );
+      
       return {
-        from: new Date(from),
-        to: to ? new Date(to) : new Date(from),
+        from: normalizedFrom,
+        to: normalizedTo,
       };
     }
     return undefined;
@@ -650,10 +664,10 @@ export default function Followups() {
         const urlStartDate = searchParams.get("startDate");
         const urlEndDate = searchParams.get("endDate");
         if (urlStartDate) {
-          params.startDate = getUTCISOString(urlStartDate, 'start');
+          params.startDate = urlStartDate;
         }
         if (urlEndDate) {
-          params.endDate = getUTCISOString(urlEndDate, 'end');
+          params.endDate = urlEndDate;
         }
       }
       if (debouncedSearchTerm) {
