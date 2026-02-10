@@ -182,31 +182,7 @@ export default function Followups() {
     searchParams.get("search") || "",
   );
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
-    const from = searchParams.get("startDate");
-    const to = searchParams.get("endDate");
-    if (from) {
-      const fromDate = new Date(from);
-      const toDate = to ? new Date(to) : fromDate;
-      
-      const normalizedFrom = new Date(
-        fromDate.getUTCFullYear(),
-        fromDate.getUTCMonth(),
-        fromDate.getUTCDate()
-      );
-      const normalizedTo = new Date(
-        toDate.getUTCFullYear(),
-        toDate.getUTCMonth(),
-        toDate.getUTCDate()
-      );
-      
-      return {
-        from: normalizedFrom,
-        to: normalizedTo,
-      };
-    }
-    return undefined;
-  });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [dateRangeFilter, setDateRangeFilter] = useState("all");
   const [pendingRangeFilter, setPendingRangeFilter] = useState("all");
   const [daysFilter, setDaysFilter] = useState("all");
@@ -959,12 +935,6 @@ export default function Followups() {
       searchParams.get("sevenDayPendingFollowUp");
 
     if (hasUrlParams) {
-      if (urlStartDate) {
-        setDateRange({
-          from: new Date(urlStartDate),
-          to: urlEndDate ? new Date(urlEndDate) : new Date(urlStartDate),
-        });
-      }
       return;
     }
 
@@ -1918,7 +1888,7 @@ export default function Followups() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                              className="h-6 w-6 border border-border hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
                               title="Add Follow-up"
                               onClick={() => handleOpenAddFollowUp(fu)}
                               disabled={selectedItems.size > 0}

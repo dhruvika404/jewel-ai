@@ -45,7 +45,7 @@ export function RemarkHistoryModal({
   const [remarkHistory, setRemarkHistory] = useState<RemarkItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const pageSize = 5;
+  const pageSize = 10;
 
   useEffect(() => {
     if (isOpen && followUpTypeId) {
