@@ -55,12 +55,10 @@ export function CreateTaskModal({
   const debouncedClientSearchQuery = useDebounce(clientSearchQuery, 500);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
-    taskType: "",
+    taskType: "new-order",
     clientCode: "",
     salesExecCode: user?.userCode || "",
-    taskDetails: "",
     nextFollowUpDate: "",
-    remarks: "",
     orderNo: "",
     orderDate: "",
     grossWtTotal: "",
@@ -126,12 +124,10 @@ export function CreateTaskModal({
 
   const resetForm = () => {
     setFormData({
-      taskType: "",
+      taskType: "new-order",
       clientCode: "",
       salesExecCode: user?.userCode || "",
-      taskDetails: "",
       nextFollowUpDate: "",
-      remarks: "",
       orderNo: "",
       orderDate: "",
       grossWtTotal: "",
@@ -172,7 +168,8 @@ export function CreateTaskModal({
       if (!formData?.orderNo) newErrors.orderNo = "Order No is required";
       if (!formData?.totalOrderPcs)
         newErrors.totalOrderPcs = "Total Order Pcs is required";
-      if (!formData?.pendingPcs) newErrors.pendingPcs = "Pending Pcs is required";
+      if (!formData?.pendingPcs)
+        newErrors.pendingPcs = "Pending Pcs is required";
 
       if (formData.totalOrderPcs && formData.pendingPcs) {
         const totalPcs = Number(formData.totalOrderPcs);
@@ -226,9 +223,6 @@ export function CreateTaskModal({
           orderNo: formData?.orderNo,
           orderDate: formData?.orderDate,
           grossWtTotal: formData?.grossWtTotal,
-          remark: formData?.remarks
-            ? `${formData?.remarks} | ${formData?.taskDetails}`
-            : formData?.taskDetails,
           nextFollowUpDate: formData?.nextFollowUpDate,
           totalOrderPcs: Number(formData?.totalOrderPcs),
           pendingPcs: Number(formData?.pendingPcs),
@@ -639,11 +633,12 @@ export function CreateTaskModal({
               }))}
               value={formData?.clientCode}
               onSelect={(val) => {
-                const selectedClient = clients.find(c => c.userCode === val);
-                setFormData({ 
-                  ...formData, 
+                const selectedClient = clients.find((c) => c.userCode === val);
+                setFormData({
+                  ...formData,
                   clientCode: val,
-                  salesExecCode: selectedClient?.salesExecCode || formData.salesExecCode
+                  salesExecCode:
+                    selectedClient?.salesExecCode || formData.salesExecCode,
                 });
                 if (errors.clientCode) setErrors({ ...errors, clientCode: "" });
               }}
@@ -673,40 +668,16 @@ export function CreateTaskModal({
                 placeholder="Select sales executive"
                 searchPlaceholder="Search sales executive..."
                 className="w-full"
-                disabled={!!formData.clientCode && !!clients.find(c => c.userCode === formData.clientCode)?.salesExecCode}
+                disabled={
+                  !!formData.clientCode &&
+                  !!clients.find((c) => c.userCode === formData.clientCode)
+                    ?.salesExecCode
+                }
               />
             )}
 
             {renderTaskSpecificFields()}
-
-            <Input
-              id="remarks"
-              label="Remarks"
-              value={formData?.remarks}
-              onChange={(e) =>
-                setFormData({ ...formData, remarks: e?.target?.value })
-              }
-              placeholder="Additional remarks"
-              containerClassName={
-                !formData?.taskType || formData?.taskType === "new-order"
-                  ? "col-span-2"
-                  : ""
-              }
-              maxLength={255}
-            />
           </div>
-
-          <Textarea
-            id="taskDetails"
-            label="Task Details"
-            value={formData?.taskDetails}
-            onChange={(e) => {
-              setFormData({ ...formData, taskDetails: e?.target?.value });
-            }}
-            placeholder="Enter task details and follow-up notes..."
-            rows={3}
-            maxLength={255}
-          />
 
           <DialogFooter>
             <Button

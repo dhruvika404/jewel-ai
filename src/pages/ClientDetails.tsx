@@ -27,24 +27,7 @@ import { PendingMaterialModal } from "@/components/modals/PendingMaterialModal";
 import { PendingOrderModal } from "@/components/modals/PendingOrderModal";
 import { NewOrderModal } from "@/components/modals/NewOrderModal";
 import { DeleteModal } from "@/components/modals/DeleteModal";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { AddFollowUpModal } from "@/components/modals/AddFollowUpModal";
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDisplayDate } from "@/lib/utils";
@@ -74,7 +57,6 @@ export default function ClientDetails() {
   const { setHeader, clearHeader } = usePageHeader();
   const { user } = useAuth();
   const isAdmin = user?.role !== "sales_executive";
-
   const [client, setClient] = useState<Client | null>(
     location.state?.client || null,
   );
@@ -93,14 +75,7 @@ export default function ClientDetails() {
   const [loadingNOFollowUps, setLoadingNOFollowUps] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    followUpMsg: "",
-    nextFollowUpDate: "",
-    followUpStatus: "pending",
-    remark: "",
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [activeRecordId, setActiveRecordId] = useState<string>("");
   const [showPMModal, setShowPMModal] = useState(false);
   const [showPOModal, setShowPOModal] = useState(false);
   const [showNOModal, setShowNOModal] = useState(false);
@@ -281,116 +256,36 @@ export default function ClientDetails() {
     refreshData();
   }, [client]);
 
-  const clearModalState = () => {
-    setFormData({
-      followUpMsg: "",
-      nextFollowUpDate: "",
-      followUpStatus: "pending",
-      remark: "",
-    });
-    setErrors({});
-    setActiveTab(null);
-  };
-
   const handleOpenModal = (type: TabType) => {
-    setActiveTab(type);
-    setFormData({
-      followUpMsg: "",
-      nextFollowUpDate: "",
-      followUpStatus: "pending",
-      remark: "",
-    });
-    setErrors({});
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    if (!submitting) {
-      setIsModalOpen(false);
-      clearModalState();
-    }
-  };
-
-  const onModalSubmit = async () => {
-    if (!activeTab || !client) return;
-
     const items =
-      activeTab === "pending-material"
+      type === "pending-material"
         ? materials
-        : activeTab === "pending-order"
+        : type === "pending-order"
           ? pendingOrders
           : newOrders;
 
     if (items.length === 0) {
       toast.error(
-        `No active ${activeTab.replace(
-          "-",
-          " ",
-        )} items found to attach follow-up to.`,
+        `No active ${type.replace("-", " ")} items found to attach follow-up to.`,
       );
       return;
     }
 
     const recordId = items[0].uuid || items[0].id;
-
     if (!recordId) {
       toast.error("No valid record found");
       return;
     }
 
-    const newErrors: Record<string, string> = {};
-    if (!formData.followUpMsg) newErrors.followUpMsg = "Remark is required";
-    if (!formData.nextFollowUpDate)
-      newErrors.nextFollowUpDate = "Next Date is required";
+    setActiveTab(type);
+    setActiveRecordId(recordId);
+    setIsModalOpen(true);
+  };
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      let response: any;
-      if (activeTab === "pending-material") {
-        response = await pendingMaterialAPI.addFollowUp({
-         pendingMaterialRecordId: recordId,
-          followUpMsg: formData.followUpMsg,
-          nextFollowUpDate: formData.nextFollowUpDate,
-          status: formData.followUpStatus,
-          remark: formData.remark,
-        });
-      } else if (activeTab === "pending-order") {
-        response = await pendingOrderAPI.addFollowUp({
-          pendingOrderId: recordId,
-          followUpMsg: formData.followUpMsg,
-          nextFollowUpDate: formData.nextFollowUpDate,
-          status: formData.followUpStatus,
-            remark: formData.remark,
-        });
-      } else {
-        response = await newOrderAPI.addFollowUp({
-          newOrderRecordId: recordId as string,
-          followUpMsg: formData.followUpMsg,
-          nextFollowUpDate: formData.nextFollowUpDate,
-          status: formData.followUpStatus,
-            remark: formData.remark,
-        });
-      }
-
-      if (response && response.success === false) {
-        toast.error(response.message || "Failed to add follow-up");
-        return;
-      }
-
-      toast.success(response?.message || "Follow-up added successfully");
-      setIsModalOpen(false);
-      clearModalState();
-      refreshData();
-    } catch (e: any) {
-      toast.error(e.message || "Failed to add follow-up");
-    } finally {
-      setSubmitting(false);
-    }
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setActiveTab(null);
+    setActiveRecordId("");
   };
 
   const renderColumn = (
@@ -479,42 +374,44 @@ export default function ClientDetails() {
                     key={idx}
                     className="bg-gray-50 rounded border border-gray-200 p-3 relative group"
                   >
-                      <div className="absolute top-3 right-3 flex items-center transition-opacity">
-                        {isAdmin && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 hover:text-primary hover:bg-primary/10"
-                            onClick={() => {
-                              if (type === "pending-material") {
-                                setEditingPM(item);
-                                setShowPMModal(true);
-                              } else if (type === "pending-order") {
-                                setEditingPO(item);
-                                setShowPOModal(true);
-                              } else {
-                                setEditingNO(item);
-                                setShowNOModal(true);
-                              }
-                            }}
-                            title="Edit"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                        {isAdmin && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 hover:text-red-600 hover:bg-red-50"
-                            onClick={() => handleOpenDelete(item, type)}
-                            title="Delete"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    <div className={`flex justify-between items-start mb-3 ${isAdmin ? 'pr-14' : ''}`}>
+                    <div className="absolute top-3 right-3 flex items-center transition-opacity">
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 hover:text-primary hover:bg-primary/10"
+                          onClick={() => {
+                            if (type === "pending-material") {
+                              setEditingPM(item);
+                              setShowPMModal(true);
+                            } else if (type === "pending-order") {
+                              setEditingPO(item);
+                              setShowPOModal(true);
+                            } else {
+                              setEditingNO(item);
+                              setShowNOModal(true);
+                            }
+                          }}
+                          title="Edit"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 hover:text-red-600 hover:bg-red-50"
+                          onClick={() => handleOpenDelete(item, type)}
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                    <div
+                      className={`flex justify-between items-start mb-3 ${isAdmin ? "pr-14" : ""}`}
+                    >
                       <div className="flex min-w-0 items-center gap-2 ">
                         <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
                           {type === "pending-material"
@@ -919,125 +816,16 @@ export default function ClientDetails() {
       </div>
 
       {/* Add Follow-up Modal */}
-      <Dialog 
-        open={isModalOpen} 
-        onOpenChange={(open) => {
-          if (!open && !submitting) {
-            handleCloseModal();
-          }
-        }}
-      >
-        <DialogContent 
-          className="max-w-md"
-          onPointerDownOutside={(e) => {
-            if (submitting) {
-              e.preventDefault();
-            }
-          }}
-          onEscapeKeyDown={(e) => {
-            if (submitting) {
-              e.preventDefault();
-            }
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle>
-              Add{" "}
-              {activeTab
-                ?.replace("-", " ")
-                .replace(/\b\w/g, (l) => l.toUpperCase())}{" "}
-              Follow-up
-            </DialogTitle>
-            <DialogDescription>
-              Enter new follow-up details
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Status</Label>
-              <Select
-                value={formData.followUpStatus}
-                onValueChange={(val) =>
-                  setFormData({ ...formData, followUpStatus: val })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Input
-                id="date"
-                type="date"
-                label="Next Follow-up Date"
-                required
-                min={new Date().toISOString().split("T")[0]}
-                value={formData.nextFollowUpDate}
-                onChange={(e) => {
-                  setFormData({
-                    ...formData,
-                    nextFollowUpDate: e.target.value,
-                  });
-                  if (errors.nextFollowUpDate)
-                    setErrors({ ...errors, nextFollowUpDate: "" });
-                }}
-                error={errors.nextFollowUpDate}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Textarea
-                id="followUpMsg"
-                label="Follow-up Message"
-                required
-                value={formData.followUpMsg}
-                onChange={(e) => {
-                  setFormData({ ...formData, followUpMsg: e.target.value });
-                  if (errors.followUpMsg)
-                    setErrors({ ...errors, followUpMsg: "" });
-                }}
-                placeholder="Enter follow-up notes"
-                rows={3}
-                error={errors.followUpMsg}
-              />
-            </div>
-             <div className="space-y-2">
-                        <Textarea
-                          id="remark"
-                          label="Remark"
-                          value={formData.remark}
-                          onChange={(e) => {
-                            setFormData({ ...formData, remark: e.target.value });
-                          }}
-                          placeholder="Enter additional remarks"
-                          rows={2}
-                          maxLength={255}
-                        />
-                      </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={handleCloseModal}
-              disabled={submitting}
-            >
-              Cancel
-            </Button>
-            <Button onClick={onModalSubmit} disabled={submitting}>
-              {submitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              Save
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {activeTab && activeRecordId && (
+        <AddFollowUpModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          recordType={activeTab}
+          recordId={activeRecordId}
+          clientName={client?.name}
+          onSuccess={refreshData}
+        />
+      )}
 
       {isAdmin && (
         <>
