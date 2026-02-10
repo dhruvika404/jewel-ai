@@ -1024,6 +1024,11 @@ export default function Followups() {
     if (statusFilter !== "all") count++;
     if (sortBy) count++;
     if (selectedItems.size > 0) count++;
+    if (searchParams.get("startDate")) count++;
+    if (searchParams.get("endDate")) count++;
+    // if (searchParams.get("todayDueFollowUp") === "true") count++;
+    // if (searchParams.get("todayCompletedFollowUp") === "true") count++;
+    // if (searchParams.get("sevenDayPendingFollowUp") === "true") count++;
     return count;
   };
 
