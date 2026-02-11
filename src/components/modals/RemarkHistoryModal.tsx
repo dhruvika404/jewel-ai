@@ -4,14 +4,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Loader2, MessageSquare } from "lucide-react";
 import { remarkAPI } from "@/services/api";
-import { toast } from "sonner";
-import { Textarea } from "@/components/ui/textarea";
 import { formatDisplayDate } from "@/lib/utils";
 
 interface RemarkHistoryModalProps {

@@ -84,6 +84,8 @@ export function CreateTaskModal({
           size: 1000,
           role: "sales_executive",
           search: search,
+          shortBy: "userCode",
+          shortOrder: "ASC",
         });
         if (res?.success && res?.data?.data) {
           setSalesPersons(res.data.data);

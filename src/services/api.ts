@@ -98,6 +98,8 @@ export const salesPersonAPI = {
     size?: number;
     search?: string;
     role?: string;
+    shortBy?: string;
+    shortOrder?: string;
   }) => {
     const queryParams = new URLSearchParams(
       filterEmptyValues(params || {}, true),

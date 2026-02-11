@@ -106,6 +106,8 @@ export default function Reports() {
           size: 1000,
           role: "sales_executive",
           search: search,
+          shortBy: "userCode",
+          shortOrder: "ASC",
         });
         if (spRes.success && spRes.data?.data) {
           setSalesPersons(spRes.data.data);

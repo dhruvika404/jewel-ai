@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUTCISOString } from "@/lib/utils";
@@ -47,6 +47,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  CalendarDays,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -69,6 +70,12 @@ import { RemarkHistoryModal } from "@/components/modals/RemarkHistoryModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type FollowupType =
   | "new-order"
@@ -221,6 +228,7 @@ export default function Followups() {
   const [selectedRemarkItem, setSelectedRemarkItem] =
     useState<FollowupRecord | null>(null);
   const [remarkRecord, setRemarkRecord] = useState<FollowupRecord | null>(null);
+  const [todayTakenFilter, setTodayTakenFilter] = useState<string>("all");
 
   const toggleSelection = (id: string) => {
     const newSelected = new Set(selectedItems);
@@ -427,6 +435,8 @@ export default function Followups() {
           size: 1000,
           role: "sales_executive",
           search: search,
+          shortBy: "userCode",
+          shortOrder: "ASC",
         });
         if (spRes.success && spRes.data?.data) {
           setSalesPersons(spRes.data.data);
@@ -674,6 +684,12 @@ export default function Followups() {
         params.salesExecCode = user.userCode;
       }
 
+      if (todayTakenFilter === "today") {
+        params.startDate = getUTCISOString(new Date(), 'start');
+        params.endDate = getUTCISOString(new Date(), 'end');
+        params.todayCompletedFollowUp = true;
+      }
+
       const isManualSort = sortBy && MANUAL_SORT_COLUMNS.includes(sortBy);
 
       if (isManualSort) {
@@ -760,10 +776,12 @@ export default function Followups() {
     setSpSearchQuery("");
     setClientSearchQuery("");
     setSelectedItems(new Set());
+    setTodayTakenFilter("all");
+    setCurrentPage(1);
     navigate(`/followups/${followupType}`, {
       replace: true,
     });
-    loadFollowupData({ skipAllFilters: true });
+    // loadFollowupData({ skipAllFilters: true });
   };
 
   const handleExport = () => {
@@ -858,6 +876,7 @@ export default function Followups() {
     daysFilter,
     debouncedSearchTerm,
     dateRange,
+    todayTakenFilter,
   ]);
 
   useEffect(() => {
@@ -870,6 +889,7 @@ export default function Followups() {
     debouncedSearchTerm,
     dateRange,
     statusFilter,
+    todayTakenFilter,
   ]);
 
   const filteredFollowups = followups.filter((fu) => {
@@ -954,6 +974,7 @@ export default function Followups() {
     setBulkRemarkText("");
     setBulkStatusValue("completed");
     loadFollowupData({ skipAllFilters: true });
+    setTodayTakenFilter("all");
   }, [followupType, searchParams.toString()]);
 
   useEffect(() => {
@@ -1026,9 +1047,7 @@ export default function Followups() {
     if (selectedItems.size > 0) count++;
     if (searchParams.get("startDate")) count++;
     if (searchParams.get("endDate")) count++;
-    // if (searchParams.get("todayDueFollowUp") === "true") count++;
-    // if (searchParams.get("todayCompletedFollowUp") === "true") count++;
-    // if (searchParams.get("sevenDayPendingFollowUp") === "true") count++;
+    if (todayTakenFilter !== "all") count++;
     return count;
   };
 
@@ -1184,6 +1203,18 @@ export default function Followups() {
               className="h-9"
             />
           </div>
+          <Select value={todayTakenFilter} onValueChange={setTodayTakenFilter}>
+            <SelectTrigger className="w-[200px] h-9 bg-white">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="w-4 h-4 text-gray-400" />
+                <SelectValue placeholder="Taken Follow-ups" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Taken Follow-ups</SelectItem>
+              <SelectItem value="today">Today's Taken</SelectItem>
+            </SelectContent>
+          </Select>
 
           {selectedItems.size > 0 && (
             <div className="flex items-center gap-2">
@@ -1313,6 +1344,9 @@ export default function Followups() {
                         {getSortIcon("nextFollowUpDate")}
                       </div>
                     </TableHead>
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[200px] min-w-[200px] max-w-[200px]">
+                      Last Followup Message
+                    </TableHead>
                     <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
                       Remark
                     </TableHead>
@@ -1390,6 +1424,9 @@ export default function Followups() {
                         {getSortIcon("nextFollowUpDate")}
                       </div>
                     </TableHead>
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[200px] min-w-[200px] max-w-[200px]">
+                      Last Followup Message
+                    </TableHead>
                     <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
                       Remark
                     </TableHead>
@@ -1457,6 +1494,9 @@ export default function Followups() {
                         {getSortIcon("nextFollowupDate")}
                       </div>
                     </TableHead>
+                    <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[200px] min-w-[200px] max-w-[200px]">
+                      Last Followup Message
+                    </TableHead>
                     <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
                       Remark
                     </TableHead>
@@ -1486,10 +1526,10 @@ export default function Followups() {
                   <TableCell
                     colSpan={
                       (followupType === "new-order"
-                        ? 11
+                        ? 13
                         : followupType === "pending-order" ||
                             followupType === "pending-material"
-                          ? 13
+                          ? 15
                           : 4) + 1
                     }
                     className="text-center py-12"
@@ -1502,10 +1542,10 @@ export default function Followups() {
                   <TableCell
                     colSpan={
                       (followupType === "new-order"
-                        ? 11
+                        ? 13
                         : followupType === "pending-order" ||
                             followupType === "pending-material"
-                          ? 13
+                          ? 15
                           : 4) + 1
                     }
                     className="text-center py-8 text-muted-foreground"
@@ -1591,11 +1631,26 @@ export default function Followups() {
                             {getTakenByName(fu.lastFollowUpBy)}
                           </div>
                         </TableCell>
-
                         <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
                           <div className="text-sm text-gray-900 truncate">
                             {formatDisplayDate(fu.nextFollowupDate)}
                           </div>
+                        </TableCell>
+                        <TableCell className="align-center border-b border-gray-200 w-[200px] min-w-[200px] max-w-[200px]">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="text-sm text-gray-900 truncate cursor-default">
+                                  {(fu as any).lastFollowUpMsg || (fu as any).originalData?.lastFollowUpMsg || "-"}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-[400px]">
+                                <p className="break-words whitespace-pre-wrap">
+                                  {(fu as any).lastFollowUpMsg || (fu as any).originalData?.lastFollowUpMsg || "No followup message available"}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
                             <Button
@@ -1723,11 +1778,26 @@ export default function Followups() {
                             {getTakenByName(fu.lastFollowUpBy)}
                           </div>
                         </TableCell>
-
                         <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
                           <div className="text-sm text-gray-900 truncate">
                             {formatDisplayDate(fu.nextFollowupDate)}
                           </div>
+                        </TableCell>
+                        <TableCell className="align-center border-b border-gray-200 w-[200px] min-w-[200px] max-w-[200px]">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="text-sm text-gray-900 truncate cursor-default">
+                                  {(fu as any).lastFollowUpMsg || (fu as any).originalData?.lastFollowUpMsg || "-"}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-[400px]">
+                                <p className="break-words whitespace-pre-wrap">
+                                  {(fu as any).lastFollowUpMsg || (fu as any).originalData?.lastFollowUpMsg || "No followup message available"}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
                             <Button
@@ -1856,11 +1926,26 @@ export default function Followups() {
                             {getTakenByName(fu.lastFollowUpBy)}
                           </div>
                         </TableCell>
-
                         <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
                           <div className="text-sm text-gray-900 truncate">
                             {formatDisplayDate(fu.nextFollowupDate)}
                           </div>
+                        </TableCell>
+                        <TableCell className="align-center border-b border-gray-200 w-[200px] min-w-[200px] max-w-[200px]">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="text-sm text-gray-900 truncate cursor-default">
+                                  {(fu as any).lastFollowUpMsg || (fu as any).originalData?.lastFollowUpMsg || "-"}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-[400px]">
+                                <p className="break-words whitespace-pre-wrap">
+                                  {(fu as any).lastFollowUpMsg || (fu as any).originalData?.lastFollowUpMsg || "No followup message available"}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
                             <Button
@@ -1874,7 +1959,7 @@ export default function Followups() {
                             >
                               View
                             </Button>
-                        
+                         
                         </TableCell>
                         <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <Badge
