@@ -362,8 +362,8 @@ export default function SalesPersons() {
     if (newPassword && confirmPassword) {
       if (newPassword !== confirmPassword) {
         newErrors.confirmPassword = "Passwords do not match";
-      } else if (newPassword.length < 6) {
-        newErrors.newPassword = "Password must be at least 6 characters";
+      } else if (newPassword.length < 4) {
+        newErrors.newPassword = "Password must be at least 4 characters";
       }
     }
 
