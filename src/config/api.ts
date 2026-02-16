@@ -49,6 +49,7 @@ export const API_CONFIG = {
       STATUS: "/shared-api/status",
       DELETE_MULTIPLE: "/shared-api/delete-multiple-followups",
       DELETE_MULTIPLE_USER: "/shared-api/delete-multiple-user",
+      ASSIGN_SALESPERSON: "/shared-api/assign-salesperson",
     },
   },
 };

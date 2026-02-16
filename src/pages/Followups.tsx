@@ -229,6 +229,11 @@ export default function Followups() {
     useState<FollowupRecord | null>(null);
   const [remarkRecord, setRemarkRecord] = useState<FollowupRecord | null>(null);
   const [todayTakenFilter, setTodayTakenFilter] = useState<string>("all");
+  const [assignTaskSalesPerson, setAssignTaskSalesPerson] = useState("all");
+  const [assignableSalesPersons, setAssignableSalesPersons] = useState<
+    SalesPerson[]
+  >([]);
+  const [isAssignableSpLoading, setIsAssignableSpLoading] = useState(false);
 
   const toggleSelection = (id: string) => {
     const newSelected = new Set(selectedItems);
@@ -480,6 +485,39 @@ export default function Followups() {
     return () => clearTimeout(timer);
   }, [clientSearchQuery]);
 
+  useEffect(() => {
+    const fetchAssignableSalesPersons = async () => {
+      try {
+        setIsAssignableSpLoading(true);
+
+        const entityTypeMap: Record<FollowupType, string> = {
+          "new-order": "newOrders",
+          "pending-order": "pendingOrders",
+          "pending-material": "pendingMaterials",
+          "cad-order": "cadOrders",
+        };
+
+        const res = await sharedAPI.getAssignSalespersons({
+          entityType: entityTypeMap[followupType],
+        });
+
+        if (res.success && res.data) {
+          // Flatten assignments to get salesperson objects
+          setAssignableSalesPersons(
+            res.data.map((a: any) => a.assignSalesPerson).filter(Boolean),
+          );
+        }
+      } catch (error) {
+        console.error("Failed to fetch assignable sales persons", error);
+      } finally {
+        setIsAssignableSpLoading(false);
+      }
+    };
+
+    fetchAssignableSalesPersons();
+    setAssignTaskSalesPerson("all"); // Reset when type changes
+  }, [followupType, user, isAdmin]);
+
   const processCADOrderData = (res: any): CADOrderFollowup[] => {
     let dataArray = [];
     if (Array.isArray(res)) dataArray = res;
@@ -704,28 +742,38 @@ export default function Followups() {
         params.status = statusFilter;
       }
 
-      if (followupType === "new-order") {
-        const res = await newOrderAPI.getAll(params);
-        data = processNewOrderData(res);
-        setTotalPages(res.data?.totalPages || 1);
-        setTotalItems(res.data?.totalItems || 0);
-      } else if (followupType === "pending-order") {
-        const res = await pendingOrderAPI.getAll(params);
-        data = processPendingOrderData(res);
-        setTotalPages(res.data?.totalPages || 1);
-        setTotalItems(res.data?.totalItems || 0);
-      } else if (followupType === "pending-material") {
-        const res = await pendingMaterialAPI.getAll(params);
-        data = processPendingMaterialData(res);
-        setTotalPages(res.data?.totalPages || 1);
-        setTotalItems(res.data?.totalItems || 0);
-      } else if (followupType === "cad-order") {
-        const res = await cadOrderAPI.getAll(params);
-        data = processCADOrderData(res);
-        setTotalPages(res.data?.totalPages || 1);
-        setTotalItems(res.data?.totalItems || 0);
+      if (assignTaskSalesPerson !== "all") {
+        params.salesExecCode = assignTaskSalesPerson;
+        params.assignSalesPersonsTask = true;
       }
-      setFollowups(data);
+
+      let res;
+      if (followupType === "new-order") {
+        res = await newOrderAPI.getAll(params);
+        data = processNewOrderData(res);
+      } else if (followupType === "pending-order") {
+        res = await pendingOrderAPI.getAll(params);
+        data = processPendingOrderData(res);
+      } else if (followupType === "pending-material") {
+        res = await pendingMaterialAPI.getAll(params);
+        data = processPendingMaterialData(res);
+      } else if (followupType === "cad-order") {
+        res = await cadOrderAPI.getAll(params);
+        data = processCADOrderData(res);
+      }
+
+      if (res) {
+        if (res.success) {
+          setTotalPages(res.data?.totalPages || 1);
+          setTotalItems(res.data?.totalItems || 0);
+          setFollowups(data);
+        } else {
+          toast.error(res.message || "Failed to load data");
+          setFollowups([]);
+          setTotalItems(0);
+          setTotalPages(1);
+        }
+      }
 
       if (isManualSort && sortOrder) {
         setFollowups((currentData) => {
@@ -777,6 +825,7 @@ export default function Followups() {
     setClientSearchQuery("");
     setSelectedItems(new Set());
     setTodayTakenFilter("all");
+    setAssignTaskSalesPerson("all");
     setCurrentPage(1);
     navigate(`/followups/${followupType}`, {
       replace: true,
@@ -877,6 +926,7 @@ export default function Followups() {
     debouncedSearchTerm,
     dateRange,
     todayTakenFilter,
+    assignTaskSalesPerson,
   ]);
 
   useEffect(() => {
@@ -890,6 +940,7 @@ export default function Followups() {
     dateRange,
     statusFilter,
     todayTakenFilter,
+    assignTaskSalesPerson,
   ]);
 
   const filteredFollowups = followups.filter((fu) => {
@@ -1048,6 +1099,7 @@ export default function Followups() {
     if (searchParams.get("startDate")) count++;
     if (searchParams.get("endDate")) count++;
     if (todayTakenFilter !== "all") count++;
+    if (assignTaskSalesPerson !== "all") count++;
     return count;
   };
 
@@ -1154,12 +1206,14 @@ export default function Followups() {
               onSearchChange={setSpSearchQuery}
               searchValue={spSearchQuery}
               loading={isSpLoading}
-              placeholder="Sales Person"
+              placeholder="Filter by Sales Person"
               searchPlaceholder="Search salesperson..."
               width="w-[180px]"
               className="h-9 bg-white"
             />
           )}
+
+
           <Combobox
             options={[
               { value: "all", label: "Select Client", disabled: clientFilter === "all" },
@@ -1242,6 +1296,25 @@ export default function Followups() {
                 </Button>
               )}
             </div>
+          )}
+
+          {(assignableSalesPersons.length > 0 || isAssignableSpLoading || user?.role === "sales_executive") && (
+            <Select
+              value={assignTaskSalesPerson}
+              onValueChange={setAssignTaskSalesPerson}
+            >
+              <SelectTrigger className="h-9 bg-white w-[230px] flex-shrink-0">
+                <SelectValue placeholder="Assigned Sales Person" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Assigned Sales Person</SelectItem>
+                {assignableSalesPersons.map((sp) => (
+                  <SelectItem key={sp.uuid} value={sp.userCode}>
+                    {sp.name} ({sp.userCode})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
 
           {getActiveFilterCount() > 0 && (

@@ -351,6 +351,7 @@ export const pendingOrderAPI = {
     todayDueFollowUp?: boolean;
     todayCompletedFollowUp?: boolean;
     sevenDayPendingFollowUp?: boolean;
+    assignSalesPersonsTask?: boolean;
   }) => {
     const queryParams = new URLSearchParams(
       filterEmptyValues(params || {}, true),
@@ -507,6 +508,7 @@ export const pendingMaterialAPI = {
     todayDueFollowUp?: boolean;
     todayCompletedFollowUp?: boolean;
     sevenDayPendingFollowUp?: boolean;
+    assignSalesPersonsTask?: boolean;
   }) => {
     const queryParams = new URLSearchParams(
       filterEmptyValues(params || {}, true),
@@ -666,6 +668,7 @@ export const newOrderAPI = {
     todayDueFollowUp?: boolean;
     todayCompletedFollowUp?: boolean;
     sevenDayPendingFollowUp?: boolean;
+    assignSalesPersonsTask?: boolean;
   }) => {
     const queryParams = new URLSearchParams(
       filterEmptyValues(params || {}, true),
@@ -970,6 +973,46 @@ export const sharedAPI = {
   }) => {
     const response = await fetch(
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SHARED.DELETE_MULTIPLE_USER}`,
+      {
+        method: "DELETE",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      },
+    );
+    return response.json();
+  },
+  assignSalesperson: async (data: {
+    entityType?: string;
+    salesPersonId: string;
+    assignSalesPersonIds: string[];
+  }) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SHARED.ASSIGN_SALESPERSON}`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      },
+    );
+    return response.json();
+  },
+  getAssignSalespersons: async (params: { entityType: string }) => {
+    const queryParams = new URLSearchParams(params);
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SHARED.ASSIGN_SALESPERSON}?${queryParams.toString()}`,
+      {
+        method: "GET",
+        headers: getHeaders(),
+      },
+    );
+    return response.json();
+  },
+  removeAssignSalesperson: async (data: {
+    salesPersonId: string;
+    assignSalesPersonId: string;
+  }) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SHARED.ASSIGN_SALESPERSON}/remove`,
       {
         method: "DELETE",
         headers: getHeaders(),

@@ -37,6 +37,7 @@ import { Label } from "@/components/ui/label";
 import { DeleteModal } from "@/components/modals/DeleteModal";
 import { ImportModal } from "@/components/modals/ImportModal";
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
+import { MultiSelect } from "@/components/ui/multi-select";
 interface SalesPerson {
   uuid: string;
   userCode: string;
@@ -48,6 +49,17 @@ interface SalesPerson {
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
+  clientVisibility?: string[];
+  assignSalesPersonList?: {
+    uuid: string;
+    salesPersonId: string;
+    assignSalesPersonId: string;
+    assignSalesPerson: {
+      uuid: string;
+      userCode: string;
+      name: string;
+    };
+  }[];
 }
 
 export default function SalesPersons() {
@@ -65,11 +77,18 @@ export default function SalesPersons() {
     useState<SalesPerson | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    userCode: string;
+    name: string;
+    email: string;
+    phone: string;
+    clientVisibility: string[];
+  }>({
     userCode: "",
     name: "",
     email: "",
     phone: "",
+    clientVisibility: [],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newPassword, setNewPassword] = useState("");
@@ -82,6 +101,7 @@ export default function SalesPersons() {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [allSalesPersons, setAllSalesPersons] = useState<SalesPerson[]>([]);
 
   const toggleSelection = (id: string) => {
     const newSelected = new Set(selectedItems);
@@ -219,6 +239,24 @@ export default function SalesPersons() {
     }
   };
 
+  const loadAllSalesPersons = async () => {
+    try {
+      const response = await salesPersonAPI.getAll({
+        size: 1000,
+        role: "sales_executive",
+      });
+      if (response.success) {
+        setAllSalesPersons(response.data.data || []);
+      }
+    } catch (error) {
+      console.error("Failed to load all sales persons", error);
+    }
+  };
+
+  useEffect(() => {
+    loadAllSalesPersons();
+  }, []);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       loadData();
@@ -236,6 +274,7 @@ export default function SalesPersons() {
       name: "",
       email: "",
       phone: "",
+      clientVisibility: [],
     });
     setSelectedSalesPerson(null);
     setErrors({});
@@ -253,6 +292,9 @@ export default function SalesPersons() {
       name: sp.name,
       email: sp.email || "",
       phone: sp.phone || "",
+      clientVisibility: sp.assignSalesPersonList
+        ? sp.assignSalesPersonList.map((a) => a.assignSalesPersonId)
+        : sp.clientVisibility || [],
     });
     setErrors({});
     setShowFormDialog(true);
@@ -312,7 +354,7 @@ export default function SalesPersons() {
     setIsSubmitting(true);
     try {
       if (selectedSalesPerson) {
-        const { userCode, ...updateData } = formData;
+        const { userCode, clientVisibility, ...updateData } = formData;
         const response = await salesPersonAPI.update(
           selectedSalesPerson.uuid,
           updateData,
@@ -321,6 +363,16 @@ export default function SalesPersons() {
           response.success &&
           !response.message?.toLowerCase().includes("exist")
         ) {
+          // Call assign-salesperson API
+          try {
+            await sharedAPI.assignSalesperson({
+              salesPersonId: selectedSalesPerson.uuid,
+              assignSalesPersonIds: clientVisibility,
+            });
+          } catch (assignError) {
+            console.error("Failed to assign sales persons", assignError);
+          }
+
           toast.success(
             response.message || "Sales person updated successfully",
           );
@@ -330,11 +382,21 @@ export default function SalesPersons() {
           toast.error(response.message || "Failed to update sales person");
         }
       } else {
-        const response = await salesPersonAPI.create(formData);
+        const { clientVisibility, ...createData } = formData;
+        const response = await salesPersonAPI.create(createData);
         if (
           response.success &&
           !response.message?.toLowerCase().includes("exist")
         ) {
+          try {
+            await sharedAPI.assignSalesperson({
+              salesPersonId: response.data.uuid || response.data.id,
+              assignSalesPersonIds: clientVisibility,
+            });
+          } catch (assignError) {
+            console.error("Failed to assign sales persons", assignError);
+          }
+
           toast.success(
             response.message || "Sales person created successfully",
           );
@@ -373,7 +435,10 @@ export default function SalesPersons() {
     }
 
     try {
-      const response = await authAPI.setPassword(selectedSalesPerson.userCode, newPassword);
+      const response = await authAPI.setPassword(
+        selectedSalesPerson.userCode,
+        newPassword,
+      );
       toast.success(response.message || "Password set successfully");
       handleClosePasswordDialog();
     } catch (error: any) {
@@ -395,12 +460,13 @@ export default function SalesPersons() {
     try {
       const response = await salesPersonAPI.import(file);
       if (response.success) {
-        toast.success(response.message || "Sales persons imported successfully");
+        toast.success(
+          response.message || "Sales persons imported successfully",
+        );
         setShowUploadDialog(false);
         loadData();
       } else {
-        const errorMsg =
-          response.message?.message || response.message ;
+        const errorMsg = response.message?.message || response.message;
         toast.error(errorMsg, { duration: Infinity });
       }
     } catch (error: any) {
@@ -434,7 +500,7 @@ export default function SalesPersons() {
                 <TableHead className="font-medium text-gray-700 w-[100px]">
                   Code
                 </TableHead>
-                 <TableHead className="font-medium text-gray-700 w-[200px]">
+                <TableHead className="font-medium text-gray-700 w-[200px]">
                   Email
                 </TableHead>
                 <TableHead className="font-medium text-gray-700 w-[150px]">
@@ -647,7 +713,6 @@ export default function SalesPersons() {
               maxLength={50}
               error={errors.name}
             />
-
             <Input
               id="email"
               label="Email Address"
@@ -655,12 +720,52 @@ export default function SalesPersons() {
               value={formData.email}
               onChange={(e) => {
                 setFormData({ ...formData, email: e.target.value });
-                  if (errors.email) setErrors({ ...errors, email: "" });
+                if (errors.email) setErrors({ ...errors, email: "" });
               }}
               autoComplete="off"
               maxLength={50}
-               error={errors.email}
+              error={errors.email}
             />
+
+            {selectedSalesPerson && (
+              <MultiSelect
+                label="Client Visibility"
+                placeholder="Select sales persons..."
+                options={allSalesPersons
+                  .filter(
+                    (sp) => sp.uuid !== selectedSalesPerson?.uuid && sp.isActive,
+                  )
+                  .map((sp) => ({
+                    value: sp.uuid,
+                    label: `${sp.name} (${sp.userCode})`,
+                  }))}
+                value={formData.clientVisibility}
+                onChange={async (value: string[]) => {
+                  const removedId = formData.clientVisibility.find(
+                    (id) => !value.includes(id),
+                  );
+
+                  if (removedId && selectedSalesPerson) {
+                    const isExistingAssignment =
+                      selectedSalesPerson.assignSalesPersonList?.some(
+                        (a) => a.assignSalesPersonId === removedId,
+                      );
+
+                    if (isExistingAssignment) {
+                      try {
+                        await sharedAPI.removeAssignSalesperson({
+                          salesPersonId: selectedSalesPerson.uuid,
+                          assignSalesPersonId: removedId,
+                        });
+                      } catch {
+                        return;
+                      }
+                    }
+                  }
+                  setFormData({ ...formData, clientVisibility: value });
+                }}
+              />
+            )}
 
             <DialogFooter className="mt-6 pt-4">
               <Button

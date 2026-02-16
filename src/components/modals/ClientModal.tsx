@@ -42,7 +42,7 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
   const [spHasMore, setSpHasMore] = useState(true)
   const [spSearchQuery, setSpSearchQuery] = useState('')
   const debouncedSpSearchQuery = useDebounce(spSearchQuery, 500)
-  const PAGE_SIZE = 20
+  const PAGE_SIZE = 1000;
 
   const loadSalesPersons = async (page: number, append: boolean = false, search?: string) => {
     try {
