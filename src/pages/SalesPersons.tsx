@@ -364,13 +364,15 @@ export default function SalesPersons() {
           !response.message?.toLowerCase().includes("exist")
         ) {
           // Call assign-salesperson API
-          try {
-            await sharedAPI.assignSalesperson({
-              salesPersonId: selectedSalesPerson.uuid,
-              assignSalesPersonIds: clientVisibility,
-            });
-          } catch (assignError) {
-            console.error("Failed to assign sales persons", assignError);
+          if (clientVisibility.length > 0) {
+            try {
+              await sharedAPI.assignSalesperson({
+                salesPersonId: selectedSalesPerson.uuid,
+                assignSalesPersonIds: clientVisibility,
+              });
+            } catch (assignError) {
+              console.error("Failed to assign sales persons", assignError);
+            }
           }
 
           toast.success(
@@ -388,13 +390,15 @@ export default function SalesPersons() {
           response.success &&
           !response.message?.toLowerCase().includes("exist")
         ) {
-          try {
-            await sharedAPI.assignSalesperson({
-              salesPersonId: response.data.uuid || response.data.id,
-              assignSalesPersonIds: clientVisibility,
-            });
-          } catch (assignError) {
-            console.error("Failed to assign sales persons", assignError);
+          if (clientVisibility.length > 0) {
+            try {
+              await sharedAPI.assignSalesperson({
+                salesPersonId: response.data.uuid || response.data.id,
+                assignSalesPersonIds: clientVisibility,
+              });
+            } catch (assignError) {
+              console.error("Failed to assign sales persons", assignError);
+            }
           }
 
           toast.success(
