@@ -65,6 +65,7 @@ import * as XLSX from "xlsx";
 import { DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { formatDisplayDate, getTakenByName } from "@/lib/utils";
+import { subDays } from "date-fns";
 import { DeleteModal } from "@/components/modals/DeleteModal";
 import { RemarkHistoryModal } from "@/components/modals/RemarkHistoryModal";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -726,6 +727,11 @@ export default function Followups() {
         params.startDate = getUTCISOString(new Date(), 'start');
         params.endDate = getUTCISOString(new Date(), 'end');
         params.todayCompletedFollowUp = true;
+      } else if (todayTakenFilter === "yesterday") {
+        const yesterday = subDays(new Date(), 1);
+        params.startDate = getUTCISOString(yesterday, 'start');
+        params.endDate = getUTCISOString(yesterday, 'end');
+        params.todayCompletedFollowUp = true;
       }
 
       const isManualSort = sortBy && MANUAL_SORT_COLUMNS.includes(sortBy);
@@ -1261,12 +1267,13 @@ export default function Followups() {
             <SelectTrigger className="w-[200px] h-9 bg-white">
               <div className="flex items-center gap-2">
                 <CalendarDays className="w-4 h-4 text-gray-400" />
-                <SelectValue placeholder="Taken Follow-ups" />
+                <SelectValue placeholder="Select Filter" />
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Taken Follow-ups</SelectItem>
+              <SelectItem value="all">Select Taken's Filter</SelectItem>
               <SelectItem value="today">Today's Taken</SelectItem>
+              <SelectItem value="yesterday">Yesterday's Taken</SelectItem>
             </SelectContent>
           </Select>
 
@@ -1298,7 +1305,7 @@ export default function Followups() {
             </div>
           )}
 
-          {(assignableSalesPersons.length > 0 || isAssignableSpLoading || user?.role === "sales_executive") && (
+          {user?.role === "sales_executive" && (
             <Select
               value={assignTaskSalesPerson}
               onValueChange={setAssignTaskSalesPerson}

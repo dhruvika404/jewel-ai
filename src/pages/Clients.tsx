@@ -496,7 +496,7 @@ export default function Clients() {
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Taken Follow-ups</SelectItem>
+              <SelectItem value="all">Select Taken's Filter</SelectItem>
               <SelectItem value="today">Today's Taken</SelectItem>
               <SelectItem value="yesterday">
                 Yesterday's Taken
