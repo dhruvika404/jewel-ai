@@ -79,9 +79,9 @@
 }
 
 [data-close-button] {
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  right: 12px !important;
+  top: 8px !important;
+  transform: none !important;
+  right: 8px !important;
   left: unset !important;
   z-index: 10001 !important;
 }
@@ -93,4 +93,5 @@
 
 [data-sonner-toast] {
   pointer-events: auto !important;
+  padding-right: 25px !important;
 }
