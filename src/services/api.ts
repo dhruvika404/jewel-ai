@@ -14,10 +14,7 @@ export const authAPI = {
       `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true",
-        },
+        headers: getHeaders(),
         body: JSON.stringify(filterEmptyValues(payload)),
       },
     );
@@ -40,6 +37,84 @@ export const authAPI = {
           method: "PUT",
           headers: getHeaders(),
           body: JSON.stringify(filterEmptyValues({ userCode, password })),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || `HTTP error! status: ${response.status}`,
+        );
+      }
+
+      return data;
+    } catch (error: any) {
+      throw error;
+    }
+  },
+
+  // Forgot password - send OTP to email (admin only)
+  forgotPassword: async (email: string, role: string = "admin") => {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.FORGOT_PASSWORD}`,
+        {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify({ email, role }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || `HTTP error! status: ${response.status}`,
+        );
+      }
+
+      return data;
+    } catch (error: any) {
+      throw error;
+    }
+  },
+
+  // Verify OTP
+  verifyOTP: async (email: string, otp: string) => {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.VERIFY_OTP}`,
+        {
+          method: "POST",
+        headers: getHeaders(),
+          body: JSON.stringify({ email, otp }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || `HTTP error! status: ${response.status}`,
+        );
+      }
+
+      return data;
+    } catch (error: any) {
+      throw error;
+    }
+  },
+
+  // Reset password
+  resetPassword: async (email: string, password: string) => {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.RESET_PASSWORD}`,
+        {
+          method: "PUT",
+          headers: getHeaders(),
+          body: JSON.stringify({ email, password }),
         },
       );
 

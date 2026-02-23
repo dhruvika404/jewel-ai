@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -128,6 +129,16 @@ export default function Login() {
                   required
                   error={errors.password}
                 />
+                {/* {selectedRole === "admin" && (
+                  <div className="text-right">
+                    <Link
+                      to="/forgot-password"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Forgot Password?
+                    </Link>
+                  </div>
+                )} */}
               </div>
 
               <Button

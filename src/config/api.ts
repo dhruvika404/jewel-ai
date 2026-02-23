@@ -4,6 +4,9 @@ export const API_CONFIG = {
     AUTH: {
       LOGIN: "/auth/login",
       SET_PASSWORD: "/auth/set-login-pwd",
+      FORGOT_PASSWORD: "/auth/forgotPassword",
+      VERIFY_OTP: "/auth/verify-otp",
+      RESET_PASSWORD: "/auth/reset-password",
     },
     DASHBOARD: {
       OVERVIEW: "/dashboard/overview-count",

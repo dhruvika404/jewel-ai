@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import VerifyOTP from "./pages/VerifyOTP";
+import ResetPassword from "./pages/ResetPassword";
 import AdminRoutes from "./routes/AdminRoutes";
 import SalesRoutes from "./routes/SalesRoutes";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -24,6 +27,9 @@ function App() {
         <PageHeaderProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/verify-otp" element={<VerifyOTP />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route
               path="/*"
               element={
@@ -41,3 +47,4 @@ function App() {
 }
 
 export default App;
+
