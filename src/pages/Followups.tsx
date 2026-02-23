@@ -1004,7 +1004,6 @@ export default function Followups() {
 
   useEffect(() => {
     const urlStartDate = searchParams.get("startDate");
-    const urlEndDate = searchParams.get("endDate");
     const hasUrlParams =
       urlStartDate ||
       searchParams.get("todayDueFollowUp") ||
@@ -1706,9 +1705,9 @@ export default function Followups() {
                         <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
                           <div
                             className="text-sm text-gray-900 truncate"
-                            title={getTakenByName(fu.lastFollowUpBy)}
+                            title={fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
                           >
-                            {getTakenByName(fu.lastFollowUpBy)}
+                            {fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
                           </div>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
@@ -1765,16 +1764,6 @@ export default function Followups() {
                         </TableCell>
                         <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <div className="flex items-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 border border-border hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                                  title="Add Follow-up"
-                                  onClick={() => handleOpenAddFollowUp(fu)}
-                                  disabled={selectedItems.size > 0}
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
                                 {isAdmin && (
                                   <Button
                                     variant="ghost"
@@ -1785,6 +1774,18 @@ export default function Followups() {
                                     disabled={selectedItems.size > 0}
                                   >
                                     <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {fu?.status !== "completed" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 border border-border hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                                    title="Add Follow-up"
+                                    onClick={() => handleOpenAddFollowUp(fu)}
+                                    disabled={selectedItems.size > 0}
+                                  >
+                                    <Plus className="h-4 w-4" />
                                   </Button>
                                 )}
                           </div>
@@ -1853,9 +1854,9 @@ export default function Followups() {
                         <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
                           <div
                             className="text-sm text-gray-900 truncate"
-                            title={getTakenByName(fu.lastFollowUpBy)}
+                            title={fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
                           >
-                            {getTakenByName(fu.lastFollowUpBy)}
+                            {fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
                           </div>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
@@ -1907,18 +1908,8 @@ export default function Followups() {
                         </TableCell>
                         <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 border border-border hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
-                              title="Add Follow-up"
-                              onClick={() => handleOpenAddFollowUp(fu)}
-                              disabled={selectedItems.size > 0}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
                             {isAdmin && (
-                              <Button
+                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
@@ -1927,6 +1918,18 @@ export default function Followups() {
                                 disabled={selectedItems.size > 0}
                               >
                                 <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {fu?.status !== "completed" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 border border-border hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                                title="Add Follow-up"
+                                onClick={() => handleOpenAddFollowUp(fu)}
+                                disabled={selectedItems.size > 0}
+                              >
+                                <Plus className="h-4 w-4" />
                               </Button>
                             )}
                           </div>
@@ -2001,9 +2004,9 @@ export default function Followups() {
                         <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
                           <div
                             className="text-sm text-gray-900 truncate"
-                            title={getTakenByName(fu.lastFollowUpBy)}
+                            title={fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
                           >
-                            {getTakenByName(fu.lastFollowUpBy)}
+                            {fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
                           </div>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
@@ -2055,16 +2058,6 @@ export default function Followups() {
                         </TableCell>
                         <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 border border-border hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
-                              title="Add Follow-up"
-                              onClick={() => handleOpenAddFollowUp(fu)}
-                              disabled={selectedItems.size > 0}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
                             {isAdmin && (
                               <Button
                                 variant="ghost"
@@ -2075,6 +2068,18 @@ export default function Followups() {
                                 disabled={selectedItems.size > 0}
                               >
                                 <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {fu?.status !== "completed" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 border border-border hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                                title="Add Follow-up"
+                                onClick={() => handleOpenAddFollowUp(fu)}
+                                disabled={selectedItems.size > 0}
+                              >
+                                <Plus className="h-4 w-4" />
                               </Button>
                             )}
                           </div>
@@ -2090,18 +2095,8 @@ export default function Followups() {
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
                           <div className="flex items-center">
-                             <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 border border-border hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
-                              title="Add Follow-up"
-                              onClick={() => handleOpenAddFollowUp(fu)}
-                              disabled={selectedItems.size > 0}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
                             {isAdmin && (
-                              <Button
+                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
@@ -2112,6 +2107,18 @@ export default function Followups() {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
+                             {fu?.status !== "completed" && (
+                               <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 border border-border hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                                title="Add Follow-up"
+                                onClick={() => handleOpenAddFollowUp(fu)}
+                                disabled={selectedItems.size > 0}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                             )}
                           </div>
                         </TableCell>
                       </>

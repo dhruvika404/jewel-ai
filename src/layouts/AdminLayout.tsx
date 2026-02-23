@@ -33,6 +33,24 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const { logout, user } = useAuth();
   const { header } = usePageHeader();
   const location = useLocation();
+  const prevPathRef = useRef<string>(location.pathname);
+
+  useEffect(() => {
+    const isClientPath = (path: string) => path === "/clients" || path.startsWith("/clients/");
+    if (isClientPath(prevPathRef.current) && !isClientPath(location.pathname)) {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key?.startsWith("clients_")) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    }
+    
+    prevPathRef.current = location.pathname;
+  }, [location.pathname]);
+
   const [isSidebar, setIsSidebar] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);

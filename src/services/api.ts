@@ -263,6 +263,8 @@ export const clientAPI = {
     search?: string;
     role?: string;
     salesExecCode?: string;
+    todayDate?: string;
+    followUpPending?: boolean;
   }) => {
     const queryParams = new URLSearchParams(
       filterEmptyValues(params || {}, true),

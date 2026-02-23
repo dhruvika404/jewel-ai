@@ -610,7 +610,7 @@ export default function ClientDetails() {
                   Follow-ups
                 </h4>
               </div>
-              {items.length > 0 && (
+              {items.length > 0 && items[0]?.status !== "completed" && (
                 <Button
                   variant="ghost"
                   size="sm"

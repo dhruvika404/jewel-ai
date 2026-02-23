@@ -17,7 +17,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import TablePagination from "@/components/ui/table-pagination";
-import { Upload, Loader2, Eye, Plus, Pencil, Trash2, CalendarDays } from "lucide-react";
+import { Upload, Loader2, Eye, Plus, Pencil, Trash2, CalendarDays, Filter } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -75,9 +75,9 @@ interface SalesPerson {
 export default function Clients() {
   const { setHeader } = usePageHeader();
   const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [searchQuery, setSearchQuery] = useState(() => sessionStorage.getItem("clients_searchQuery") || "");
+  const [currentPage, setCurrentPage] = useState(() => Number(sessionStorage.getItem("clients_currentPage")) || 1);
+  const [pageSize, setPageSize] = useState(() => Number(sessionStorage.getItem("clients_pageSize")) || 10);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
@@ -90,7 +90,7 @@ export default function Clients() {
   const [deletingClient, setDeletingClient] = useState<Client | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
-  const [selectedSalesPerson, setSelectedSalesPerson] = useState<string>("all");
+  const [selectedSalesPerson, setSelectedSalesPerson] = useState<string>(() => sessionStorage.getItem("clients_selectedSalesPerson") || "all");
   const [spSearchQuery, setSpSearchQuery] = useState("");
   const [isSpLoading, setIsSpLoading] = useState(false);
   const [dateRange] = useState<{
@@ -103,8 +103,17 @@ export default function Clients() {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
-  const [followUpFilter, setFollowUpFilter] = useState<string>("all");
+  const [followUpFilter, setFollowUpFilter] = useState<string>(() => sessionStorage.getItem("clients_followUpFilter") || "all");
+  const [followUpPending, setFollowUpPending] = useState<boolean>(false);
   const isAdmin = user?.role !== "sales_executive";
+
+  useEffect(() => {
+    sessionStorage.setItem("clients_searchQuery", searchQuery);
+    sessionStorage.setItem("clients_selectedSalesPerson", selectedSalesPerson);
+    sessionStorage.setItem("clients_followUpFilter", followUpFilter);
+    sessionStorage.setItem("clients_currentPage", String(currentPage));
+    sessionStorage.setItem("clients_pageSize", String(pageSize));
+  }, [searchQuery, selectedSalesPerson, followUpFilter, currentPage, pageSize]);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -165,7 +174,7 @@ export default function Clients() {
     if (dateRange.startDate || dateRange.endDate) count++;
     if (searchParams.get("startDate") || searchParams.get("todayTakenFollowUp"))
       count++;
-    if (followUpFilter !== "all") count++;
+    if (followUpFilter !== "all" || followUpPending) count++;
     if (selectedItems.size > 0) count++;
     return count;
   };
@@ -175,7 +184,14 @@ export default function Clients() {
     setSelectedSalesPerson("all");
     setSpSearchQuery("");
     setFollowUpFilter("all");
+    setFollowUpPending(false);
     setSelectedItems(new Set());
+    sessionStorage.removeItem("clients_searchQuery");
+    sessionStorage.removeItem("clients_selectedSalesPerson");
+    sessionStorage.removeItem("clients_followUpFilter");
+    sessionStorage.removeItem("clients_followUpPending");
+    sessionStorage.removeItem("clients_currentPage");
+    sessionStorage.removeItem("clients_pageSize");
     navigate("/clients");
   };
 
@@ -300,6 +316,11 @@ export default function Clients() {
         params.todayTakenFollowUp = true;
       }
 
+      if (followUpPending) {
+        params.followUpPending = true;
+        params.todayDate = getUTCISOString(new Date(), 'start');
+      }
+
       const response = await clientAPI.getAll(params);
 
       if (response.success !== false) {
@@ -335,11 +356,12 @@ export default function Clients() {
     selectedSalesPerson,
     searchParams,
     followUpFilter,
+    followUpPending,
   ]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedSalesPerson, dateRange]);
+  }, [searchQuery, selectedSalesPerson, dateRange, followUpFilter, followUpPending]);
 
   const handleImport = async (file: File) => {
     setIsUploading(true);
@@ -503,6 +525,15 @@ export default function Clients() {
               </SelectItem>
             </SelectContent>
           </Select>
+
+          <Button
+            variant="outline"
+            onClick={() => setFollowUpPending(!followUpPending)}
+            className="w-[200px] h-9 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center justify-start px-3 font-normal overflow-hidden"
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            <span className="truncate">Pending Followups</span>
+          </Button>
 
           {selectedItems.size > 0 && isAdmin && (
             <Button
