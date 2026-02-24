@@ -151,17 +151,18 @@ export default function ClientDetails() {
 
       if (res?.success === false) {
         toast.error(res?.message || "Failed to delete record");
+        setIsDeleting(false);
         return;
       }
 
-      toast.success(res?.message || "Record deleted successfully");
       setDeleteModalOpen(false);
       setDeletingItem(null);
       setDeletingType(null);
+      setIsDeleting(false);
       refreshData();
+      toast.success(res?.message || "Record deleted successfully");
     } catch (e: any) {
       toast.error(e?.message || "Failed to delete record");
-    } finally {
       setIsDeleting(false);
     }
   };

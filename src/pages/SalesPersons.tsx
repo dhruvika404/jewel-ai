@@ -139,17 +139,18 @@ export default function SalesPersons() {
 
       if (response.success === false) {
         toast.error(response.message || "Failed to delete sales persons");
+        setIsBulkDeleting(false);
       } else {
+        setShowBulkDeleteConfirm(false);
+        setSelectedItems(new Set());
+        setIsBulkDeleting(false);
+        await loadData();
         toast.success(
           response.message || "Selected sales persons deleted successfully",
         );
-        loadData();
-        setShowBulkDeleteConfirm(false);
-        setSelectedItems(new Set());
       }
     } catch (e: any) {
       toast.error("Failed to delete sales persons");
-    } finally {
       setIsBulkDeleting(false);
     }
   };
@@ -314,15 +315,16 @@ export default function SalesPersons() {
       const res = await salesPersonAPI.delete(deletingSalesPerson.uuid);
       if (res?.success === false) {
         toast.error(res?.message || "Failed to delete sales person");
+        setIsDeleting(false);
         return;
       }
-      toast.success(res?.message || "Sales person deleted successfully");
       setDeleteModalOpen(false);
       setDeletingSalesPerson(null);
-      loadData();
+      setIsDeleting(false);
+      await loadData();
+      toast.success(res?.message || "Sales person deleted successfully");
     } catch (e: any) {
       toast.error(e?.message || "Failed to delete sales person");
-    } finally {
       setIsDeleting(false);
     }
   };
@@ -466,11 +468,12 @@ export default function SalesPersons() {
     try {
       const response = await salesPersonAPI.import(file);
       if (response.success) {
+        setShowUploadDialog(false);
+        setIsUploading(false);
+        await loadData();
         toast.success(
           response.message || "Sales persons imported successfully",
         );
-        setShowUploadDialog(false);
-        loadData();
       } else {
         const errorMsg = response.message?.message || response.message;
         toast.error(errorMsg, { duration: Infinity });

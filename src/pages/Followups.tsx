@@ -284,19 +284,20 @@ export default function Followups() {
 
       if (response?.success === false) {
         toast.error(response?.message || "Failed to delete selected records");
+        setIsBulkProcessing(false);
       } else {
+        setShowBulkDeleteConfirm(false);
+        setSelectedItems(new Set());
+        setIsBulkProcessing(false);
+        await loadFollowupData();
         toast.success(
           `Successfully deleted ${selectedItems.size} selected records`,
         );
-        setShowBulkDeleteConfirm(false);
-        setSelectedItems(new Set());
-        loadFollowupData();
       }
     } catch (e: any) {
       toast.error(
         e?.message || "Failed to delete selected records. Please try again.",
       );
-    } finally {
       setIsBulkProcessing(false);
     }
   };
@@ -1129,9 +1130,10 @@ export default function Followups() {
         };
       }
       if (response && (response.success || response.status === 200)) {
-        toast.success(`${getFollowupTypeTitle()} imported successfully`);
         setShowUploadDialog(false);
-        loadFollowupData();
+        setIsUploading(false);
+        await loadFollowupData();
+        toast.success(`${getFollowupTypeTitle()} imported successfully`);
       } else {
         toast.error(response?.message, {
           duration: Infinity,
@@ -1180,16 +1182,17 @@ export default function Followups() {
 
       if (res?.success === false) {
         toast.error(res?.message || "Failed to delete record");
+        setIsDeleting(false);
         return;
       }
 
-      toast.success("Record deleted successfully");
       setDeleteModalOpen(false);
       setDeletingItem(null);
-      loadFollowupData();
+      setIsDeleting(false);
+      await loadFollowupData();
+      toast.success("Record deleted successfully");
     } catch (e: any) {
       toast.error(e?.message || "Failed to delete record");
-    } finally {
       setIsDeleting(false);
     }
   };

@@ -81,10 +81,12 @@ export function ImportModal({
   };
 
   const handleDialogChange = (open: boolean) => {
-    if (!open) {
+    if (!open && !isUploading) {
       handleClose();
     }
-    onOpenChange(open);
+    if (!isUploading) {
+      onOpenChange(open);
+    }
   };
 
   return (

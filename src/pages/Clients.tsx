@@ -154,17 +154,18 @@ export default function Clients() {
 
       if (response.success === false) {
         toast.error(response.message || "Failed to delete clients");
+        setIsBulkDeleting(false);
       } else {
+        setShowBulkDeleteConfirm(false);
+        setSelectedItems(new Set());
+        setIsBulkDeleting(false);
+        await loadData();
         toast.success(
           response.message || "Selected clients deleted successfully",
         );
-        loadData();
-        setShowBulkDeleteConfirm(false);
-        setSelectedItems(new Set());
       }
     } catch (e: any) {
       toast.error("Failed to delete clients");
-    } finally {
       setIsBulkDeleting(false);
     }
   };
@@ -371,13 +372,12 @@ export default function Clients() {
     setIsUploading(true);
     try {
       const result = await clientAPI.import(file);
-      toast.success(result.message || "Import successful");
-      loadData();
       setShowUploadDialog(false);
-      // await loadData();
+      setIsUploading(false);
+      await loadData();
+      toast.success(result.message || "Import successful");
     } catch (error: any) {
       toast.error(error.message, { duration: Infinity });
-    } finally {
       setIsUploading(false);
     }
   };
@@ -398,15 +398,16 @@ export default function Clients() {
       const res = await clientAPI.delete(deletingClient.uuid);
       if (res?.success === false) {
         toast.error(res?.message || "Failed to delete client");
+        setIsDeleting(false);
         return;
       }
-      toast.success("Client deleted successfully");
       setDeleteModalOpen(false);
       setDeletingClient(null);
-      loadData();
+      setIsDeleting(false);
+      await loadData();
+      toast.success("Client deleted successfully");
     } catch (e: any) {
       toast.error(e?.message || "Failed to delete client");
-    } finally {
       setIsDeleting(false);
     }
   };

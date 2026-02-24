@@ -29,7 +29,7 @@ export const DeleteModal = ({
   isLoading = false,
 }: DeleteModalProps) => {
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && !isLoading && onClose()}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader className="sm:text-center">
           <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
