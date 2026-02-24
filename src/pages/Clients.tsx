@@ -271,6 +271,7 @@ export default function Clients() {
 
   const loadData = async () => {
     setLoading(true);
+    // setClients([])
     let currentTotalItems = 0;
     try {
       const params: any = {
@@ -372,6 +373,7 @@ export default function Clients() {
       toast.success(result.message || "Import successful");
       loadData();
       setShowUploadDialog(false);
+      // await loadData();
     } catch (error: any) {
       toast.error(error.message, { duration: Infinity });
     } finally {
@@ -609,9 +611,11 @@ export default function Clients() {
                     />
                   </TableHead>
                 )}
-                <TableHead className="font-medium text-gray-700 w-[200px]">
-                  Client Name
-                </TableHead>
+                {isAdmin && (
+                  <TableHead className="font-medium text-gray-700 w-[200px]">
+                    Client Name
+                  </TableHead>
+                )}
                 <TableHead className="font-medium text-gray-700 w-[130px]">
                   Client Code
                 </TableHead>
@@ -638,7 +642,7 @@ export default function Clients() {
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={isAdmin ? 8 : 7}
+                    colSpan={isAdmin ? 8 : 5}
                     className="text-center py-12"
                   >
                     <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
@@ -647,7 +651,7 @@ export default function Clients() {
               ) : clients.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={isAdmin ? 8 : 7}
+                    colSpan={isAdmin ? 8 : 5}
                     className="text-center py-8 text-muted-foreground"
                   >
                     No clients found
@@ -664,29 +668,31 @@ export default function Clients() {
                         />
                       </TableCell>
                     )}
-                    <TableCell className="align-center">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
-                          {client.name?.charAt(0) ||
-                            client.userCode?.charAt(0) ||
-                            "C"}
+                    {isAdmin && (
+                      <TableCell className="align-center">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
+                            {client.name?.charAt(0) ||
+                              client.userCode?.charAt(0) ||
+                              "C"}
+                          </div>
+                          <div>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="font-medium text-gray-900 max-w-[150px] truncate cursor-default">
+                                    {client.name || "N/A"}
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{client.name || "N/A"}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
                         </div>
-                        <div>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="font-medium text-gray-900 max-w-[150px] truncate cursor-default">
-                                  {client.name || "N/A"}
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{client.name || "N/A"}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                      </div>
-                    </TableCell>
+                      </TableCell>
+                    )}
                     <TableCell className="font-medium text-gray-900 align-center">
                       {client?.userCode}
                     </TableCell>

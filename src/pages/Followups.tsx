@@ -848,7 +848,7 @@ export default function Followups() {
       const baseRow = {
         "S.No": index + 1,
         "Client Code": fu.userCode,
-        "Client Name": fu.name,
+        ...(isAdmin && { "Client Name": fu.name }),
         "Sales Executive": fu.salesExecutive || "-",
       };
 
@@ -1218,14 +1218,13 @@ export default function Followups() {
             />
           )}
 
-
           <Combobox
             options={[
               { value: "all", label: "Select Client", disabled: clientFilter === "all" },
               ...clients.map((client) => ({
                 value: client.userCode,
-                label: client.userCode
-                  ? `${client.userCode} (${client.name})`
+                label: isAdmin
+                  ? (client.userCode ? `${client.userCode} (${client.name})` : client.userCode)
                   : client.userCode,
               })),
             ]}
@@ -1366,9 +1365,11 @@ export default function Followups() {
                       <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                         Client Code
                       </TableHead>
-                      <TableHead className="font-medium text-gray-700 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
-                        Client Name
-                      </TableHead>
+                      {isAdmin && (
+                        <TableHead className="font-medium text-gray-700 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
+                          Client Name
+                        </TableHead>
+                      )}
                     </>
                   )}
 
@@ -1446,9 +1447,11 @@ export default function Followups() {
                     <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                       Client Code
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
-                      Client Name
-                    </TableHead>
+                    {isAdmin && (
+                      <TableHead className="font-medium text-gray-700 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
+                        Client Name
+                      </TableHead>
+                    )}
                     <TableHead className="font-medium text-gray-700 min-w-[120px] border-b border-gray-200">
                       Order No
                     </TableHead>
@@ -1522,9 +1525,11 @@ export default function Followups() {
                     <TableHead className="font-medium text-gray-700 sticky left-[50px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                       Client Code
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
-                      Client Name
-                    </TableHead>
+                    {isAdmin && (
+                      <TableHead className="font-medium text-gray-700 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
+                        Client Name
+                      </TableHead>
+                    )}
                     <TableHead className="font-medium text-gray-700 min-w-[120px] border-b border-gray-200">
                       Order No
                     </TableHead>
@@ -1649,21 +1654,23 @@ export default function Followups() {
                               {fu.userCode}
                             </div>
                           </TableCell>
-                          <TableCell className="align-center w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
-                                {fu.name?.charAt(0) ||
-                                  fu.userCode?.charAt(0) ||
-                                  "C"}
+                          {isAdmin && (
+                            <TableCell className="align-center w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
+                                  {fu.name?.charAt(0) ||
+                                    fu.userCode?.charAt(0) ||
+                                    "C"}
+                                </div>
+                                <div
+                                  className="font-medium text-gray-900 max-w-[124px] truncate"
+                                  title={fu.name || "N/A"}
+                                >
+                                  {fu.name || "N/A"}
+                                </div>
                               </div>
-                              <div
-                                className="font-medium text-gray-900 max-w-[124px] truncate"
-                                title={fu.name || "N/A"}
-                              >
-                                {fu.name || "N/A"}
-                              </div>
-                            </div>
-                          </TableCell>
+                            </TableCell>
+                          )}
                         </>
                       )}
 
@@ -1799,21 +1806,23 @@ export default function Followups() {
                             {fu.userCode}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
-                              {fu.name?.charAt(0) ||
-                                fu.userCode?.charAt(0) ||
-                                "C"}
+                        {isAdmin && (
+                          <TableCell className="align-center w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
+                                {fu.name?.charAt(0) ||
+                                  fu.userCode?.charAt(0) ||
+                                  "C"}
+                              </div>
+                              <div
+                                className="font-medium text-gray-900 max-w-[124px] truncate"
+                                title={fu.name || "N/A"}
+                              >
+                                {fu.name || "N/A"}
+                              </div>
                             </div>
-                            <div
-                              className="font-medium text-gray-900 max-w-[124px] truncate"
-                              title={fu.name || "N/A"}
-                            >
-                              {fu.name || "N/A"}
-                            </div>
-                          </div>
-                        </TableCell>
+                          </TableCell>
+                        )}
                         <TableCell className="align-center min-w-[120px] border-b border-gray-200">
                           <div className="text-sm font-medium text-gray-900 whitespace-nowrap">
                             {fu.orderNo}
@@ -1940,21 +1949,23 @@ export default function Followups() {
                             {fu.userCode}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
-                              {fu.name?.charAt(0) ||
-                                fu.userCode?.charAt(0) ||
-                                "C"}
+                        {isAdmin && (
+                          <TableCell className="align-center w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
+                                {fu.name?.charAt(0) ||
+                                  fu.userCode?.charAt(0) ||
+                                  "C"}
+                              </div>
+                              <div
+                                className="font-medium text-gray-900 max-w-[124px] truncate"
+                                title={fu.name || "N/A"}
+                              >
+                                {fu.name || "N/A"}
+                              </div>
                             </div>
-                            <div
-                              className="font-medium text-gray-900 max-w-[124px] truncate"
-                              title={fu.name || "N/A"}
-                            >
-                              {fu.name || "N/A"}
-                            </div>
-                          </div>
-                        </TableCell>
+                          </TableCell>
+                        )}
                         <TableCell className="align-center min-w-[120px] border-b border-gray-200">
                           <div className="text-sm text-gray-900 whitespace-nowrap">
                             {fu.orderNo}

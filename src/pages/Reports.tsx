@@ -402,10 +402,10 @@ export default function Reports() {
 
     const exportData = filteredFollowUps.map((fu, index) => ({
       "S.No": index + 1,
-      "Client Name": fu.clientName,
+      ...(isAdmin && { "Client Name": fu.clientName }),
       "Client Code": fu.clientCode,
-      "Sales Person Name": fu.salesExecName || "-",
-      "Sales Person Code": fu.salesExecCode || "-",
+      ...(isAdmin && { "Sales Person Name": fu.salesExecName || "-" }),
+      ...(isAdmin && { "Sales Person Code": fu.salesExecCode || "-" }),
       Type: fu.type,
       "Follow-up Message": fu.followUpMsg,
       "Next Follow-up Date": formatDisplayDate(fu.nextFollowUpDate),
@@ -480,8 +480,8 @@ export default function Reports() {
               { value: "all", label: "Select Client", disabled: clientFilter === "all" },
               ...clients.map((client) => ({
                 value: client.userCode,
-                label: client.userCode
-                  ? `${client.userCode} (${client.name})`
+                label: isAdmin 
+                  ? (client.userCode ? `${client.userCode} (${client.name})` : client.userCode)
                   : client.userCode,
               })),
             ]}
@@ -525,9 +525,11 @@ export default function Reports() {
                   <TableHead className="font-medium text-gray-700 w-[200px]">
                     Client Details
                   </TableHead>
-                  <TableHead className="font-medium text-gray-700 w-[150px]">
-                    Sales Person
-                  </TableHead>
+                  {isAdmin && (
+                    <TableHead className="font-medium text-gray-700 w-[150px]">
+                      Sales Person
+                    </TableHead>
+                  )}
                   <TableHead className="font-medium text-gray-700 w-[120px]">
                     Type
                   </TableHead>
@@ -570,34 +572,46 @@ export default function Reports() {
                       <TableCell className="align-center">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-xs shrink-0">
-                            {fu.clientName?.charAt(0) ||
-                              fu.clientCode?.charAt(0) ||
-                              "C"}
+                            {isAdmin
+                              ? fu.clientName?.charAt(0) ||
+                                fu.clientCode?.charAt(0) ||
+                                "C"
+                              : fu.clientCode?.charAt(0) || "C"}
                           </div>
                           <div>
-                            <div className="font-medium text-gray-900">
-                              {fu.clientName}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {fu.clientCode}
-                            </div>
+                            {isAdmin ? (
+                              <>
+                                <div className="font-medium text-gray-900">
+                                  {fu.clientName}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {fu.clientCode}
+                                </div>
+                              </>
+                            ) : (
+                              <div className="font-medium text-gray-900">
+                                {fu.clientCode}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="align-center">
-                        {fu.salesExecCode ? (
-                          <div>
-                            <div className="font-medium text-gray-900">
-                              {fu.salesExecName || "Unknown"}
+                      {isAdmin && (
+                        <TableCell className="align-center">
+                          {fu.salesExecCode ? (
+                            <div>
+                              <div className="font-medium text-gray-900">
+                                {fu.salesExecName || "Unknown"}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {fu.salesExecCode}
+                              </div>
                             </div>
-                            <div className="text-xs text-gray-500">
-                              {fu.salesExecCode}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </TableCell>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </TableCell>
+                      )}
                       <TableCell className="align-center">
                         <Badge
                           variant="outline"
