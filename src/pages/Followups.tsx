@@ -669,6 +669,9 @@ export default function Followups() {
     const skipAllFilters = options?.skipAllFilters || false;
     try {
       setLoading(true);
+      setFollowups([]);
+      setTotalItems(0);
+      setTotalPages(1);
       let data: any[] = [];
 
       const params: any = {

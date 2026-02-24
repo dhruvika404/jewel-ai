@@ -168,6 +168,7 @@ export default function Reports() {
         : appliedDateRange;
     const skipAllFilters = options?.skipAllFilters || false;
     setLoading(true);
+    setFollowUps([]);
     try {
       const params: any = { page: 1, size: 10 };
       if (activeDateRange?.from && !skipAllFilters) {

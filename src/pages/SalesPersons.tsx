@@ -217,6 +217,8 @@ export default function SalesPersons() {
 
   const loadData = async () => {
     setLoading(true);
+    setSalesPersons([]);
+    setTotalItems(0);
     let currentTotalItems = 0;
     try {
       const response = await salesPersonAPI.getAll({

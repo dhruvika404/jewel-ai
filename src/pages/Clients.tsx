@@ -271,7 +271,8 @@ export default function Clients() {
 
   const loadData = async () => {
     setLoading(true);
-    // setClients([])
+    setClients([]);
+    setTotalItems(0);
     let currentTotalItems = 0;
     try {
       const params: any = {
