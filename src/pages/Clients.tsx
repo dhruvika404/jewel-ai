@@ -106,6 +106,8 @@ export default function Clients() {
   const [followUpFilter, setFollowUpFilter] = useState<string>(() => sessionStorage.getItem("clients_followUpFilter") || "all");
   const [followUpPending, setFollowUpPending] = useState<boolean>(false);
   const isAdmin = user?.role !== "sales_executive";
+  const isTakenFilterActive = followUpFilter !== "all";
+  const isPendingFilterActive = followUpPending;
 
   useEffect(() => {
     sessionStorage.setItem("clients_searchQuery", searchQuery);
@@ -305,18 +307,18 @@ export default function Clients() {
         params.endDate = getUTCISOString(urlEndDate, 'end');
       }
 
-      if (followUpFilter === "today") {
-        params.startDate = getUTCISOString(new Date(), 'start');
-        params.endDate = getUTCISOString(new Date(), 'end');
-        params.todayTakenFollowUp = true;
-      } else if (followUpFilter === "yesterday") {
-        const yesterday = subDays(new Date(), 1);
-        params.startDate = getUTCISOString(yesterday, 'start');
-        params.endDate = getUTCISOString(yesterday, 'end');
-        params.todayTakenFollowUp = true;
-      }
-
-      if (followUpPending) {
+      if (isTakenFilterActive) {
+        if (followUpFilter === "today") {
+          params.startDate = getUTCISOString(new Date(), 'start');
+          params.endDate = getUTCISOString(new Date(), 'end');
+          params.todayTakenFollowUp = true;
+        } else if (followUpFilter === "yesterday") {
+          const yesterday = subDays(new Date(), 1);
+          params.startDate = getUTCISOString(yesterday, 'start');
+          params.endDate = getUTCISOString(yesterday, 'end');
+          params.todayTakenFollowUp = true;
+        }
+      } else if (isPendingFilterActive) {
         params.followUpPending = true;
         params.todayDate = getUTCISOString(new Date(), 'start');
       }
@@ -510,30 +512,47 @@ export default function Clients() {
             </div>
           )}
 
-          <Select value={followUpFilter} onValueChange={setFollowUpFilter}>
-            <SelectTrigger className="w-[200px] h-9 bg-white">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-gray-400" />
-                <SelectValue placeholder="Follow-up Filter" />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Select Taken's Filter</SelectItem>
-              <SelectItem value="today">Today's Taken</SelectItem>
-              <SelectItem value="yesterday">
-                Yesterday's Taken
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <div className={isPendingFilterActive ? "cursor-not-allowed" : ""}>
+            <Select
+              value={followUpFilter}
+              onValueChange={(val) => {
+                if (!isPendingFilterActive) setFollowUpFilter(val);
+              }}
+            >
+              <SelectTrigger
+                className={`w-[200px] h-9 bg-white ${isPendingFilterActive ? "pointer-events-none text-gray-300" : ""}`}
+              >
+                <div className="flex items-center gap-2">
+                  <CalendarDays className={`w-4 h-4 ${isPendingFilterActive ? "text-gray-300" : "text-gray-400"}`} />
+                  <SelectValue placeholder="Follow-up Filter" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Select Taken's Filter</SelectItem>
+                <SelectItem value="today">Today's Taken</SelectItem>
+                <SelectItem value="yesterday">Yesterday's Taken</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Button
-            variant="outline"
-            onClick={() => setFollowUpPending(!followUpPending)}
-            className="w-[200px] h-9 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center justify-start px-3 font-normal overflow-hidden"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            <span className="truncate">Pending Followups</span>
-          </Button>
+          <div className={isTakenFilterActive ? "cursor-not-allowed" : ""}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!isTakenFilterActive) setFollowUpPending(!followUpPending);
+              }}
+              className={`w-[200px] h-9 border flex items-center justify-start px-3 font-normal overflow-hidden
+                ${isTakenFilterActive
+                  ? "bg-white border-gray-300 text-gray-300 pointer-events-none"
+                  : followUpPending
+                    ? "bg-primary/10 border-primary text-primary hover:bg-primary/20"
+                    : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
+                }`}
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              <span className="truncate">Pending Followups</span>
+            </Button>
+          </div>
 
           {selectedItems.size > 0 && isAdmin && (
             <Button
