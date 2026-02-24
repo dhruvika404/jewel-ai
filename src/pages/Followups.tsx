@@ -1449,7 +1449,7 @@ export default function Followups() {
                     <TableHead className="font-medium text-gray-700 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
                       Client Name
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
+                    <TableHead className="font-medium text-gray-700 min-w-[120px] border-b border-gray-200">
                       Order No
                     </TableHead>
                     <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
@@ -1525,7 +1525,7 @@ export default function Followups() {
                     <TableHead className="font-medium text-gray-700 w-[180px] min-w-[180px] max-w-[180px] border-b border-gray-200 overflow-hidden">
                       Client Name
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
+                    <TableHead className="font-medium text-gray-700 min-w-[120px] border-b border-gray-200">
                       Order No
                     </TableHead>
                     <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
@@ -1814,11 +1814,8 @@ export default function Followups() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="align-center w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
-                          <div
-                            className="text-sm font-medium text-gray-900 truncate"
-                            title={fu.orderNo}
-                          >
+                        <TableCell className="align-center min-w-[120px] border-b border-gray-200">
+                          <div className="text-sm font-medium text-gray-900 whitespace-nowrap">
                             {fu.orderNo}
                           </div>
                         </TableCell>
@@ -1958,11 +1955,8 @@ export default function Followups() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="align-center w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
-                          <div
-                            className="text-sm text-gray-900 truncate"
-                            title={fu.orderNo}
-                          >
+                        <TableCell className="align-center min-w-[120px] border-b border-gray-200">
+                          <div className="text-sm text-gray-900 whitespace-nowrap">
                             {fu.orderNo}
                           </div>
                         </TableCell>
