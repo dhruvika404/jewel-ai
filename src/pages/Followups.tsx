@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useAuth } from "@/contexts/AuthContext";
-import { getUTCISOString } from "@/lib/utils";
+import { formatDisplayDateWithTime, getUTCISOString } from "@/lib/utils";
 import {
   useParams,
   Navigate,
@@ -442,8 +442,8 @@ export default function Followups() {
           size: 1000,
           role: "sales_executive",
           search: search,
-          shortBy: "userCode",
-          shortOrder: "ASC",
+          sortBy: "userCode",
+          sortOrder: "ASC",
         });
         if (spRes.success && spRes.data?.data) {
           setSalesPersons(spRes.data.data);
@@ -1123,17 +1123,13 @@ export default function Followups() {
       } else if (followupType === "pending-material") {
         response = await pendingMaterialAPI.import(file);
       } else if (followupType === "cad-order") {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        response = {
-          success: true,
-          message: "CAD orders imported successfully",
-        };
+        response = await cadOrderAPI.import(file);
       }
       if (response && (response.success || response.status === 200)) {
+        toast.success(`${getFollowupTypeTitle()} imported successfully`);
         setShowUploadDialog(false);
         setIsUploading(false);
         await loadFollowupData();
-        toast.success(`${getFollowupTypeTitle()} imported successfully`);
       } else {
         toast.error(response?.message, {
           duration: Infinity,
@@ -1410,7 +1406,7 @@ export default function Followups() {
                 {followupType === "new-order" && (
                   <>
                     <TableHead
-                      className="font-medium text-gray-700 border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px] cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[180px] min-w-[180px] max-w-[180px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("lastFollowUpDate")}
                     >
                       <div className="flex items-center">
@@ -1492,7 +1488,7 @@ export default function Followups() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px] cursor-pointer hover:bg-gray-100 transition-colors whitespace-nowrap"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[180px] min-w-[180px] max-w-[180px] cursor-pointer hover:bg-gray-100 transition-colors whitespace-nowrap"
                       onClick={() => handleSort("lastFollowUpDate")}
                     >
                       <div className="flex items-center">
@@ -1564,7 +1560,7 @@ export default function Followups() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="font-medium text-gray-700 border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px] cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-medium text-gray-700 border-b border-gray-200 w-[180px] min-w-[180px] max-w-[180px] cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleSort("lastFollowUpDate")}
                     >
                       <div className="flex items-center">
@@ -1656,7 +1652,7 @@ export default function Followups() {
                       followupType !== "pending-material" && (
                         <>
                           <TableCell className="font-medium text-gray-900 align-center sticky left-[50px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
-                            <div className="truncate max-w-[80px]" title={fu.userCode}>
+                            <div className="truncate max-w-[80px]">
                               {fu.userCode}
                             </div>
                           </TableCell>
@@ -1668,12 +1664,18 @@ export default function Followups() {
                                     fu.userCode?.charAt(0) ||
                                     "C"}
                                 </div>
-                                <div
-                                  className="font-medium text-gray-900 max-w-[124px] truncate"
-                                  title={fu.name || "N/A"}
-                                >
-                                  {fu.name || "N/A"}
-                                </div>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="font-medium text-gray-900 max-w-[124px] truncate cursor-default">
+                                        {fu.name || "N/A"}
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-h-60 overflow-y-auto">
+                                      <p>{fu.name || "N/A"}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </div>
                             </TableCell>
                           )}
@@ -1699,7 +1701,7 @@ export default function Followups() {
                       followupType !== "pending-material" && (
                         <TableCell className="align-center border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
                           {fu.salesExecutive ? (
-                            <div className="text-sm text-gray-900 truncate" title={fu.salesExecutive}>
+                            <div className="text-sm text-gray-900 truncate" >
                               {fu.salesExecutive}
                             </div>
                           ) : (
@@ -1710,18 +1712,28 @@ export default function Followups() {
 
                     {fu.type === "new-order" && (
                       <>
-                        <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
-                          <div className="text-sm text-gray-900 truncate">
-                            {formatDisplayDate(fu.lastFollowUpDate)}
+                        <TableCell className="align-center border-b border-gray-200 w-[180px] min-w-[180px] max-w-[180px]">
+                          <div
+                            className={"text-sm text-gray-900 whitespace-nowrap" + (fu.lastFollowUpDate ? " cursor-default" : "")}
+                          >
+                            {formatDisplayDateWithTime(fu.lastFollowUpDate)}
                           </div>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
-                          <div
-                            className="text-sm text-gray-900 truncate"
-                            title={fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
-                          >
-                            {fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
-                          </div>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div
+                                        className="text-sm text-gray-900 truncate cursor-default"
+                                      >
+                                        {fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-h-60 overflow-y-auto">
+                                      <p>{fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
                           <div className="text-sm text-gray-900 truncate">
@@ -1732,7 +1744,7 @@ export default function Followups() {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <div className="text-sm text-gray-900 truncate cursor-default">
+                                <div className="text-sm text-gray-900 truncate cursor-pointer">
                                   {(fu as any).lastFollowUpMsg || (fu as any).originalData?.lastFollowUpMsg || "-"}
                                 </div>
                               </TooltipTrigger>
@@ -1808,7 +1820,7 @@ export default function Followups() {
                     {fu.type === "pending-order" && (
                       <>
                         <TableCell className="font-medium text-gray-900 align-center sticky left-[50px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
-                          <div className="truncate max-w-[80px]" title={fu.userCode}>
+                          <div className="truncate max-w-[80px]">
                             {fu.userCode}
                           </div>
                         </TableCell>
@@ -1820,23 +1832,51 @@ export default function Followups() {
                                   fu.userCode?.charAt(0) ||
                                   "C"}
                               </div>
-                              <div
-                                className="font-medium text-gray-900 max-w-[124px] truncate"
-                                title={fu.name || "N/A"}
-                              >
-                                {fu.name || "N/A"}
-                              </div>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="font-medium text-gray-900 max-w-[124px] truncate cursor-default">
+                                      {fu.name || "N/A"}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-h-60 overflow-y-auto">
+                                    <p>{fu.name || "N/A"}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             </div>
                           </TableCell>
                         )}
                         <TableCell className="align-center min-w-[120px] border-b border-gray-200">
-                          <div className="text-sm font-medium text-gray-900 whitespace-nowrap">
-                            {fu.orderNo}
-                          </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="text-sm font-medium text-gray-900 whitespace-nowrap cursor-default flex items-center gap-1">
+                                  <span>
+                                    {fu.orderNo?.split(",")[0]}
+                                  </span>
+                                  {fu.orderNo?.split(",").length > 1 && (
+                                    <Badge variant="secondary" className="h-4 px-1 text-[10px] bg-primary/10 text-primary border-none font-medium">
+                                      +{fu.orderNo.split(",").length - 1}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </TooltipTrigger>
+                              {fu.orderNo?.split(",").length > 1 && (
+                                <TooltipContent className="max-h-60 overflow-y-auto">
+                                  <div className="flex flex-col gap-1">
+                                    {fu.orderNo.split(",").map((no: string, idx: number) => (
+                                      <div key={idx}>{no.trim()}</div>
+                                    ))}
+                                  </div>
+                                </TooltipContent>
+                              )}
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
                           {fu.salesExecutive ? (
-                            <div className="text-sm text-gray-900 truncate" title={fu.salesExecutive}>
+                            <div className="text-sm text-gray-900 truncate" >
                               {fu.salesExecutive}
                             </div>
                           ) : (
@@ -1858,18 +1898,28 @@ export default function Followups() {
                             {fu.pendingPcs}
                           </div>
                         </TableCell>
-                        <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
-                          <div className="text-sm text-gray-900 truncate">
-                            {formatDisplayDate(fu.lastFollowUpDate)}
+                        <TableCell className="align-center border-b border-gray-200 w-[180px] min-w-[180px] max-w-[180px]">
+                          <div
+                            className={"text-sm text-gray-900 whitespace-nowrap" + (fu.lastFollowUpDate ? " cursor-default" : "")}
+                          >
+                            {formatDisplayDateWithTime(fu.lastFollowUpDate)}
                           </div>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
-                          <div
-                            className="text-sm text-gray-900 truncate"
-                            title={fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
-                          >
-                            {fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
-                          </div>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div
+                                        className="text-sm text-gray-900 truncate cursor-default"
+                                      >
+                                        {fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-h-60 overflow-y-auto">
+                                      <p>{fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
                           <div className="text-sm text-gray-900 truncate">
@@ -1880,7 +1930,7 @@ export default function Followups() {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <div className="text-sm text-gray-900 truncate cursor-default">
+                                <div className="text-sm text-gray-900 truncate cursor-pointer">
                                   {(fu as any).lastFollowUpMsg || (fu as any).originalData?.lastFollowUpMsg || "-"}
                                 </div>
                               </TooltipTrigger>
@@ -1951,7 +2001,7 @@ export default function Followups() {
                     {fu.type === "pending-material" && (
                       <>
                         <TableCell className="font-medium text-gray-900 align-center sticky left-[50px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
-                          <div className="truncate max-w-[80px]" title={fu.userCode}>
+                          <div className="truncate max-w-[80px]">
                             {fu.userCode}
                           </div>
                         </TableCell>
@@ -1963,23 +2013,51 @@ export default function Followups() {
                                   fu.userCode?.charAt(0) ||
                                   "C"}
                               </div>
-                              <div
-                                className="font-medium text-gray-900 max-w-[124px] truncate"
-                                title={fu.name || "N/A"}
-                              >
-                                {fu.name || "N/A"}
-                              </div>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="font-medium text-gray-900 max-w-[124px] truncate cursor-default">
+                                      {fu.name || "N/A"}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-h-60 overflow-y-auto">
+                                    <p>{fu.name || "N/A"}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             </div>
                           </TableCell>
                         )}
                         <TableCell className="align-center min-w-[120px] border-b border-gray-200">
-                          <div className="text-sm text-gray-900 whitespace-nowrap">
-                            {fu.orderNo}
-                          </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="text-sm text-gray-900 whitespace-nowrap cursor-default flex items-center gap-1">
+                                  <span>
+                                    {fu.orderNo?.split(",")[0]}
+                                  </span>
+                                  {fu.orderNo?.split(",").length > 1 && (
+                                    <Badge variant="secondary" className="h-4 px-1 text-[10px] bg-primary/10 text-primary border-none font-medium">
+                                      +{fu.orderNo.split(",").length - 1}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </TooltipTrigger>
+                              {fu.orderNo?.split(",").length > 1 && (
+                                <TooltipContent className="max-h-60 overflow-y-auto">
+                                  <div className="flex flex-col gap-1">
+                                    {fu.orderNo.split(",").map((no: string, idx: number) => (
+                                      <div key={idx}>{no.trim()}</div>
+                                    ))}
+                                  </div>
+                                </TooltipContent>
+                              )}
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
                           {fu.salesExecutive ? (
-                            <div className="text-sm text-gray-900 truncate" title={fu.salesExecutive}>
+                            <div className="text-sm text-gray-900 truncate" >
                               {fu.salesExecutive}
                             </div>
                           ) : (
@@ -1993,12 +2071,20 @@ export default function Followups() {
                         </TableCell>
 
                         <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
-                          <div
-                            className="text-sm text-gray-900 truncate"
-                            title={fu.departmentName}
-                          >
-                            {fu.departmentName}
-                          </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div
+                                  className="text-sm text-gray-900 truncate cursor-default"
+                                >
+                                  {fu.departmentName}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{fu.departmentName}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
 
                         <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
@@ -2007,18 +2093,28 @@ export default function Followups() {
                           </div>
                         </TableCell>
 
-                        <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
-                          <div className="text-sm text-gray-900 truncate">
-                            {formatDisplayDate(fu.lastFollowUpDate)}
+                        <TableCell className="align-center border-b border-gray-200 w-[180px] min-w-[180px] max-w-[180px]">
+                          <div
+                            className={"text-sm text-gray-900 whitespace-nowrap" + (fu.lastFollowUpDate ? " cursor-default" : "")}
+                          >
+                            {formatDisplayDateWithTime(fu.lastFollowUpDate)}
                           </div>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
-                          <div
-                            className="text-sm text-gray-900 truncate"
-                            title={fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
-                          >
-                            {fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
-                          </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div
+                                  className="text-sm text-gray-900 truncate cursor-default"
+                                >
+                                  {fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
                           <div className="text-sm text-gray-900 truncate">
@@ -2029,7 +2125,7 @@ export default function Followups() {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <div className="text-sm text-gray-900 truncate cursor-default">
+                                <div className="text-sm text-gray-900 truncate cursor-pointer">
                                   {(fu as any).lastFollowUpMsg || (fu as any).originalData?.lastFollowUpMsg || "-"}
                                 </div>
                               </TooltipTrigger>
@@ -2100,9 +2196,18 @@ export default function Followups() {
                     {fu.type === "cad-order" && (
                       <>
                         <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
-                          <div className="text-sm text-gray-900 truncate" title={fu.designNo}>
-                            {fu.designNo}
-                          </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="text-sm text-gray-900 truncate cursor-default">
+                                  {fu.designNo}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{fu.designNo}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
                           <div className="flex items-center">

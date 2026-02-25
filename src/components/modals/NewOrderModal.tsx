@@ -69,8 +69,8 @@ export function NewOrderModal({
           size: 1000,
           role: "sales_executive",
           search: search,
-          shortBy: "userCode",
-          shortOrder: "ASC",
+          sortBy: "userCode",
+          sortOrder: "ASC",
         });
         if (response.success && response.data?.data) {
           setSalesPersons(response.data.data);

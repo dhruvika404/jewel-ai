@@ -43,6 +43,29 @@ export function formatDisplayDate(dateString: string | null | undefined): string
   }
 }
 
+export function formatDisplayDateWithTime(dateString: string | null | undefined): string {
+  if (!dateString) return '-'
+  
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return '-'
+    
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const year = date.getFullYear()
+    
+    let hours = date.getHours()
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const ampm = hours >= 12 ? 'PM' : 'AM'
+    hours = hours % 12 || 12
+    const hoursStr = String(hours).padStart(2, '0')
+    
+    return `${day}/${month}/${year} ${hoursStr}:${minutes} ${ampm}`
+  } catch (error) {
+    return '-'
+  }
+}
+
 /**
  * Removes null, undefined, and empty string values from an object.
  * Optionally converts all values to strings for URLSearchParams.

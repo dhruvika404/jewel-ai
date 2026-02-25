@@ -74,8 +74,8 @@ export function PendingMaterialModal({
           size: 1000,
           role: "sales_executive",
           search: search,
-          shortBy: "updatedAt",
-          shortOrder: "DESC",
+          sortBy: "updatedAt",
+          sortOrder: "DESC",
         });
         if (response.success && response.data?.data) {
           setSalesPersons(response.data.data);

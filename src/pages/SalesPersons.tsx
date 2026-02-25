@@ -18,6 +18,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import TablePagination from "@/components/ui/table-pagination";
 import {
   Upload,
@@ -468,12 +474,12 @@ export default function SalesPersons() {
     try {
       const response = await salesPersonAPI.import(file);
       if (response.success) {
-        setShowUploadDialog(false);
-        setIsUploading(false);
-        await loadData();
         toast.success(
           response.message || "Sales persons imported successfully",
         );
+        setShowUploadDialog(false);
+        setIsUploading(false);
+        await loadData();
       } else {
         const errorMsg = response.message?.message || response.message;
         toast.error(errorMsg, { duration: Infinity });
@@ -553,9 +559,18 @@ export default function SalesPersons() {
                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs shrink-0">
                           {sp.name?.charAt(0).toUpperCase() || "U"}
                         </div>
-                        <div className="font-medium text-gray-900">
-                          {sp.name}
-                        </div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="font-medium text-gray-900 max-w-[150px] truncate cursor-default">
+                                {sp.name}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{sp.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     </TableCell>
                     <TableCell className="font-medium text-gray-900 align-center">
@@ -565,10 +580,7 @@ export default function SalesPersons() {
                       {sp.email ? (
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Mail className="w-3 h-3 text-gray-400" />
-                          <span
-                            className="truncate max-w-[180px]"
-                            title={sp.email}
-                          >
+                          <span className="truncate max-w-[180px]">
                             {sp.email}
                           </span>
                         </div>

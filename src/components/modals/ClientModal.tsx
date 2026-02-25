@@ -53,8 +53,8 @@ export function ClientModal({ isOpen, onClose, onSuccess, client }: ClientModalP
         size: PAGE_SIZE, 
         role: 'sales_executive',
         search: search,
-        shortBy: "userCode",
-        shortOrder: "ASC",
+        sortBy: "userCode",
+        sortOrder: "ASC",
       })
       
       if (response?.success && response?.data?.data) {

@@ -31,6 +31,12 @@ import { AddFollowUpModal } from "@/components/modals/AddFollowUpModal";
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDisplayDate } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Client {
   uuid: string;
@@ -419,10 +425,36 @@ export default function ClientDetails() {
                             ? "Style ID: "
                             : "Order ID: "}
                         </span>
-                        <h4 className="font-semibold text-sm text-gray-900 truncate">
-                          {type === "pending-material"
-                            ? item.styleNo || "N/A"
-                            : item.orderNo || `ITEM-${idx + 1}`}
+                        <h4 className="font-semibold text-sm text-gray-900 truncate cursor-default">
+                          {type === "pending-material" ? (
+                            item.styleNo || "N/A"
+                          ) : (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1">
+                                  <span>
+                                    {item.orderNo?.split(",")[0] || `ITEM-${idx + 1}`}
+                                  </span>
+                                  {item.orderNo?.split(",").length > 1 && (
+                                    <Badge variant="secondary" className="h-4 px-1 text-[9px] bg-primary/10 text-primary border-none font-medium">
+                                      +{item.orderNo.split(",").length - 1}
+                                    </Badge>
+                                  )}
+                                </div>
+                                </TooltipTrigger>
+                                {item.orderNo?.split(",").length > 1 && (
+                                  <TooltipContent className="max-h-60 overflow-y-auto">
+                                    <div className="flex flex-col gap-1">
+                                      {item.orderNo.split(",").map((no: string, i: number) => (
+                                        <div key={i}>{no.trim()}</div>
+                                      ))}
+                                    </div>
+                                  </TooltipContent>
+                                )}
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                         </h4>
                       </div>
                       <Badge
@@ -505,9 +537,33 @@ export default function ClientDetails() {
                               <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
                                 Order No
                               </p>
-                              <p className="text-xs font-semibold text-gray-900 truncate">
-                                {item.orderNo || "-"}
-                              </p>
+                              <div className="text-xs font-semibold text-gray-900 truncate cursor-default">
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1">
+                                  <span>
+                                    {item.orderNo?.split(",")[0] || "-"}
+                                  </span>
+                                  {item.orderNo?.split(",").length > 1 && (
+                                    <Badge variant="secondary" className="h-4 px-1 text-[9px] bg-primary/10 text-primary border-none font-medium">
+                                      +{item.orderNo.split(",").length - 1}
+                                    </Badge>
+                                  )}
+                                </div>
+                                    </TooltipTrigger>
+                                    {item.orderNo?.split(",").length > 1 && (
+                                      <TooltipContent className="max-h-60 overflow-y-auto">
+                                        <div className="flex flex-col gap-1">
+                                          {item.orderNo.split(",").map((no: string, i: number) => (
+                                            <div key={i}>{no.trim()}</div>
+                                          ))}
+                                        </div>
+                                      </TooltipContent>
+                                    )}
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
                             </div>
                             <div className="space-y-0.5 text-center">
                               <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">

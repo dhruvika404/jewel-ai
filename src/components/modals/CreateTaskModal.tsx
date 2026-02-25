@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import {
   Select,
@@ -84,8 +83,8 @@ export function CreateTaskModal({
           size: 1000,
           role: "sales_executive",
           search: search,
-          shortBy: "userCode",
-          shortOrder: "ASC",
+          sortBy: "userCode",
+          sortOrder: "ASC",
         });
         if (res?.success && res?.data?.data) {
           setSalesPersons(res.data.data);

@@ -1,5 +1,23 @@
+import axios from "axios";
 import { API_CONFIG, getHeaders, getUploadHeaders } from "@/config/api";
 import { filterEmptyValues } from "@/lib/utils";
+
+const handleAxiosError = (error: any) => {
+  if (error.response?.data) {
+    let errorMessage =
+      error.response.data.message ||
+      error.response.data.error ||
+      error.message;
+    if (typeof errorMessage === "object") {
+      const msg = errorMessage.message || JSON.stringify(errorMessage);
+      errorMessage = errorMessage.rowNo
+        ? `Row ${errorMessage.rowNo}: ${msg}`
+        : msg;
+    }
+    throw new Error(errorMessage);
+  }
+  throw error;
+};
 
 // Auth APIs
 export const authAPI = {
@@ -173,8 +191,8 @@ export const salesPersonAPI = {
     size?: number;
     search?: string;
     role?: string;
-    shortBy?: string;
-    shortOrder?: string;
+    sortBy?: string;
+    sortOrder?: string;
   }) => {
     const queryParams = new URLSearchParams(
       filterEmptyValues(params || {}, true),
@@ -228,18 +246,22 @@ export const salesPersonAPI = {
 
   // Import sales person data
   import: async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const response = await fetch(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.IMPORT}`,
-      {
-        method: "POST",
-        headers: getUploadHeaders(),
-        body: formData,
-      },
-    );
-    return response.json();
+      const response = await axios.post(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES_PERSON.IMPORT}`,
+        formData,
+        {
+          headers: getUploadHeaders(),
+          timeout: 900000,
+        },
+      );
+      return response.data;
+    } catch (error: any) {
+      handleAxiosError(error);
+    }
   },
 
   // Delete sales person
@@ -361,40 +383,14 @@ export const clientAPI = {
       formData.append("file", file, file.name);
       const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLIENT.IMPORT}`;
 
-      const response = await fetch(url, {
-        method: "POST",
+      const response = await axios.post(url, formData, {
         headers: getUploadHeaders(),
-        body: formData,
+        timeout: 900000,
       });
 
-      let result;
-      try {
-        result = await response.json();
-      } catch (parseError) {
-        throw new Error(
-          `Server returned invalid JSON. Status: ${response.status}`,
-        );
-      }
-
-      if (!response.ok) {
-        let errorMessage =
-          result.message ||
-          result.error ||
-          `HTTP error! status: ${response.status}`;
-
-        if (typeof errorMessage === "object") {
-          const msg = errorMessage.message || JSON.stringify(errorMessage);
-          errorMessage = errorMessage.rowNo
-            ? `Row ${errorMessage.rowNo}: ${msg}`
-            : msg;
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      return result;
+      return response.data;
     } catch (error: any) {
-      throw error;
+      handleAxiosError(error);
     }
   },
 
@@ -540,19 +536,23 @@ export const pendingOrderAPI = {
 
   // Import pending order data
   import: async (file: File) => {
-    // Validate file
-    const formData = new FormData();
-    formData.append("file", file);
+    try {
+      // Validate file
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const response = await fetch(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.IMPORT}`,
-      {
-        method: "POST",
-        headers: getUploadHeaders(),
-        body: formData,
-      },
-    );
-    return response.json();
+      const response = await axios.post(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_ORDER.IMPORT}`,
+        formData,
+        {
+          headers: getUploadHeaders(),
+          timeout: 900000,
+        },
+      );
+      return response.data;
+    } catch (error: any) {
+      handleAxiosError(error);
+    }
   },
 
   // Delete pending order
@@ -698,18 +698,22 @@ export const pendingMaterialAPI = {
 
   // Import pending material data
   import: async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const response = await fetch(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.IMPORT}`,
-      {
-        method: "POST",
-        headers: getUploadHeaders(),
-        body: formData,
-      },
-    );
-    return response.json();
+      const response = await axios.post(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_MATERIAL.IMPORT}`,
+        formData,
+        {
+          headers: getUploadHeaders(),
+          timeout: 900000,
+        },
+      );
+      return response.data;
+    } catch (error: any) {
+      handleAxiosError(error);
+    }
   },
 
   // Delete pending material
@@ -854,18 +858,22 @@ export const newOrderAPI = {
 
   // Import new order data
   import: async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const response = await fetch(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.IMPORT}`,
-      {
-        method: "POST",
-        headers: getUploadHeaders(),
-        body: formData,
-      },
-    );
-    return response.json();
+      const response = await axios.post(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.NEW_ORDER.IMPORT}`,
+        formData,
+        {
+          headers: getUploadHeaders(),
+          timeout: 900000,
+        },
+      );
+      return response.data;
+    } catch (error: any) {
+      handleAxiosError(error);
+    }
   },
 
   // Delete new order
@@ -909,18 +917,22 @@ export const cadOrderAPI = {
 
   // Import cad order data
   import: async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const response = await fetch(
-      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CAD_ORDER.IMPORT}`,
-      {
-        method: "POST",
-        headers: getUploadHeaders(),
-        body: formData,
-      },
-    );
-    return response.json();
+      const response = await axios.post(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CAD_ORDER.IMPORT}`,
+        formData,
+        {
+          headers: getUploadHeaders(),
+          timeout: 900000,
+        },
+      );
+      return response.data;
+    } catch (error: any) {
+      handleAxiosError(error);
+    }
   },
 
   // Add follow-up for cad order

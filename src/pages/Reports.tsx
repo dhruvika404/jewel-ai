@@ -12,6 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import TablePagination from "@/components/ui/table-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Download } from "lucide-react";
@@ -26,7 +32,7 @@ import {
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import * as XLSX from "xlsx";
 import { DateRange } from "react-day-picker";
-import { formatDisplayDate, getTakenByName } from "@/lib/utils";
+import { formatDisplayDate, formatDisplayDateWithTime, getTakenByName } from "@/lib/utils";
 import { Combobox } from "@/components/ui/combobox";
 
 type ReportType = "todays-taken" | "pending" | "overdue";
@@ -106,8 +112,8 @@ export default function Reports() {
           size: 1000,
           role: "sales_executive",
           search: search,
-          shortBy: "userCode",
-          shortOrder: "ASC",
+          sortBy: "userCode",
+          sortOrder: "ASC",
         });
         if (spRes.success && spRes.data?.data) {
           setSalesPersons(spRes.data.data);
@@ -410,7 +416,7 @@ export default function Reports() {
       Type: fu.type,
       "Follow-up Message": fu.followUpMsg,
       "Next Follow-up Date": formatDisplayDate(fu.nextFollowUpDate),
-      "Last Follow-up Date": formatDisplayDate(fu.lastFollowUpDate),
+      "Last Follow-up Date": formatDisplayDateWithTime(fu.lastFollowUpDate),
       Status: fu.followUpStatus,
     }));
 
@@ -537,7 +543,7 @@ export default function Reports() {
                   <TableHead className="font-medium text-gray-700 w-[250px]">
                     Followup Message
                   </TableHead>
-                  <TableHead className="font-medium text-gray-700 w-[130px]">
+                  <TableHead className="font-medium text-gray-700 w-[180px]">
                     Last Followup
                   </TableHead>
                   <TableHead className="font-medium text-gray-700 w-[150px]">
@@ -582,9 +588,18 @@ export default function Reports() {
                           <div>
                             {isAdmin ? (
                               <>
-                                <div className="font-medium text-gray-900">
-                                  {fu.clientName}
-                                </div>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="font-medium text-gray-900 max-w-[200px] truncate cursor-default">
+                                        {fu.clientName}
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{fu.clientName}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                                 <div className="text-xs text-gray-500">
                                   {fu.clientCode}
                                 </div>
@@ -640,13 +655,9 @@ export default function Reports() {
                         </div>
                       </TableCell>
                       <TableCell className="align-center">
-                        {fu.lastFollowUpDate ? (
-                          <div className="text-sm text-gray-900">
-                            {formatDisplayDate(fu.lastFollowUpDate)}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-sm">-</span>
-                        )}
+                        <div className="text-sm text-gray-900 whitespace-nowrap">
+                          {formatDisplayDateWithTime(fu.lastFollowUpDate)}
+                        </div>
                       </TableCell>
                       <TableCell className="align-center">
                         <div

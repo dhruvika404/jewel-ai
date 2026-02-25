@@ -249,8 +249,8 @@ export default function Clients() {
             size: 1000,
             role: "sales_executive",
             search: search,
-            shortBy: "userCode",
-            shortOrder: "ASC",
+            sortBy: "userCode",
+            sortOrder: "ASC",
           });
           if (response.success && response.data?.data) {
             setSalesPersons(response.data.data);
@@ -323,7 +323,7 @@ export default function Clients() {
         }
       } else if (isPendingFilterActive) {
         params.followUpPending = true;
-        params.todayDate = getUTCISOString(new Date(), 'start');
+        params.todayDate = getUTCISOString(new Date(), 'end');
       }
 
       const response = await clientAPI.getAll(params);
@@ -372,10 +372,10 @@ export default function Clients() {
     setIsUploading(true);
     try {
       const result = await clientAPI.import(file);
+      toast.success(result.message || "Import successful");
       setShowUploadDialog(false);
       setIsUploading(false);
       await loadData();
-      toast.success(result.message || "Import successful");
     } catch (error: any) {
       toast.error(error.message, { duration: Infinity });
       setIsUploading(false);
