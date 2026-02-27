@@ -212,7 +212,9 @@ export default function Followups() {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showAddFollowUpModal, setShowAddFollowUpModal] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<FollowupRecord | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<FollowupRecord | null>(
+    null,
+  );
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingItem, setDeletingItem] = useState<FollowupRecord | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -359,9 +361,7 @@ export default function Followups() {
         loadFollowupData();
       }
     } catch (e: any) {
-      toast.error(
-        e.message || "Failed to add remark to selected records"
-      );
+      toast.error(e.message || "Failed to add remark to selected records");
     } finally {
       setIsBulkProcessing(false);
     }
@@ -413,7 +413,6 @@ export default function Followups() {
       setIsBulkProcessing(false);
     }
   };
-
 
   const MANUAL_SORT_COLUMNS = [
     "noOrderSince",
@@ -657,9 +656,7 @@ export default function Followups() {
     });
   };
 
-  const loadFollowupData = async (options?: {
-    skipAllFilters?: boolean;
-  }) => {
+  const loadFollowupData = async (options?: { skipAllFilters?: boolean }) => {
     const activeDateRange = dateRange;
     const skipAllFilters = options?.skipAllFilters || false;
     try {
@@ -675,12 +672,12 @@ export default function Followups() {
       };
 
       if (activeDateRange?.from && !skipAllFilters) {
-        params.startDate = getUTCISOString(activeDateRange.from, 'start');
+        params.startDate = getUTCISOString(activeDateRange.from, "start");
 
         if (activeDateRange.to) {
-          params.endDate = getUTCISOString(activeDateRange.to, 'end');
+          params.endDate = getUTCISOString(activeDateRange.to, "end");
         } else {
-          params.endDate = getUTCISOString(activeDateRange.from, 'end');
+          params.endDate = getUTCISOString(activeDateRange.from, "end");
         }
       }
       if (!activeDateRange && !skipAllFilters) {
@@ -722,13 +719,13 @@ export default function Followups() {
       }
 
       if (todayTakenFilter === "today") {
-        params.startDate = getUTCISOString(new Date(), 'start');
-        params.endDate = getUTCISOString(new Date(), 'end');
+        params.startDate = getUTCISOString(new Date(), "start");
+        params.endDate = getUTCISOString(new Date(), "end");
         params.todayCompletedFollowUp = true;
       } else if (todayTakenFilter === "yesterday") {
         const yesterday = subDays(new Date(), 1);
-        params.startDate = getUTCISOString(yesterday, 'start');
-        params.endDate = getUTCISOString(yesterday, 'end');
+        params.startDate = getUTCISOString(yesterday, "start");
+        params.endDate = getUTCISOString(yesterday, "end");
         params.todayCompletedFollowUp = true;
       }
 
@@ -912,7 +909,6 @@ export default function Followups() {
     XLSX.writeFile(wb, fileName);
     toast.success(`Exported successfully as ${fileName}`);
   };
-
 
   useEffect(() => {
     loadFollowupData();
@@ -1123,7 +1119,7 @@ export default function Followups() {
         response = await cadOrderAPI.import(file);
       }
       if (response && (response.success || response.status === 200)) {
-        toast.success(`${getFollowupTypeTitle()} imported successfully`);
+        toast.success(`${getFollowupTypeTitle()} imported successfully`, { duration: Infinity });
         setShowUploadDialog(false);
         setIsUploading(false);
         await loadFollowupData();
@@ -1133,7 +1129,7 @@ export default function Followups() {
         });
       }
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.message, { duration: Infinity });
     } finally {
       setIsUploading(false);
     }
@@ -1190,8 +1186,6 @@ export default function Followups() {
     }
   };
 
-
-
   return (
     <div className="bg-gray-50">
       <div className="p-6 space-y-6">
@@ -1199,7 +1193,11 @@ export default function Followups() {
           {isAdmin && (
             <Combobox
               options={[
-                { value: "all", label: "Select Sales Person", disabled: salesPersonFilter === "all" },
+                {
+                  value: "all",
+                  label: "Select Sales Person",
+                  disabled: salesPersonFilter === "all",
+                },
                 ...salesPersons.map((sp) => ({
                   value: sp.userCode,
                   label: sp.name ? `${sp.name} (${sp.userCode})` : sp.userCode,
@@ -1219,11 +1217,17 @@ export default function Followups() {
 
           <Combobox
             options={[
-              { value: "all", label: "Select Client", disabled: clientFilter === "all" },
+              {
+                value: "all",
+                label: "Select Client",
+                disabled: clientFilter === "all",
+              },
               ...clients.map((client) => ({
                 value: client.userCode,
                 label: isAdmin
-                  ? (client.userCode ? `${client.userCode} (${client.name})` : client.userCode)
+                  ? client.userCode
+                    ? `${client.userCode} (${client.name})`
+                    : client.userCode
                   : client.userCode,
               })),
             ]}
@@ -1246,7 +1250,9 @@ export default function Followups() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" disabled={statusFilter === "all"}>Select Status</SelectItem>
+                <SelectItem value="all" disabled={statusFilter === "all"}>
+                  Select Status
+                </SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
@@ -1698,7 +1704,7 @@ export default function Followups() {
                       followupType !== "pending-material" && (
                         <TableCell className="align-center border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
                           {fu.salesExecutive ? (
-                            <div className="text-sm text-gray-900 truncate" >
+                            <div className="text-sm text-gray-900 truncate">
                               {fu.salesExecutive}
                             </div>
                           ) : (
@@ -1711,26 +1717,39 @@ export default function Followups() {
                       <>
                         <TableCell className="align-center border-b border-gray-200 w-[180px] min-w-[180px] max-w-[180px]">
                           <div
-                            className={"text-sm text-gray-900 whitespace-nowrap" + (fu.lastFollowUpDate ? " cursor-default" : "")}
+                            className={
+                              "text-sm text-gray-900 whitespace-nowrap" +
+                              (fu.lastFollowUpDate ? " cursor-default" : "")
+                            }
                           >
                             {formatDisplayDateWithTime(fu.lastFollowUpDate)}
                           </div>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div
-                                        className="text-sm text-gray-900 truncate cursor-default"
-                                      >
-                                        {fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="max-h-60 overflow-y-auto">
-                                      <p>{fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="text-sm text-gray-900 truncate cursor-default">
+                                  {fu.lastFollowUpBy &&
+                                  fu.lastFollowUpBy !== "null"
+                                    ? getTakenByName(fu.lastFollowUpBy)
+                                    : fu.status === "completed"
+                                      ? "system"
+                                      : "-"}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-h-60 overflow-y-auto">
+                                <p>
+                                  {fu.lastFollowUpBy &&
+                                  fu.lastFollowUpBy !== "null"
+                                    ? getTakenByName(fu.lastFollowUpBy)
+                                    : fu.status === "completed"
+                                      ? "system"
+                                      : "-"}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
                           <div className="text-sm text-gray-900 truncate">
@@ -1742,30 +1761,33 @@ export default function Followups() {
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div className="text-sm text-gray-900 truncate cursor-pointer">
-                                  {(fu as any).lastFollowUpMsg || (fu as any).originalData?.lastFollowUpMsg || "-"}
+                                  {(fu as any).lastFollowUpMsg ||
+                                    (fu as any).originalData?.lastFollowUpMsg ||
+                                    "-"}
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent className="max-w-[400px]">
                                 <p className="break-words whitespace-pre-wrap">
-                                  {(fu as any).lastFollowUpMsg || (fu as any).originalData?.lastFollowUpMsg || "No followup message available"}
+                                  {(fu as any).lastFollowUpMsg ||
+                                    (fu as any).originalData?.lastFollowUpMsg ||
+                                    "No followup message available"}
                                 </p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary"
-                              onClick={() => {
-                                setSelectedRemarkItem(fu);
-                                setRemarkHistoryOpen(true);
-                              }}
-                            >
-                              View
-                            </Button>
-                       
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary"
+                            onClick={() => {
+                              setSelectedRemarkItem(fu);
+                              setRemarkHistoryOpen(true);
+                            }}
+                          >
+                            View
+                          </Button>
                         </TableCell>
                       </>
                     )}
@@ -1786,30 +1808,30 @@ export default function Followups() {
                         </TableCell>
                         <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <div className="flex items-center gap-2">
-                                {isAdmin && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors"
-                                    title="Delete"
-                                    onClick={() => handleOpenDelete(fu)}
-                                    disabled={selectedItems.size > 0}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                )}
-                                {fu?.status !== "completed" && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 border border-border hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
-                                    title="Add Follow-up"
-                                    onClick={() => handleOpenAddFollowUp(fu)}
-                                    disabled={selectedItems.size > 0}
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                )}
+                            {isAdmin && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors"
+                                title="Delete"
+                                onClick={() => handleOpenDelete(fu)}
+                                disabled={selectedItems.size > 0}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {fu?.status !== "completed" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 border border-border hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                                title="Add Follow-up"
+                                onClick={() => handleOpenAddFollowUp(fu)}
+                                disabled={selectedItems.size > 0}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </>
@@ -1849,11 +1871,12 @@ export default function Followups() {
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div className="text-sm font-medium text-gray-900 whitespace-nowrap cursor-default flex items-center gap-1">
-                                  <span>
-                                    {fu.orderNo?.split(",")[0]}
-                                  </span>
+                                  <span>{fu.orderNo?.split(",")[0]}</span>
                                   {fu.orderNo?.split(",").length > 1 && (
-                                    <Badge variant="secondary" className="h-4 px-1 text-[10px] bg-primary/10 text-primary border-none font-medium">
+                                    <Badge
+                                      variant="secondary"
+                                      className="h-4 px-1 text-[10px] bg-primary/10 text-primary border-none font-medium"
+                                    >
                                       +{fu.orderNo.split(",").length - 1}
                                     </Badge>
                                   )}
@@ -1862,9 +1885,11 @@ export default function Followups() {
                               {fu.orderNo?.split(",").length > 1 && (
                                 <TooltipContent className="max-h-60 overflow-y-auto">
                                   <div className="flex flex-col gap-1">
-                                    {fu.orderNo.split(",").map((no: string, idx: number) => (
-                                      <div key={idx}>{no.trim()}</div>
-                                    ))}
+                                    {fu.orderNo
+                                      .split(",")
+                                      .map((no: string, idx: number) => (
+                                        <div key={idx}>{no.trim()}</div>
+                                      ))}
                                   </div>
                                 </TooltipContent>
                               )}
@@ -1873,7 +1898,7 @@ export default function Followups() {
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
                           {fu.salesExecutive ? (
-                            <div className="text-sm text-gray-900 truncate" >
+                            <div className="text-sm text-gray-900 truncate">
                               {fu.salesExecutive}
                             </div>
                           ) : (
@@ -1897,26 +1922,39 @@ export default function Followups() {
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[180px] min-w-[180px] max-w-[180px]">
                           <div
-                            className={"text-sm text-gray-900 whitespace-nowrap" + (fu.lastFollowUpDate ? " cursor-default" : "")}
+                            className={
+                              "text-sm text-gray-900 whitespace-nowrap" +
+                              (fu.lastFollowUpDate ? " cursor-default" : "")
+                            }
                           >
                             {formatDisplayDateWithTime(fu.lastFollowUpDate)}
                           </div>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div
-                                        className="text-sm text-gray-900 truncate cursor-default"
-                                      >
-                                        {fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="max-h-60 overflow-y-auto">
-                                      <p>{fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="text-sm text-gray-900 truncate cursor-default">
+                                  {fu.lastFollowUpBy &&
+                                  fu.lastFollowUpBy !== "null"
+                                    ? getTakenByName(fu.lastFollowUpBy)
+                                    : fu.status === "completed"
+                                      ? "system"
+                                      : "-"}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-h-60 overflow-y-auto">
+                                <p>
+                                  {fu.lastFollowUpBy &&
+                                  fu.lastFollowUpBy !== "null"
+                                    ? getTakenByName(fu.lastFollowUpBy)
+                                    : fu.status === "completed"
+                                      ? "system"
+                                      : "-"}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[130px] min-w-[130px] max-w-[130px]">
                           <div className="text-sm text-gray-900 truncate">
@@ -1928,30 +1966,33 @@ export default function Followups() {
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div className="text-sm text-gray-900 truncate cursor-pointer">
-                                  {(fu as any).lastFollowUpMsg || (fu as any).originalData?.lastFollowUpMsg || "-"}
+                                  {(fu as any).lastFollowUpMsg ||
+                                    (fu as any).originalData?.lastFollowUpMsg ||
+                                    "-"}
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent className="max-w-[400px]">
                                 <p className="break-words whitespace-pre-wrap">
-                                  {(fu as any).lastFollowUpMsg || (fu as any).originalData?.lastFollowUpMsg || "No followup message available"}
+                                  {(fu as any).lastFollowUpMsg ||
+                                    (fu as any).originalData?.lastFollowUpMsg ||
+                                    "No followup message available"}
                                 </p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary"
-                              onClick={() => {
-                                setSelectedRemarkItem(fu);
-                                setRemarkHistoryOpen(true);
-                              }}
-                            >
-                              View
-                            </Button>
-                         
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary"
+                            onClick={() => {
+                              setSelectedRemarkItem(fu);
+                              setRemarkHistoryOpen(true);
+                            }}
+                          >
+                            View
+                          </Button>
                         </TableCell>
                         <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <Badge
@@ -1968,7 +2009,7 @@ export default function Followups() {
                         <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <div className="flex items-center gap-2">
                             {isAdmin && (
-                               <Button
+                              <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
@@ -2030,11 +2071,12 @@ export default function Followups() {
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div className="text-sm text-gray-900 whitespace-nowrap cursor-default flex items-center gap-1">
-                                  <span>
-                                    {fu.orderNo?.split(",")[0]}
-                                  </span>
+                                  <span>{fu.orderNo?.split(",")[0]}</span>
                                   {fu.orderNo?.split(",").length > 1 && (
-                                    <Badge variant="secondary" className="h-4 px-1 text-[10px] bg-primary/10 text-primary border-none font-medium">
+                                    <Badge
+                                      variant="secondary"
+                                      className="h-4 px-1 text-[10px] bg-primary/10 text-primary border-none font-medium"
+                                    >
                                       +{fu.orderNo.split(",").length - 1}
                                     </Badge>
                                   )}
@@ -2043,9 +2085,11 @@ export default function Followups() {
                               {fu.orderNo?.split(",").length > 1 && (
                                 <TooltipContent className="max-h-60 overflow-y-auto">
                                   <div className="flex flex-col gap-1">
-                                    {fu.orderNo.split(",").map((no: string, idx: number) => (
-                                      <div key={idx}>{no.trim()}</div>
-                                    ))}
+                                    {fu.orderNo
+                                      .split(",")
+                                      .map((no: string, idx: number) => (
+                                        <div key={idx}>{no.trim()}</div>
+                                      ))}
                                   </div>
                                 </TooltipContent>
                               )}
@@ -2054,7 +2098,7 @@ export default function Followups() {
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[150px] min-w-[150px] max-w-[150px]">
                           {fu.salesExecutive ? (
-                            <div className="text-sm text-gray-900 truncate" >
+                            <div className="text-sm text-gray-900 truncate">
                               {fu.salesExecutive}
                             </div>
                           ) : (
@@ -2071,9 +2115,7 @@ export default function Followups() {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <div
-                                  className="text-sm text-gray-900 truncate cursor-default"
-                                >
+                                <div className="text-sm text-gray-900 truncate cursor-default">
                                   {fu.departmentName}
                                 </div>
                               </TooltipTrigger>
@@ -2092,7 +2134,10 @@ export default function Followups() {
 
                         <TableCell className="align-center border-b border-gray-200 w-[180px] min-w-[180px] max-w-[180px]">
                           <div
-                            className={"text-sm text-gray-900 whitespace-nowrap" + (fu.lastFollowUpDate ? " cursor-default" : "")}
+                            className={
+                              "text-sm text-gray-900 whitespace-nowrap" +
+                              (fu.lastFollowUpDate ? " cursor-default" : "")
+                            }
                           >
                             {formatDisplayDateWithTime(fu.lastFollowUpDate)}
                           </div>
@@ -2101,14 +2146,24 @@ export default function Followups() {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <div
-                                  className="text-sm text-gray-900 truncate cursor-default"
-                                >
-                                  {fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}
+                                <div className="text-sm text-gray-900 truncate cursor-default">
+                                  {fu.lastFollowUpBy &&
+                                  fu.lastFollowUpBy !== "null"
+                                    ? getTakenByName(fu.lastFollowUpBy)
+                                    : fu.status === "completed"
+                                      ? "system"
+                                      : "-"}
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>{fu.lastFollowUpBy && fu.lastFollowUpBy !== "null" ? getTakenByName(fu.lastFollowUpBy) : (fu.status === "completed" ? "system" : "-")}</p>
+                                <p>
+                                  {fu.lastFollowUpBy &&
+                                  fu.lastFollowUpBy !== "null"
+                                    ? getTakenByName(fu.lastFollowUpBy)
+                                    : fu.status === "completed"
+                                      ? "system"
+                                      : "-"}
+                                </p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -2123,30 +2178,33 @@ export default function Followups() {
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div className="text-sm text-gray-900 truncate cursor-pointer">
-                                  {(fu as any).lastFollowUpMsg || (fu as any).originalData?.lastFollowUpMsg || "-"}
+                                  {(fu as any).lastFollowUpMsg ||
+                                    (fu as any).originalData?.lastFollowUpMsg ||
+                                    "-"}
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent className="max-w-[400px]">
                                 <p className="break-words whitespace-pre-wrap">
-                                  {(fu as any).lastFollowUpMsg || (fu as any).originalData?.lastFollowUpMsg || "No followup message available"}
+                                  {(fu as any).lastFollowUpMsg ||
+                                    (fu as any).originalData?.lastFollowUpMsg ||
+                                    "No followup message available"}
                                 </p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
                         </TableCell>
                         <TableCell className="align-center border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary"
-                              onClick={() => {
-                                setSelectedRemarkItem(fu);
-                                setRemarkHistoryOpen(true);
-                              }}
-                            >
-                              View
-                            </Button>
-                         
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary hover:text-primary"
+                            onClick={() => {
+                              setSelectedRemarkItem(fu);
+                              setRemarkHistoryOpen(true);
+                            }}
+                          >
+                            View
+                          </Button>
                         </TableCell>
                         <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <Badge
@@ -2209,7 +2267,7 @@ export default function Followups() {
                         <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
                           <div className="flex items-center">
                             {isAdmin && (
-                               <Button
+                              <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7 hover:bg-red-50 text-gray-900 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
@@ -2220,8 +2278,8 @@ export default function Followups() {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
-                             {fu?.status !== "completed" && (
-                               <Button
+                            {fu?.status !== "completed" && (
+                              <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-6 w-6 border border-border hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
@@ -2231,7 +2289,7 @@ export default function Followups() {
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
-                             )}
+                            )}
                           </div>
                         </TableCell>
                       </>

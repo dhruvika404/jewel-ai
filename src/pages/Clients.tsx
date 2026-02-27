@@ -372,7 +372,7 @@ export default function Clients() {
     setIsUploading(true);
     try {
       const result = await clientAPI.import(file);
-      toast.success(result.message || "Import successful");
+      toast.success(result.message || "Import successful", { duration: Infinity });
       setShowUploadDialog(false);
       setIsUploading(false);
       await loadData();

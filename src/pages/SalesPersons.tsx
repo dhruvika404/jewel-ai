@@ -476,6 +476,7 @@ export default function SalesPersons() {
       if (response.success) {
         toast.success(
           response.message || "Sales persons imported successfully",
+          { duration: Infinity }
         );
         setShowUploadDialog(false);
         setIsUploading(false);
