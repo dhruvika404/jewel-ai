@@ -234,7 +234,6 @@ export default function Followups() {
   const [assignableSalesPersons, setAssignableSalesPersons] = useState<
     SalesPerson[]
   >([]);
-  const [isAssignableSpLoading, setIsAssignableSpLoading] = useState(false);
 
   const toggleSelection = (id: string) => {
     const newSelected = new Set(selectedItems);
@@ -490,8 +489,6 @@ export default function Followups() {
   useEffect(() => {
     const fetchAssignableSalesPersons = async () => {
       try {
-        setIsAssignableSpLoading(true);
-
         const entityTypeMap: Record<FollowupType, string> = {
           "new-order": "newOrders",
           "pending-order": "pendingOrders",
@@ -511,13 +508,10 @@ export default function Followups() {
         }
       } catch (error) {
         console.error("Failed to fetch assignable sales persons", error);
-      } finally {
-        setIsAssignableSpLoading(false);
       }
     };
 
     fetchAssignableSalesPersons();
-    setAssignTaskSalesPerson("all"); // Reset when type changes
   }, [followupType, user, isAdmin]);
 
   const processCADOrderData = (res: any): CADOrderFollowup[] => {
@@ -1035,6 +1029,9 @@ export default function Followups() {
     setBulkStatusValue("completed");
     loadFollowupData({ skipAllFilters: true });
     setTodayTakenFilter("all");
+    setAssignTaskSalesPerson("all");
+    setSpSearchQuery("");
+    setClientSearchQuery("");
   }, [followupType, searchParams.toString()]);
 
   useEffect(() => {
