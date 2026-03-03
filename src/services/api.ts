@@ -425,6 +425,7 @@ export const pendingOrderAPI = {
     todayCompletedFollowUp?: boolean;
     sevenDayPendingFollowUp?: boolean;
     assignSalesPersonsTask?: boolean;
+    tokenId?: string;
   }) => {
     const queryParams = new URLSearchParams(
       filterEmptyValues(params || {}, true),
@@ -586,6 +587,7 @@ export const pendingMaterialAPI = {
     todayCompletedFollowUp?: boolean;
     sevenDayPendingFollowUp?: boolean;
     assignSalesPersonsTask?: boolean;
+    tokenId?: string;
   }) => {
     const queryParams = new URLSearchParams(
       filterEmptyValues(params || {}, true),
@@ -750,6 +752,7 @@ export const newOrderAPI = {
     todayCompletedFollowUp?: boolean;
     sevenDayPendingFollowUp?: boolean;
     assignSalesPersonsTask?: boolean;
+    tokenId?: string;
   }) => {
     const queryParams = new URLSearchParams(
       filterEmptyValues(params || {}, true),
@@ -903,6 +906,7 @@ export const cadOrderAPI = {
     startDate?: string;
     endDate?: string;
     salesExecCode?: string;
+    tokenId?: string;
   }) => {
     const queryParams = new URLSearchParams(
       filterEmptyValues(params || {}, true),

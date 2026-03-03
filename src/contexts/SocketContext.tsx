@@ -81,7 +81,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
             onClick: () => {
               let path = "/notifications";
               if (data.entityType) {
-                const queryParam = data.entityId ? `?id=${data.entityId}` : "";
+                const queryParam = data.entityId ? `?tokenId=${data.entityId}` : "";
                 if (data.entityType === "newOrders") path = `/followups/new-order${queryParam}`;
                 else if (data.entityType === "pendingOrders") path = `/followups/pending-order${queryParam}`;
                 else if (data.entityType === "pendingMaterials") path = `/followups/pending-material${queryParam}`;

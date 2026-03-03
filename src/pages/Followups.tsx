@@ -696,6 +696,11 @@ export default function Followups() {
           params.endDate = urlEndDate;
         }
       }
+      
+      const tokenId = searchParams.get("tokenId");
+      if (tokenId) {
+        params.tokenId = tokenId;
+      }
       if (debouncedSearchTerm) {
         params.search = debouncedSearchTerm;
       }
@@ -995,15 +1000,12 @@ export default function Followups() {
     ? Math.ceil(displayTotalItems / pageSize)
     : totalPages;
 
-  const idFilter = searchParams.get("id");
   const paginatedFollowups = isManualSort
     ? filteredFollowups.slice(
         (currentPage - 1) * pageSize,
         currentPage * pageSize,
       )
-    : idFilter
-      ? filteredFollowups.filter((fu) => fu.id === idFilter)
-      : filteredFollowups;
+    : filteredFollowups;
 
   useEffect(() => {
     const urlStartDate = searchParams.get("startDate");
@@ -1111,7 +1113,7 @@ export default function Followups() {
     if (searchParams.get("endDate")) count++;
     if (todayTakenFilter !== "all") count++;
     if (assignTaskSalesPerson !== "all") count++;
-    if (searchParams.get("id")) count++;
+    if (searchParams.get("tokenId")) count++;
     return count;
   };
 

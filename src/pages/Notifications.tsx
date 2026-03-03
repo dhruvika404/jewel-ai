@@ -72,7 +72,7 @@ export default function Notifications() {
 
   const handleNotificationClick = (reminder: Reminder) => {
     let path = "/followups";
-    const queryParam = reminder.entityId ? `?id=${reminder.entityId}` : "";
+    const queryParam = reminder.entityId ? `?tokenId=${reminder.entityId}` : "";
     if (reminder.entityType === "newOrders") path = `/followups/new-order${queryParam}`;
     else if (reminder.entityType === "pendingOrders") path = `/followups/pending-order${queryParam}`;
     else if (reminder.entityType === "pendingMaterials") path = `/followups/pending-material${queryParam}`;
