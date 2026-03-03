@@ -83,7 +83,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const menuItems: MenuItem[] = [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
-    { label: "Notifications", href: "/notifications", icon: Bell },
     { label: "Clients", href: "/clients", icon: UsersRound },
     ...(user?.role !== "sales_executive"
       ? [
