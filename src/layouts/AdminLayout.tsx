@@ -11,12 +11,16 @@ import {
   UsersRound,
   Headset,
   ChevronDown,
+  Bell,
 } from "lucide-react";
+import { useSocket } from "@/contexts/SocketContext";
+import { sharedAPI } from "@/services/api";
 import { cn } from "@/lib/utils";
 import ConfirmationModal from "@/components/modals/ConfirmationModal";
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -32,6 +36,7 @@ interface MenuItem {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const { logout, user } = useAuth();
   const { header } = usePageHeader();
+  const { notificationCount, setNotificationCount } = useSocket();
   const location = useLocation();
   const prevPathRef = useRef<string>(location.pathname);
 
@@ -62,8 +67,23 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
   }, [location.pathname]);
 
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const res = await sharedAPI.getRemindCount();
+        if (res.success && typeof res.data === "number") {
+          setNotificationCount(res.data);
+        }
+      } catch (error) {
+        console.error("Error fetching notification count:", error);
+      }
+    };
+    fetchCount();
+  }, []);
+
   const menuItems: MenuItem[] = [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
+    { label: "Notifications", href: "/notifications", icon: Bell },
     { label: "Clients", href: "/clients", icon: UsersRound },
     ...(user?.role !== "sales_executive"
       ? [
@@ -290,6 +310,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     </span>
                   </Button>
                 )}
+                <Link
+                  to="/notifications"
+                  onClick={() => toast.dismiss()}
+                  className="relative p-2 hover:bg-muted rounded-full transition-colors order-first sm:order-last"
+                >
+                  <Bell className="w-5 h-5 text-gray-700" />
+                  {notificationCount > 0 && (
+                    <span className="absolute top-0 right-0 h-4 min-w-[1rem] flex items-center justify-center bg-red-600 text-white text-[10px] font-bold rounded-full px-1 border-2 border-card">
+                      {notificationCount > 99 ? "99+" : notificationCount}
+                    </span>
+                  )}
+                </Link>
               </div>
             </div>
           </header>

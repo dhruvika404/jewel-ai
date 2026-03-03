@@ -4,6 +4,7 @@ import Dashboard from "@/pages/Dashboard";
 import Clients from "@/pages/Clients";
 import ClientDetails from "@/pages/ClientDetails";
 import Followups from "@/pages/Followups";
+import Notifications from "@/pages/Notifications";
 
 export default function SalesRoutes() {
   return (
@@ -12,6 +13,7 @@ export default function SalesRoutes() {
         <Route index element={<Dashboard />} />
         <Route path="clients" element={<Clients />} />
         <Route path="clients/:id" element={<ClientDetails />} />
+        <Route path="notifications" element={<Notifications />} />
         <Route path="followups/:type" element={<Followups />} />
         <Route
           path="followups"

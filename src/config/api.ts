@@ -53,6 +53,9 @@ export const API_CONFIG = {
       DELETE_MULTIPLE: "/shared-api/delete-multiple-followups",
       DELETE_MULTIPLE_USER: "/shared-api/delete-multiple-user",
       ASSIGN_SALESPERSON: "/shared-api/assign-salesperson",
+      REMIND_TASK: "/shared-api/remind-task",
+      REMIND_COUNT: "/shared-api/remind-count",
+      REMINDERS: "/shared-api/reminders",
     },
   },
 };

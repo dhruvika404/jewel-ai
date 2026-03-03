@@ -12,6 +12,7 @@ export type UserRole = "admin" | "sales" | "sales_executive" | "client";
 
 interface User {
   id: string;
+  uuid?: string;
   email: string;
   name: string;
   role: UserRole;
@@ -80,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const userSession: User = {
         id: userData.id || userData.userId || "1",
+        uuid: userData.uuid || userData.id || userData.userId,
         email: userData.email || (isEmail ? identifier : ""),
         name:
           userData.name ||

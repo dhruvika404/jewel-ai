@@ -38,6 +38,7 @@ import TablePagination from "@/components/ui/table-pagination";
 import { Badge } from "@/components/ui/badge";
 import { AddFollowUpModal } from "@/components/modals/AddFollowUpModal";
 import { ImportModal } from "@/components/modals/ImportModal";
+import { ReminderModal } from "@/components/modals/ReminderModal";
 import {
   Download,
   Loader2,
@@ -48,6 +49,7 @@ import {
   ArrowUp,
   ArrowDown,
   CalendarDays,
+  Bell,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -213,6 +215,10 @@ export default function Followups() {
   const [isUploading, setIsUploading] = useState(false);
   const [showAddFollowUpModal, setShowAddFollowUpModal] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<FollowupRecord | null>(
+    null,
+  );
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [reminderRecord, setReminderRecord] = useState<FollowupRecord | null>(
     null,
   );
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -989,12 +995,15 @@ export default function Followups() {
     ? Math.ceil(displayTotalItems / pageSize)
     : totalPages;
 
+  const idFilter = searchParams.get("id");
   const paginatedFollowups = isManualSort
     ? filteredFollowups.slice(
         (currentPage - 1) * pageSize,
         currentPage * pageSize,
       )
-    : filteredFollowups;
+    : idFilter
+      ? filteredFollowups.filter((fu) => fu.id === idFilter)
+      : filteredFollowups;
 
   useEffect(() => {
     const urlStartDate = searchParams.get("startDate");
@@ -1102,6 +1111,7 @@ export default function Followups() {
     if (searchParams.get("endDate")) count++;
     if (todayTakenFilter !== "all") count++;
     if (assignTaskSalesPerson !== "all") count++;
+    if (searchParams.get("id")) count++;
     return count;
   };
 
@@ -1147,6 +1157,11 @@ export default function Followups() {
 
   const handleSubmitFollowUp = () => {
     loadFollowupData();
+  };
+
+  const handleOpenReminder = (record: FollowupRecord) => {
+    setReminderRecord(record);
+    setShowReminderModal(true);
   };
 
   const handleOpenDelete = (followup: FollowupRecord) => {
@@ -1439,10 +1454,10 @@ export default function Followups() {
                 )}
                 {followupType === "new-order" && (
                   <>
-                    <TableHead className="font-medium text-gray-700 sticky right-[100px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                    <TableHead className="font-medium text-gray-700 sticky right-[120px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                       Status
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                    <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50 w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
                       Actions
                     </TableHead>
                   </>
@@ -1517,10 +1532,10 @@ export default function Followups() {
                     <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
                       Remark
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky right-[100px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                    <TableHead className="font-medium text-gray-700 sticky right-[120px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                       Status
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                    <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50 w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
                       Actions
                     </TableHead>
                   </>
@@ -1589,10 +1604,10 @@ export default function Followups() {
                     <TableHead className="font-medium text-gray-700 border-b border-gray-200 w-[100px] min-w-[100px] max-w-[100px]">
                       Remark
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky right-[100px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                    <TableHead className="font-medium text-gray-700 sticky right-[120px] z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                       Status
                     </TableHead>
-                    <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                    <TableHead className="font-medium text-gray-700 sticky right-0 z-30 bg-gray-50 w-[120px] min-w-[120px] max-w-[120px] border-b border-gray-200 overflow-hidden">
                       Actions
                     </TableHead>
                   </>
@@ -1794,7 +1809,7 @@ export default function Followups() {
 
                     {fu.type === "new-order" && (
                       <>
-                        <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                        <TableCell className="align-center sticky right-[110px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <Badge
                             variant="outline"
                             className={
@@ -1806,7 +1821,7 @@ export default function Followups() {
                             {fu.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                        <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[110px] min-w-[110px] max-w-[110px] border-b border-gray-200 overflow-hidden">
                           <div className="flex items-center gap-2">
                             {isAdmin && (
                               <Button
@@ -1820,6 +1835,16 @@ export default function Followups() {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors"
+                              title="Set Reminder"
+                              onClick={() => handleOpenReminder(fu)}
+                              disabled={selectedItems.size > 0}
+                            >
+                              <Bell className="h-4 w-4" />
+                            </Button>
                             {fu?.status !== "completed" && (
                               <Button
                                 variant="ghost"
@@ -1994,7 +2019,7 @@ export default function Followups() {
                             View
                           </Button>
                         </TableCell>
-                        <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                        <TableCell className="align-center sticky right-[110px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <Badge
                             variant="outline"
                             className={
@@ -2006,7 +2031,7 @@ export default function Followups() {
                             {fu.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                        <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[110px] min-w-[110px] max-w-[110px] border-b border-gray-200 overflow-hidden">
                           <div className="flex items-center gap-2">
                             {isAdmin && (
                               <Button
@@ -2020,6 +2045,16 @@ export default function Followups() {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                              title="Set Reminder"
+                              onClick={() => handleOpenReminder(fu)}
+                              disabled={selectedItems.size > 0}
+                            >
+                              <Bell className="h-4 w-4" />
+                            </Button>
                             {fu?.status !== "completed" && (
                               <Button
                                 variant="ghost"
@@ -2206,7 +2241,7 @@ export default function Followups() {
                             View
                           </Button>
                         </TableCell>
-                        <TableCell className="align-center sticky right-[100px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                        <TableCell className="align-center sticky right-[110px] z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
                           <Badge
                             variant="outline"
                             className={
@@ -2218,7 +2253,7 @@ export default function Followups() {
                             {fu.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[100px] min-w-[100px] max-w-[100px] border-b border-gray-200 overflow-hidden">
+                        <TableCell className="align-center sticky right-0 z-10 bg-white group-hover:bg-gray-50 w-[110px] min-w-[110px] max-w-[110px] border-b border-gray-200 overflow-hidden">
                           <div className="flex items-center gap-2">
                             {isAdmin && (
                               <Button
@@ -2232,6 +2267,16 @@ export default function Followups() {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                              title="Set Reminder"
+                              onClick={() => handleOpenReminder(fu)}
+                              disabled={selectedItems.size > 0}
+                            >
+                              <Bell className="h-4 w-4" />
+                            </Button>
                             {fu?.status !== "completed" && (
                               <Button
                                 variant="ghost"
@@ -2264,7 +2309,7 @@ export default function Followups() {
                             </Tooltip>
                           </TooltipProvider>
                         </TableCell>
-                        <TableCell className="align-center border-b border-gray-200 w-[120px] min-w-[120px] max-w-[120px]">
+                        <TableCell className="align-center border-b border-gray-200 w-[110px] min-w-[110px] max-w-[110px]">
                           <div className="flex items-center">
                             {isAdmin && (
                               <Button
@@ -2278,6 +2323,16 @@ export default function Followups() {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 hover:bg-primary/10 text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:pointer-events-auto disabled:opacity-50"
+                              title="Set Reminder"
+                              onClick={() => handleOpenReminder(fu)}
+                              disabled={selectedItems.size > 0}
+                            >
+                              <Bell className="h-4 w-4" />
+                            </Button>
                             {fu?.status !== "completed" && (
                               <Button
                                 variant="ghost"
@@ -2325,6 +2380,31 @@ export default function Followups() {
             recordId={selectedRecord.id}
             clientName={selectedRecord.name}
             onSuccess={handleSubmitFollowUp}
+          />
+        )}
+
+        {reminderRecord && (
+          <ReminderModal
+            isOpen={showReminderModal}
+            onClose={() => {
+              setShowReminderModal(false);
+              setReminderRecord(null);
+            }}
+            entityId={reminderRecord.id}
+            entityType={
+              reminderRecord.type === "new-order"
+                ? "newOrders"
+                : reminderRecord.type === "pending-order"
+                  ? "pendingOrders"
+                  : reminderRecord.type === "pending-material"
+                    ? "pendingMaterials"
+                    : "cadOrders"
+            }
+            defaultSalesPersonId={
+              (reminderRecord as any).originalData?.salesExecData?.uuid ||
+              (reminderRecord as any).originalData?.salesExecUuid ||
+              ""
+            }
           />
         )}
 

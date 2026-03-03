@@ -6,6 +6,7 @@ import ClientDetails from "@/pages/ClientDetails";
 import Followups from "@/pages/Followups";
 import SalesPersons from "@/pages/SalesPersons";
 import Reports from "@/pages/Reports";
+import Notifications from "@/pages/Notifications";
 
 export default function AdminRoutes() {
   return (
@@ -16,6 +17,7 @@ export default function AdminRoutes() {
         <Route path="clients/:id" element={<ClientDetails />} />
         <Route path="sales-persons" element={<SalesPersons />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="notifications" element={<Notifications />} />
         <Route path="followups/:type" element={<Followups />} />
         <Route
           path="followups"

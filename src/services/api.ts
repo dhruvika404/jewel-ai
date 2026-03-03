@@ -1110,4 +1110,42 @@ export const sharedAPI = {
     );
     return response.json();
   },
+  remindTask: async (data: {
+    userId: string;
+    task: string;
+    reminderTime: string;
+    entityId: string;
+    entityType: string;
+  }) => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SHARED.REMIND_TASK}`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+      },
+    );
+    return response.json();
+  },
+  getRemindCount: async () => {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SHARED.REMIND_COUNT}`,
+      {
+        method: "GET",
+        headers: getHeaders(),
+      },
+    );
+    return response.json();
+  },
+  getReminders: async (params?: { page?: number; size?: number }) => {
+    const queryParams = new URLSearchParams(filterEmptyValues(params || {}));
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SHARED.REMINDERS}?${queryParams.toString()}`,
+      {
+        method: "GET",
+        headers: getHeaders(),
+      },
+    );
+    return response.json();
+  },
 };

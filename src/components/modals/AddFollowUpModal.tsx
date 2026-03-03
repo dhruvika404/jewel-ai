@@ -191,6 +191,17 @@ export function AddFollowUpModal({
                 if (errors.nextFollowUpDate)
                   setErrors({ ...errors, nextFollowUpDate: "" });
               }}
+              onBlur={(e) => {
+                const typedDate = e.target.value;
+                const today = new Date().toISOString().split("T")[0];
+                if (typedDate && typedDate < today) {
+                  setErrors({
+                    ...errors,
+                    nextFollowUpDate: "Cannot select a past date",
+                  });
+                  setFormData({ ...formData, nextFollowUpDate: "" });
+                }
+              }}
               error={errors.nextFollowUpDate}
               disabled={formData.followUpStatus === "completed"}
             />

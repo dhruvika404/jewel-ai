@@ -9,6 +9,7 @@ import SalesRoutes from "./routes/SalesRoutes";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { PageHeaderProvider } from "./contexts/PageHeaderProvider";
+import { SocketProvider } from "./contexts/SocketContext";
 
 function RoleBasedRoutes() {
   const { user } = useAuth();
@@ -24,23 +25,25 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <PageHeaderProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/verify-otp" element={<VerifyOTP />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route
-              path="/*"
-              element={
-                <ProtectedRoute>
-                  <RoleBasedRoutes />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-          <Toaster closeButton />
-        </PageHeaderProvider>
+        <SocketProvider>
+          <PageHeaderProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/verify-otp" element={<VerifyOTP />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route
+                path="/*"
+                element={
+                  <ProtectedRoute>
+                    <RoleBasedRoutes />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+            <Toaster closeButton />
+          </PageHeaderProvider>
+        </SocketProvider>
       </AuthProvider>
     </BrowserRouter>
   );
