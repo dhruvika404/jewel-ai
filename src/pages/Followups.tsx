@@ -1837,6 +1837,8 @@ export default function Followups() {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
+                            {fu?.status !== "completed" && (
+                            <>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -1847,7 +1849,6 @@ export default function Followups() {
                             >
                               <Bell className="h-4 w-4" />
                             </Button>
-                            {fu?.status !== "completed" && (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -1858,6 +1859,7 @@ export default function Followups() {
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
+                            </>
                             )}
                           </div>
                         </TableCell>
@@ -2047,6 +2049,8 @@ export default function Followups() {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
+                            {fu?.status !== "completed" && (
+                            <>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -2057,7 +2061,6 @@ export default function Followups() {
                             >
                               <Bell className="h-4 w-4" />
                             </Button>
-                            {fu?.status !== "completed" && (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -2068,6 +2071,7 @@ export default function Followups() {
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
+                              </>
                             )}
                           </div>
                         </TableCell>
@@ -2269,6 +2273,8 @@ export default function Followups() {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
+                            {fu?.status !== "completed" && (
+                            <>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -2279,7 +2285,6 @@ export default function Followups() {
                             >
                               <Bell className="h-4 w-4" />
                             </Button>
-                            {fu?.status !== "completed" && (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -2290,6 +2295,7 @@ export default function Followups() {
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
+                              </>
                             )}
                           </div>
                         </TableCell>
@@ -2325,6 +2331,8 @@ export default function Followups() {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
+                            {fu?.status !== "completed" && (
+                            <>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -2335,7 +2343,6 @@ export default function Followups() {
                             >
                               <Bell className="h-4 w-4" />
                             </Button>
-                            {fu?.status !== "completed" && (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -2346,6 +2353,7 @@ export default function Followups() {
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
+                              </>
                             )}
                           </div>
                         </TableCell>
