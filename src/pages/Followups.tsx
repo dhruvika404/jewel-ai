@@ -99,6 +99,7 @@ interface NewOrderFollowup {
   lastFollowUpBy?: string | { name: string; userCode: string; uuid?: string };
   remark?: string;
   type: "new-order";
+  createdAt: string;
   originalData?: any;
 }
 
@@ -118,6 +119,7 @@ interface PendingOrderFollowup {
   lastFollowUpBy?: string | { name: string; userCode: string; uuid?: string };
   remark?: string;
   status: string;
+  createdAt: string;
   originalData?: any;
 }
 
@@ -141,6 +143,7 @@ interface PendingMaterialFollowup {
   status: string;
   remark?: string;
   type: "pending-material";
+  createdAt: string;
   originalData?: any;
 }
 
@@ -156,6 +159,7 @@ interface CADOrderFollowup {
   lastFollowUpBy?: string | { name: string; userCode: string; uuid?: string };
   remark?: string;
   type: "cad-order";
+  createdAt: string;
   originalData?: any;
 }
 
@@ -198,6 +202,7 @@ export default function Followups() {
   const [daysFilter, setDaysFilter] = useState("all");
   const [loading, setLoading] = useState(false);
   const [followups, setFollowups] = useState<FollowupRecord[]>([]);
+  console.log("🚀 ~ Followups ~ followups:", followups)
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -540,6 +545,7 @@ export default function Followups() {
         lastFollowUpBy: item.lastFollowUpBy || null,
         remark: item.remark || "",
         type: "cad-order" as const,
+        createdAt: item.createdAt || new Date().toISOString(),
         originalData: item,
       };
     });
@@ -575,6 +581,7 @@ export default function Followups() {
         lastFollowUpBy: item.lastFollowUpBy || null,
         remark: item.remark || "",
         type: "new-order" as const,
+        createdAt: item.createdAt || new Date().toISOString(),
         originalData: item,
       };
     });
@@ -615,7 +622,7 @@ export default function Followups() {
         lastFollowUpBy: item.lastFollowUpBy || null,
         remark: item.remark || "",
         status: (item.status || "pending").toLowerCase(),
-
+        createdAt: item.createdAt || new Date().toISOString(),
         originalData: item,
       };
     });
@@ -657,6 +664,7 @@ export default function Followups() {
           item.nextFollowUpDate || item.nextFollowupDate || null,
         lastFollowUpDate: item.lastFollowUpDate || null,
         lastFollowUpBy: item.lastFollowUpBy || null,
+        createdAt: item.createdAt || new Date().toISOString(),
         originalData: item,
       };
     });
@@ -2372,6 +2380,29 @@ export default function Followups() {
                 {loading ? "..." : displayTotalItems}
               </span>
             </div>
+            {(() => {
+              const lastImported = followups
+                .filter(
+                  (f) => (f as any).originalData?.lastFollowUpMsg?.toLowerCase().includes("excel import"),
+                )
+                .sort(
+                  (a, b) =>
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime(),
+                )[0];
+
+              if (lastImported) {
+                return (
+                  <div className="text-sm text-gray-500">
+                    Last Imported:{" "}
+                    <span className="font-medium text-gray-700">
+                      {formatDisplayDateWithTime(lastImported.createdAt)}
+                    </span>
+                  </div>
+                );
+              }
+              return null;
+            })()}
             <TablePagination
               currentPage={currentPage}
               totalPages={displayTotalPages}
