@@ -1152,4 +1152,19 @@ export const sharedAPI = {
     );
     return response.json();
   },
+  getExcelImportHistory: async (params?: {
+    followUpType?: string;
+    page?: number;
+    size?: number;
+  }) => {
+    const queryParams = new URLSearchParams(filterEmptyValues(params || {}));
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SHARED.EXCEL_IMPORT_HISTORY}?${queryParams.toString()}`,
+      {
+        method: "GET",
+        headers: getHeaders(),
+      },
+    );
+    return response.json();
+  },
 };

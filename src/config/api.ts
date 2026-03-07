@@ -56,6 +56,7 @@ export const API_CONFIG = {
       REMIND_TASK: "/shared-api/remind-task",
       REMIND_COUNT: "/shared-api/remind-count",
       REMINDERS: "/shared-api/reminders",
+      EXCEL_IMPORT_HISTORY: "/shared-api/excel-import-history",
     },
   },
 };

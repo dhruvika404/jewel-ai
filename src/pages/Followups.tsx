@@ -99,7 +99,6 @@ interface NewOrderFollowup {
   lastFollowUpBy?: string | { name: string; userCode: string; uuid?: string };
   remark?: string;
   type: "new-order";
-  createdAt: string;
   originalData?: any;
 }
 
@@ -119,7 +118,6 @@ interface PendingOrderFollowup {
   lastFollowUpBy?: string | { name: string; userCode: string; uuid?: string };
   remark?: string;
   status: string;
-  createdAt: string;
   originalData?: any;
 }
 
@@ -143,7 +141,6 @@ interface PendingMaterialFollowup {
   status: string;
   remark?: string;
   type: "pending-material";
-  createdAt: string;
   originalData?: any;
 }
 
@@ -159,7 +156,6 @@ interface CADOrderFollowup {
   lastFollowUpBy?: string | { name: string; userCode: string; uuid?: string };
   remark?: string;
   type: "cad-order";
-  createdAt: string;
   originalData?: any;
 }
 
@@ -202,7 +198,6 @@ export default function Followups() {
   const [daysFilter, setDaysFilter] = useState("all");
   const [loading, setLoading] = useState(false);
   const [followups, setFollowups] = useState<FollowupRecord[]>([]);
-  console.log("🚀 ~ Followups ~ followups:", followups)
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -247,6 +242,7 @@ export default function Followups() {
   const [assignableSalesPersons, setAssignableSalesPersons] = useState<
     SalesPerson[]
   >([]);
+  const [importHistory, setImportHistory] = useState<any>(null);
 
   const toggleSelection = (id: string) => {
     const newSelected = new Set(selectedItems);
@@ -545,7 +541,6 @@ export default function Followups() {
         lastFollowUpBy: item.lastFollowUpBy || null,
         remark: item.remark || "",
         type: "cad-order" as const,
-        createdAt: item.createdAt || new Date().toISOString(),
         originalData: item,
       };
     });
@@ -581,7 +576,6 @@ export default function Followups() {
         lastFollowUpBy: item.lastFollowUpBy || null,
         remark: item.remark || "",
         type: "new-order" as const,
-        createdAt: item.createdAt || new Date().toISOString(),
         originalData: item,
       };
     });
@@ -622,7 +616,7 @@ export default function Followups() {
         lastFollowUpBy: item.lastFollowUpBy || null,
         remark: item.remark || "",
         status: (item.status || "pending").toLowerCase(),
-        createdAt: item.createdAt || new Date().toISOString(),
+
         originalData: item,
       };
     });
@@ -664,7 +658,6 @@ export default function Followups() {
           item.nextFollowUpDate || item.nextFollowupDate || null,
         lastFollowUpDate: item.lastFollowUpDate || null,
         lastFollowUpBy: item.lastFollowUpBy || null,
-        createdAt: item.createdAt || new Date().toISOString(),
         originalData: item,
       };
     });
@@ -808,6 +801,22 @@ export default function Followups() {
           });
           return sorted;
         });
+      }
+      
+      const entityTypeMap: Record<
+        FollowupType,
+        "newOrders" | "pendingOrders" | "pendingMaterials" | "cadOrders"
+      > = {
+        "new-order": "newOrders",
+        "pending-order": "pendingOrders",
+        "pending-material": "pendingMaterials",
+        "cad-order": "cadOrders",
+      };
+      const importRes = await sharedAPI.getExcelImportHistory({followUpType: entityTypeMap[followupType], page: 1, size: 1});
+      if (importRes?.success && importRes?.data?.data?.length > 0) {
+        setImportHistory(importRes.data.data[0]);
+      } else {
+        setImportHistory(null);
       }
     } catch (error: any) {
     } finally {
@@ -2373,43 +2382,42 @@ export default function Followups() {
             </TableBody>
           </Table>
 
-          <div className="p-4 border-t bg-white flex justify-between items-center">
-            <div className="text-sm text-gray-600">
+          <div className="p-4 border-t bg-white flex items-center gap-4">
+            <div className="text-sm text-gray-600 shrink-0">
               Total:{" "}
               <span className="font-semibold text-gray-900">
                 {loading ? "..." : displayTotalItems}
               </span>
             </div>
-            {(() => {
-              const lastImported = followups
-                .filter(
-                  (f) => (f as any).originalData?.lastFollowUpMsg?.toLowerCase().includes("excel import"),
-                )
-                .sort(
-                  (a, b) =>
-                    new Date(b.createdAt).getTime() -
-                    new Date(a.createdAt).getTime(),
-                )[0];
 
-              if (lastImported) {
-                return (
-                  <div className="text-sm text-gray-500">
-                    Last Imported:{" "}
-                    <span className="font-medium text-gray-700">
-                      {formatDisplayDateWithTime(lastImported.createdAt)}
-                    </span>
-                  </div>
-                );
-              }
-              return null;
-            })()}
-            <TablePagination
-              currentPage={currentPage}
-              totalPages={displayTotalPages}
-              onPageChange={setCurrentPage}
-              pageSize={pageSize}
-              setPageSize={setPageSize}
-            />
+            <div className="flex-1 text-center text-sm text-gray-600 px-4 truncate">
+              {importHistory && (
+                <>
+                  Last Excel imported by{" "}
+                  <span className="font-semibold text-gray-900">
+                    {importHistory.importedBy?.name ||
+                      importHistory.importedBy?.userCode ||
+                      importHistory.excelUploadingBy?.name ||
+                      importHistory.excelUploadingBy?.userCode ||
+                      "Unknown"}
+                  </span>{" "}
+                  on{" "}
+                  <span className="font-semibold text-gray-900">
+                    {formatDisplayDateWithTime(importHistory.createdAt)}
+                  </span>
+                </>
+              )}
+            </div>
+
+            <div className="shrink-0">
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={displayTotalPages}
+                onPageChange={setCurrentPage}
+                pageSize={pageSize}
+                setPageSize={setPageSize}
+              />
+            </div>
           </div>
         </Card>
 

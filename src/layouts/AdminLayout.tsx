@@ -97,6 +97,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         { label: "New Order", href: "/followups/new-order" },
         { label: "Pending Order", href: "/followups/pending-order" },
         { label: "Pending Material", href: "/followups/pending-material" },
+        ...(user?.role === "admin" ? [{ label: "Excel Import History", href: "/followups/excel-import-history" }] : []),
         // { label: "CAD Order", href: "/followups/cad-order" },
       ],
     },

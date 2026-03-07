@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import { clientAPI, salesPersonAPI, sharedAPI } from "@/services/api";
 import { ClientModal } from "@/components/modals/ClientModal";
 import { useAuth } from "@/contexts/AuthContext";
-import { formatDisplayDate } from "@/lib/utils";
+import { formatDisplayDate, formatDisplayDateWithTime, getUTCISOString } from "@/lib/utils";
 import { DeleteModal } from "@/components/modals/DeleteModal";
 import { Combobox } from "@/components/ui/combobox";
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
@@ -81,6 +81,7 @@ export default function Clients() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
+  const [importHistory, setImportHistory] = useState<any>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -270,6 +271,18 @@ export default function Clients() {
     return () => clearTimeout(timer);
   }, [user, isAdmin, spSearchQuery]);
 
+  const loadImportHistory = async () => {
+    try {
+      const res = await sharedAPI.getExcelImportHistory({ page: 1, size: 6 });
+      const responseData = res?.data ?? res;
+      const list = responseData?.data ?? responseData ?? [];
+      const record = Array.isArray(list) && list.length > 0 ? list[0] : null;
+      setImportHistory(record || null);
+    } catch (e) {
+      setImportHistory(null);
+    }
+  };
+
   const loadData = async () => {
     setLoading(true);
     setClients([]);
@@ -365,6 +378,10 @@ export default function Clients() {
   ]);
 
   useEffect(() => {
+    loadImportHistory();
+  }, []);
+
+  useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedSalesPerson, dateRange, followUpFilter, followUpPending]);
 
@@ -376,6 +393,7 @@ export default function Clients() {
       setShowUploadDialog(false);
       setIsUploading(false);
       await loadData();
+      await loadImportHistory();
     } catch (error: any) {
       toast.error(error.message, { duration: Infinity });
       setIsUploading(false);
@@ -762,20 +780,42 @@ export default function Clients() {
             </TableBody>
           </Table>
 
-          <div className="p-4 border-t bg-white flex justify-between items-center">
-            <div className="text-sm text-gray-600">
+          <div className="p-4 border-t bg-white flex items-center gap-4">
+            <div className="text-sm text-gray-600 shrink-0">
               Total:{" "}
               <span className="font-semibold text-gray-900">
                 {loading ? "..." : totalItems}
               </span>
             </div>
-            <TablePagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              pageSize={pageSize}
-              setPageSize={setPageSize}
-            />
+
+            <div className="flex-1 text-center text-sm text-gray-600 px-4 truncate">
+              {importHistory && (
+                <>
+                  Last Excel imported by{" "}
+                  <span className="font-semibold text-gray-900">
+                    {importHistory.importedBy?.name ||
+                      importHistory.importedBy?.userCode ||
+                      importHistory.excelUploadingBy?.name ||
+                      importHistory.excelUploadingBy?.userCode ||
+                      "Unknown"}
+                  </span>{" "}
+                  on{" "}
+                  <span className="font-semibold text-gray-900">
+                    {formatDisplayDateWithTime(importHistory.createdAt)}
+                  </span>
+                </>
+              )}
+            </div>
+
+            <div className="shrink-0">
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                pageSize={pageSize}
+                setPageSize={setPageSize}
+              />
+            </div>
           </div>
         </Card>
       </div>

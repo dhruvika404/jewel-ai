@@ -7,6 +7,7 @@ import Followups from "@/pages/Followups";
 import SalesPersons from "@/pages/SalesPersons";
 import Reports from "@/pages/Reports";
 import Notifications from "@/pages/Notifications";
+import ExcelImportHistory from "@/pages/ExcelImportHistory";
 
 export default function AdminRoutes() {
   return (
@@ -18,6 +19,7 @@ export default function AdminRoutes() {
         <Route path="sales-persons" element={<SalesPersons />} />
         <Route path="reports" element={<Reports />} />
         <Route path="notifications" element={<Notifications />} />
+        <Route path="followups/excel-import-history" element={<ExcelImportHistory />} />
         <Route path="followups/:type" element={<Followups />} />
         <Route
           path="followups"

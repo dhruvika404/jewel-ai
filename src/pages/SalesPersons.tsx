@@ -44,6 +44,7 @@ import { DeleteModal } from "@/components/modals/DeleteModal";
 import { ImportModal } from "@/components/modals/ImportModal";
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { formatDisplayDateWithTime } from "@/lib/utils";
 interface SalesPerson {
   uuid: string;
   userCode: string;
@@ -76,6 +77,7 @@ export default function SalesPersons() {
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
+  const [importHistory, setImportHistory] = useState<any>(null);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showFormDialog, setShowFormDialog] = useState(false);
@@ -248,6 +250,18 @@ export default function SalesPersons() {
     }
   };
 
+  const loadImportHistory = async () => {
+    try {
+      const res = await sharedAPI.getExcelImportHistory({ followUpType: "sales_executive", page: 1, size: 1 });
+      const responseData = res?.data ?? res;
+      const list = responseData?.data ?? responseData ?? [];
+      const record = Array.isArray(list) && list.length > 0 ? list[0] : null;
+      setImportHistory(record || null);
+    } catch (e) {
+      setImportHistory(null);
+    }
+  };
+
   const loadAllSalesPersons = async () => {
     try {
       const response = await salesPersonAPI.getAll({
@@ -264,6 +278,7 @@ export default function SalesPersons() {
 
   useEffect(() => {
     loadAllSalesPersons();
+    loadImportHistory();
   }, []);
 
   useEffect(() => {
@@ -481,6 +496,7 @@ export default function SalesPersons() {
         setShowUploadDialog(false);
         setIsUploading(false);
         await loadData();
+        await loadImportHistory();
       } else {
         const errorMsg = response.message?.message || response.message;
         toast.error(errorMsg, { duration: Infinity });
@@ -654,20 +670,42 @@ export default function SalesPersons() {
             </TableBody>
           </Table>
           {totalItems > 0 && (
-            <div className="p-4 border-t bg-white flex justify-between items-center">
-              <div className="text-sm text-gray-600">
+            <div className="p-4 border-t bg-white flex items-center gap-4">
+              <div className="text-sm text-gray-600 shrink-0">
                 Total :{" "}
                 <span className="font-semibold text-gray-900">
                   {loading ? "..." : totalItems}
                 </span>
               </div>
-              <TablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-                pageSize={pageSize}
-                setPageSize={setPageSize}
-              />
+
+              <div className="flex-1 text-center text-sm text-gray-600 px-4 truncate">
+                {importHistory && (
+                  <>
+                    Last Excel imported by{" "}
+                    <span className="font-semibold text-gray-900">
+                      {importHistory.importedBy?.name ||
+                        importHistory.importedBy?.userCode ||
+                        importHistory.excelUploadingBy?.name ||
+                        importHistory.excelUploadingBy?.userCode ||
+                        "Unknown"}
+                    </span>{" "}
+                    on{" "}
+                    <span className="font-semibold text-gray-900">
+                      {formatDisplayDateWithTime(importHistory.createdAt)}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              <div className="shrink-0">
+                <TablePagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  pageSize={pageSize}
+                  setPageSize={setPageSize}
+                />
+              </div>
             </div>
           )}
         </Card>
