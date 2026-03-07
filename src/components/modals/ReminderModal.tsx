@@ -116,7 +116,7 @@ export function ReminderModal({
       const response = await sharedAPI.remindTask({
         userId: formData?.userId, 
         task: formData.task,
-        reminderTime: formData.reminderTime,
+        reminderTime: new Date(formData.reminderTime).toISOString(),
         entityId:entityId , 
         entityType,
       });
