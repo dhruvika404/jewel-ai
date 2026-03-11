@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import TablePagination from "@/components/ui/table-pagination";
 import { sharedAPI } from "@/services/api";
 import { usePageHeader } from "@/contexts/PageHeaderProvider";
 import { Loader2 } from "lucide-react";
@@ -30,17 +31,36 @@ export default function ExcelImportHistory() {
   const { setHeader } = usePageHeader();
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<ImportHistoryRecord[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
 
   const loadHistoryData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await sharedAPI.getExcelImportHistory({ page: 1, size: 6 });
+      setHistory([]);
+      setTotalItems(0);
+
+      const res = await sharedAPI.getExcelImportHistory({
+        page: currentPage,
+        size: pageSize,
+      });
 
       if (res?.success === false) {
         throw new Error(res.message || "Failed to load history data");
       }
+
       const responseData = res?.data ?? res;
-      setHistory(responseData?.data ?? responseData ?? []);
+      if (responseData && Array.isArray(responseData.data)) {
+        setHistory(responseData.data);
+        setTotalItems(responseData.totalItems ?? responseData.data.length ?? 0);
+      } else if (Array.isArray(responseData)) {
+        setHistory(responseData);
+        setTotalItems(responseData.length);
+      } else {
+        setHistory([]);
+        setTotalItems(0);
+      }
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message ||
@@ -50,7 +70,7 @@ export default function ExcelImportHistory() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage, pageSize]);
 
   useEffect(() => {
     loadHistoryData();
@@ -62,11 +82,13 @@ export default function ExcelImportHistory() {
     });
   }, [setHeader]);
 
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
   return (
-    <div className="bg-gray-50 min-h-full">
-      <div className="p-6">
+    <div className="bg-gray-50">
+      <div className="p-6 space-y-6">
         <Card className="overflow-hidden">
-          <Table containerClassName="max-h-[calc(100vh-220px)] overflow-auto">
+          <Table containerClassName="max-h-[calc(100vh-304px)] overflow-auto">
             <TableHeader className="sticky top-0 z-20 bg-gray-50">
               <TableRow className="bg-gray-50">
                 <TableHead className="font-medium text-gray-700 w-[200px] border-b border-gray-200">
@@ -113,6 +135,27 @@ export default function ExcelImportHistory() {
               )}
             </TableBody>
           </Table>
+
+          <div className="p-4 border-t bg-white flex items-center gap-4 justify-between">
+            <div className="text-sm text-gray-600">
+              Total:{" "}
+              <span className="font-semibold text-gray-900">
+                {loading ? "..." : totalItems}
+              </span>
+            </div>
+
+            <div className="flex-1" />
+
+            <div className="shrink-0">
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                pageSize={pageSize}
+                setPageSize={setPageSize}
+              />
+            </div>
+          </div>
         </Card>
       </div>
     </div>
