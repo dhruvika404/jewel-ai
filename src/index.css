@@ -91,7 +91,15 @@
   pointer-events: auto !important;
 }
 
-[data-sonner-toast] {
+[data-sonner-toast],
+[data-sonner-toast][data-hovered="true"],
+[data-sonner-toaster]:hover [data-sonner-toast] {
+  transform: none !important;
+  transition: none !important;
+  max-height: 100px !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  opacity: 1 !important;
   pointer-events: auto !important;
   padding-right: 35px !important;
 }
