@@ -71,7 +71,7 @@ export function PendingMaterialModal({
         setIsSpLoading(true);
         const response = await salesPersonAPI.getAll({
           page: 1,
-          size: 1000,
+          size: 500,
           role: "sales_executive",
           search: search,
           sortBy: "updatedAt",

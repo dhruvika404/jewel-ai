@@ -62,7 +62,7 @@ export function PendingOrderModal({
         setIsSpLoading(true);
         const response = await salesPersonAPI.getAll({
           page: 1,
-          size: 1000,
+          size: 500,
           role: "sales_executive",
           search: search,
           sortBy: "userCode",
@@ -151,7 +151,6 @@ export function PendingOrderModal({
         newErrors.pendingPcs = "Pending Pcs cannot exceed Total Order Pcs";
       }
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };

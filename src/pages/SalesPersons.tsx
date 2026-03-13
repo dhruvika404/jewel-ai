@@ -265,7 +265,7 @@ export default function SalesPersons() {
   const loadAllSalesPersons = async () => {
     try {
       const response = await salesPersonAPI.getAll({
-        size: 1000,
+        size: 500,
         role: "sales_executive",
       });
       if (response.success) {

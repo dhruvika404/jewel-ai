@@ -444,7 +444,7 @@ export default function Followups() {
         setIsSpLoading(true);
         const spRes = await salesPersonAPI.getAll({
           page: 1,
-          size: 1000,
+          size: 500,
           role: "sales_executive",
           search: search,
           sortBy: "userCode",
@@ -472,7 +472,7 @@ export default function Followups() {
         setIsClientLoading(true);
         const clientRes = await clientAPI.getAll({
           page: 1,
-          size: 1000,
+          size: 500,
           role: "client",
           search: search,
         });
