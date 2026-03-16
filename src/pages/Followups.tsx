@@ -972,6 +972,13 @@ export default function Followups() {
   ]);
 
   const filteredFollowups = followups.filter((fu) => {
+    if (!isAdmin) {
+      const isSystemCompleted =
+        fu.status === "completed" &&
+        (!fu.lastFollowUpBy || fu.lastFollowUpBy === "null");
+      if (isSystemCompleted) return false;
+    }
+
     if (followupType === "new-order" && dateRangeFilter !== "all") {
       const daysSince = (fu as NewOrderFollowup).noOrderSince;
       if (dateRangeFilter === "30" && daysSince > 30) return false;
