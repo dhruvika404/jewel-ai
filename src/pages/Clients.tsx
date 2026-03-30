@@ -270,9 +270,10 @@ export default function Clients() {
     return () => clearTimeout(timer);
   }, [user, isAdmin, spSearchQuery]);
 
+
   const loadImportHistory = async () => {
     try {
-      const res = await sharedAPI.getExcelImportHistory({ page: 1, size: 6 });
+      const res = await sharedAPI.getExcelImportHistory({ followUpType: "client", page: 1, size: 1 });
       const responseData = res?.data ?? res;
       const list = responseData?.data ?? responseData ?? [];
       const record = Array.isArray(list) && list.length > 0 ? list[0] : null;
