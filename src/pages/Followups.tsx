@@ -199,6 +199,7 @@ export default function Followups() {
   const [loading, setLoading] = useState(false);
   const [followups, setFollowups] = useState<FollowupRecord[]>([]);
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
+  const [takenBySalesPersons, setTakenBySalesPersons] = useState<SalesPerson[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -211,6 +212,8 @@ export default function Followups() {
   const [clientSearchQuery, setClientSearchQuery] = useState("");
   const [isClientLoading, setIsClientLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [takenByFilter, setTakenByFilter] = useState("all");
+  const [takenBySearchQuery, setTakenBySearchQuery] = useState("");
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showAddFollowUpModal, setShowAddFollowUpModal] = useState(false);
@@ -460,11 +463,30 @@ export default function Followups() {
       }
     };
 
+    const loadTakenBySalesPersons = async (search?: string) => {
+      try {
+        const spRes = await salesPersonAPI.getAll({
+          page: 1,
+          size: 500,
+          role: "sales_executive",
+          search: search,
+          sortBy: "userCode",
+          sortOrder: "ASC",
+        });
+        if (spRes.success && spRes.data?.data) {
+          setTakenBySalesPersons(spRes.data.data);
+        }
+      } catch (error) {
+        console.error("Error loading taken by sales persons:", error);
+      }
+    };
+
     const timer = setTimeout(() => {
       loadSalesPersons(spSearchQuery);
+      loadTakenBySalesPersons(takenBySearchQuery);
     }, 500);
     return () => clearTimeout(timer);
-  }, [spSearchQuery]);
+  }, [spSearchQuery, takenBySearchQuery]);
 
   useEffect(() => {
     const loadClients = async (search?: string) => {
@@ -760,6 +782,10 @@ export default function Followups() {
         params.assignSalesPersonsTask = true;
       }
 
+      if (takenByFilter !== "all") {
+        params.lastFollowUpTakenBy = takenByFilter;
+      }
+
       let res;
       if (followupType === "new-order") {
         res = await newOrderAPI.getAll(params);
@@ -855,6 +881,8 @@ export default function Followups() {
     setSelectedItems(new Set());
     setTodayTakenFilter("all");
     setAssignTaskSalesPerson("all");
+    setTakenByFilter("all");
+    setTakenBySearchQuery("");
     setCurrentPage(1);
     navigate(`/followups/${followupType}`, {
       replace: true,
@@ -955,6 +983,7 @@ export default function Followups() {
     dateRange,
     todayTakenFilter,
     assignTaskSalesPerson,
+    takenByFilter,
   ]);
 
   useEffect(() => {
@@ -969,10 +998,11 @@ export default function Followups() {
     statusFilter,
     todayTakenFilter,
     assignTaskSalesPerson,
+    takenByFilter,
   ]);
 
   const filteredFollowups = followups.filter((fu) => {
-    if (!isAdmin) {
+    if (!isAdmin && takenByFilter !== "system") {
       const isSystemCompleted =
         fu.status === "completed" &&
         (!fu.lastFollowUpBy || fu.lastFollowUpBy === "null");
@@ -1061,8 +1091,10 @@ export default function Followups() {
     loadFollowupData({ skipAllFilters: true });
     setTodayTakenFilter("all");
     setAssignTaskSalesPerson("all");
+    setTakenByFilter("all");
     setSpSearchQuery("");
     setClientSearchQuery("");
+    setTakenBySearchQuery("");
   }, [followupType, searchParams.toString()]);
 
   useEffect(() => {
@@ -1137,6 +1169,7 @@ export default function Followups() {
     if (searchParams.get("endDate")) count++;
     if (todayTakenFilter !== "all") count++;
     if (assignTaskSalesPerson !== "all") count++;
+    if (takenByFilter !== "all") count++;
     if (searchParams.get("tokenId")) count++;
     return count;
   };
@@ -1320,6 +1353,33 @@ export default function Followups() {
               <SelectItem value="yesterday">Yesterday's Taken</SelectItem>
             </SelectContent>
           </Select>
+
+          <Combobox
+            options={[
+              {
+                value: "all",
+                label: "Select Taken By",
+                disabled: takenByFilter === "all",
+              },
+              {
+                value: "system",
+                label: "System",
+                disabled: takenByFilter === "system",
+              },
+              ...takenBySalesPersons.map((sp) => ({
+                value: sp.uuid,
+                label: sp.name ? `${sp.name} (${sp.userCode})` : sp.userCode,
+              })),
+            ]}
+            value={takenByFilter}
+            onSelect={setTakenByFilter}
+            onSearchChange={setTakenBySearchQuery}
+            searchValue={takenBySearchQuery}
+            placeholder="Taken By"
+            searchPlaceholder="Search salesperson..."
+            width="w-[180px]"
+            className="h-9 bg-white"
+          />
 
           {selectedItems.size > 0 && (
             <div className="flex items-center gap-2">
