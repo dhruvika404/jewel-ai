@@ -903,11 +903,20 @@ export default function Followups() {
         "Sales Executive": fu.salesExecutive || "-",
       };
 
+      const takenBy =
+        fu.lastFollowUpBy && fu.lastFollowUpBy !== "null"
+          ? getTakenByName(fu.lastFollowUpBy)
+          : fu.status === "completed"
+            ? "system"
+            : "-";
+
       if (fu.type === "new-order") {
         return {
           ...baseRow,
           "Last Order Date": formatDisplayDate(fu.lastOrderDate),
           "No Order Since": `${fu.noOrderSince} Days`,
+          "Last Follow-up": formatDisplayDateWithTime(fu.lastFollowUpDate),
+          "Taken By": takenBy,
           "Next Follow-up": formatDisplayDate(fu.nextFollowupDate),
           Remark: fu.remark || "-",
           Status: fu.status,
@@ -919,6 +928,8 @@ export default function Followups() {
           "Order Date": formatDisplayDate(fu.orderDate),
           "Pending Since": `${fu.pendingSince} Days`,
           "Pending Pcs": fu.pendingPcs,
+          "Last Follow-up": formatDisplayDateWithTime(fu.lastFollowUpDate),
+          "Taken By": takenBy,
           "Next Follow-up": formatDisplayDate(fu.nextFollowupDate),
           Remark: fu.remark || "-",
           Status: fu.status,
@@ -937,6 +948,8 @@ export default function Followups() {
           ),
           "Pending For": fu.pendingFor,
           "Pending Since": `${fu.pendingSinceDays} Days`,
+          "Last Follow-up": formatDisplayDateWithTime(fu.lastFollowUpDate),
+          "Taken By": takenBy,
           "Next Follow-up": formatDisplayDate(fu.nextFollowupDate),
           Remark: fu.remark || "-",
           Status: fu.status,
@@ -945,6 +958,10 @@ export default function Followups() {
         return {
           ...baseRow,
           "Design No": fu.designNo,
+          "Last Follow-up": formatDisplayDateWithTime(fu.lastFollowUpDate),
+          "Taken By": takenBy,
+          Remark: fu.remark || "-",
+          Status: fu.status,
         };
       }
     });

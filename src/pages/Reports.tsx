@@ -415,6 +415,7 @@ export default function Reports() {
       ...(isAdmin && { "Sales Person Code": fu.salesExecCode || "-" }),
       Type: fu.type,
       "Follow-up Message": fu.followUpMsg,
+      "Taken By": getTakenByName(fu.lastFollowUpBy),
       "Next Follow-up Date": formatDisplayDate(fu.nextFollowUpDate),
       "Last Follow-up Date": formatDisplayDateWithTime(fu.lastFollowUpDate),
       Status: fu.followUpStatus,
