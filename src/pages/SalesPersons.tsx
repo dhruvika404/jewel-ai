@@ -765,7 +765,7 @@ export default function SalesPersons() {
               placeholder="Staff name"
               value={formData.name}
               onChange={(e) => {
-                const value = e.target.value.replace(/[^a-zA-Z ]/g, "");
+                const value = e.target.value.replace(/[^a-zA-Z0-9 ]/g, "");
                 setFormData({ ...formData, name: value });
                 if (errors.name) setErrors({ ...errors, name: "" });
               }}

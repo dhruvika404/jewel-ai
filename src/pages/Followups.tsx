@@ -576,7 +576,7 @@ export default function Followups() {
 
     return dataArray.map((item: any) => {
       const lastOrderDate =
-        item.lastOrderDate || item.lastSaleDate || new Date().toISOString();
+        item.lastOrderDate || item.lastSaleDate || "2026-03-31T00:00:00.000Z";
       const date = new Date(lastOrderDate);
       const now = new Date();
       const daysDiff = Math.floor(
