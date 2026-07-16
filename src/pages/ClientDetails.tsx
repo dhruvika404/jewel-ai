@@ -619,7 +619,7 @@ export default function ClientDetails() {
                                 Last Sale
                               </p>
                               <p className="text-xs font-semibold text-gray-900">
-                                {item.lastSaleDate || "-"}
+                                {formatDisplayDate(item.lastSaleDate)}
                               </p>
                             </div>
                             <div className="space-y-0.5 text-right">
