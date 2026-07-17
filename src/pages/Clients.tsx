@@ -648,7 +648,7 @@ export default function Clients() {
                   Pending Material
                 </TableHead>
                 <TableHead className="font-medium text-gray-700 w-[220px]">
-                  Pending Orders
+                  Pending Quatation
                 </TableHead>
                 <TableHead className="font-medium text-gray-700 w-[220px]">
                   New Orders

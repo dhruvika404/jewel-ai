@@ -847,7 +847,7 @@ export default function ClientDetails() {
           {/* Column 2: Pending Orders */}
           <div className="h-full min-h-0">
             {renderColumn(
-              "Pending Orders",
+              "Pending Quatation",
               "pending-order",
               pendingOrders,
               loadingPO,
